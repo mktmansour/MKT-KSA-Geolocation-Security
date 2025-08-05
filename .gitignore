@@ -59,4 +59,8 @@ tests/results/
 *.pem
 *.key
 *.crt
+<<<<<<< HEAD
 secrets.json
+=======
+secrets.json
+>>>>>>> 9f9a4c785307adff189d537b95ef5815a075b0a9
