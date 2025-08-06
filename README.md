@@ -4,7 +4,7 @@
 **Smart Saudi Geolocation & Security Library** 
 > 🔐 Rust | 🛰️ Smart Security | 🏙️ Smart City Ready | 📄 Apache 2.0 |  Developed by Mansour Bin Khalid (KSA 🇸🇦)
 
-[![Rust](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/rust.yml/badge.svg?branch=main)](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/rust.yml)
+[![Rust](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/rust.yml/badge.svg?branch=main)](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/rust.yml)             [![Rust](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/rust.yml/badge.svg)](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/rust.yml)
 ---
 
 ## 📘 المحتويات | Table of Contents
