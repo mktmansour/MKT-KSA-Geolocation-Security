@@ -5,7 +5,7 @@
 > 
 [![Rust](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/rust.yml/badge.svg?branch=main)](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/rust.yml) 
 ---
-<img width="1024" height="559" alt="image" src="https://github.com/user-attachments/assets/16099a64-b1c4-402e-a08e-d938e9665497" />
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/95cf4068-d2f6-4603-9c03-521146a04e0e" />
 
 ## 📘 Table of Contents
 
