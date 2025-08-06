@@ -1,7 +1,9 @@
 [package]
 name = "MKT_KSA_Geolocation_Security"
 version = "0.1.0"
+authors = ["Mansour Khalid <mkt-edge@outlook.sa>"]
 edition = "2021"
+license = "Apache-2.0"
 [dependencies]
 actix-web = "4.0"
 actix-rt = "2.10"
