@@ -13,26 +13,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 1. تثبيت Rust (أحدث إصدار مستقر)
+      # 1. Set up Rust toolchain
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
 
-      # 2. بناء مكتبة المشروع (Release)
+      # 2. Build project in release mode
       - name: Build Rust project
         run: cargo build --release
 
-      # 3. توليد قائمة الملفات الناتجة (rlib أو bin)
+      # 3. Find all rlib and bin files (edit as needed)
       - name: Find build artifacts
         id: find_artifacts
         run: |
-          # يبحث عن كل ملفات .rlib وملفات bin الناتجة من target/release
-          find target/release -type f \( -name '*.rlib' -o -executable \) > artifact-list.txt
-          cat artifact-list.txt
+          ARTIFACTS=$(find target/release -type f \( -name '*.rlib' -o -executable \))
+          echo "$ARTIFACTS" > artifact-list.txt
+          echo "ARTIFACTS=$ARTIFACTS" >> $GITHUB_ENV
 
-      # 4. حساب SHA256 للملفات الناتجة
+      # 4. Upload artifacts (rlib/bin files)
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: built-artifacts
+          path: |
+            ${{ env.ARTIFACTS }}
+
+      # 5. Generate subject for provenance
       - name: Generate subject for provenance
         id: hash
         run: |
@@ -50,4 +58,3 @@ jobs:
     with:
       base64-subjects: "${{ needs.build.outputs.digests }}"
       upload-assets: true
-
