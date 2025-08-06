@@ -217,12 +217,13 @@ if role_row.is_some() {
 
 ## ⚠️ تقرير فحص التبعيات | Dependency Audit
 
-\| التبعية            | Dependency        | النوع     | Type    | استخدام مباشر؟ | Direct? | استخدام غير مباشر؟ | Indirect? | خطر أو مشكلة؟ | Risk? | الإجراء المطلوب | Action  |
-\|--------------------|------------------|-----------|---------|----------------|---------|--------------------|-----------|---------------|--------|
-\| instant            | Std Native       | نعم       | Yes     | لا             | No      | لا                 | No        | لا شيء        | None   |
-\| lexical            | External         | لا        | No      | نعم            | Yes     | لا                 | No        | لا شيء        | None   |
-\| lexical-core       | External         | لا        | No      | نعم            | Yes     | لا                 | No        | لا شيء        | None   |
-\| proc-macro-error   | External         | لا        | No      | نعم            | Yes     | لا                 | No        | لا شيء        | None   |
+| Dependency         | Type     | Direct? | Indirect? | Risk? | Action  |
+|--------------------|----------|---------|-----------|-------|---------|
+| instant            | Std Native | Yes   | No        | None  | None    |
+| lexical            | External   | No    | Yes       | None  | None    |
+| lexical-core       | External   | No    | Yes       | None  | None    |
+| proc-macro-error   | External   | No    | Yes       | None  | None    |
+
 
 * ✅ جميع التبعيات مراجعة ولا توجد حزم غير آمنة.
 * 🔁 تحديث دوري بـ `cargo update` يوصى به دائمًا.
