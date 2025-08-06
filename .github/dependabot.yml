@@ -1,19 +1,12 @@
 name: Auto-merge Dependabot updates
 
-on:
-  pull_request:
-    types:
-      - labeled
-      - opened
-      - synchronize
-
-jobs:
-  automerge:
-    if: github.actor == 'dependabot[bot]'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Enable auto-merge for Dependabot PRs
-        uses: peter-evans/enable-pull-request-automerge@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          merge-method: squash
+version: 2
+updates:
+  - package-ecosystem: "cargo"
+    directory: "/"                # مكان وجود Cargo.toml وCargo.lock
+    schedule:
+      interval: "weekly"          # تحقق من التحديثات أسبوعيًا (يمكنك تغييرها إلى daily أو monthly)
+    open-pull-requests-limit: 5   # (اختياري) الحد الأقصى لطلبات التحديث المفتوحة
+    labels:
+      - "dependencies"
+      - "rust"
