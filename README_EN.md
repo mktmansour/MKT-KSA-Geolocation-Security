@@ -462,12 +462,12 @@ if !access_granted {
 
 ## 🔌 Feature Flags
 
-This crate supports advanced feature flags to activate specialized capabilities.  
-You can enable them via `Cargo.toml` like this:
+#### This crate supports advanced feature flags to activate specialized capabilities.  
+#### You can enable them via `Cargo.toml` like this:
 
-```toml
-[dependencies]
-MKT_KSA_Geolocation_Security = { version = "1.0.0", features = ["adaptive", "quantum"] }
+toml
+#### [dependencies]
+#### MKT_KSA_Geolocation_Security = { version = "1.0.0", features = ["adaptive", "quantum"] }
 
 | Feature Name          | Description                                                                                  |
 | --------------------- | -------------------------------------------------------------------------------------------- |
