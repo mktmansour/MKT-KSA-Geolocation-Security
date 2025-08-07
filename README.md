@@ -484,6 +484,33 @@ if !access_granted {
 }
 ```
 
+#### 🔌 أعلام الميزات | Feature Flags
+
+#### يدعم هذا الصندوق علامات الميزات المتقدمة لتنشيط الإمكانات المتخصصة.
+#### يمكنك تمكينها عبر مثل هذا:Cargo.toml
+
+#### [dependencies]
+#### MKT_KSA_Geolocation_Security = { version = "1.0.0", features = ["adaptive", "quantum"] }    
+
+| Feature Name          | Description                                                                                  |
+| --------------------- | -------------------------------------------------------------------------------------------- |
+| `adaptive`            | Enables AI-driven adaptive behavior analysis.                                                |
+| `ar_integration`      | Integrates Augmented Reality (AR) sources for enhanced location validation.                  |
+| `autonomous_vehicles` | Activates modules designed for autonomous cars and smart fleet systems.                      |
+| `blockchain`          | Supports blockchain-based authentication and data anchoring.                                 |
+| `generative_ai`       | Uses generative AI models to dynamically generate and adjust security policies.              |
+| `gpu`                 | Enables GPU acceleration for heavy analysis (e.g. sensor or network data).                   |
+| `predictive`          | Adds predictive modeling and anomaly detection based on behavioral patterns.                 |
+| `quantum`             | Activates modules compatible with post-quantum cryptography.                                 |
+| `quantum_computing`   | Enables integrations with quantum computing backends and processors.                         |
+| `v1_1`                | Enables compatibility with API version 1.1 for legacy support.                               |
+| `v2_0`                | Enables compatibility with API version 2.0 (default for most modules).                       |
+| `v3_0`                | Enables next-gen modules for upcoming API version 3.0.                                       |
+| `zkp`                 | Adds support for Zero-Knowledge Proofs for privacy-preserving validation and access control. |
+```
+
+```
+
 #### 💡 نصائح متقدمة | Advanced Tips
 
 * جميع المحركات قابلة للحقن أو الاستبدال
