@@ -13,7 +13,7 @@ dependencies = [
  "anyhow",
  "assert-json-diff",
  "async-trait",
- "base64 0.21.7",
+ "base64 0.22.1",
  "blake3",
  "cfg-if",
  "chrono",
