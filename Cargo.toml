@@ -50,7 +50,7 @@ reqwest = { version = "0.12", default-features = false, features = ["json", "rus
 serde = { version = "1", features = ["derive"] }
 serde_derive = "1"
 thiserror = "2"
-maxminddb = { version = "0.23", features = ["mmap"] }
+maxminddb = { version = "0.26", features = ["mmap"] }
 pqcrypto-traits = "0.3.5"
 
 [dev-dependencies]
