@@ -23,13 +23,13 @@ tokio = { version = "1", features = ["full"] }
 uuid = { version = "1.17.0", features = ["v4", "serde"] }
 # Crypto & Security
 aes-gcm = "0.10.3"
-secrecy = { version = "0.10", features = ["serde"] }
+secrecy = { version = "0.8", features = ["serde"] }
 zeroize = { version = "1.8.1", features = ["derive"] }
 hex = "0.4.3"
 hmac = "0.12.1"
 sha2 = "0.10.9"
 blake3 = "1.8.2"
-base64 = "0.22.1"
+base64 = "0.21.7"
 jsonwebtoken = "9.3.1"
 # pqcrypto-kyber = "0.7.9"  # تم استبدالها
 pqcrypto-mlkem = "0.1.0"
@@ -48,12 +48,13 @@ chrono = { version = "0.4", features = ["serde"] }
 # Utilities (Config, logging, caching, errors)
 # -------------------------------------------------------------------
 serde_json = "1"
-reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }
 serde = { version = "1", features = ["derive"] }
 serde_derive = "1"
-thiserror = "2"
-maxminddb = { version = "0.26", features = ["mmap"] }
+thiserror = "1"
+maxminddb = { version = "0.23", features = ["mmap"] }
 pqcrypto-traits = "0.3.5"
+# governor = "0.6"  # أبقِ فقط governor إذا كنت تستخدمه فعليًا في الكود
 
 [dev-dependencies]
 proptest = "1.7.0"
