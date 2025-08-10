@@ -4,9 +4,7 @@ version = "1.0.0"
 authors = ["Mansour Khalid <mkt-edge@outlook.sa>"]
 edition = "2021"
 license = "Apache-2.0"
-description = "Smart geolocation & behavioral security library for Rust"
-readme = "README_EN.md"
-repository = "https://github.com/mktmansour/MKT-KSA-Geolocation-Security"
+
 [dependencies]
 actix-web = "4.0"
 actix-rt = "2.10"
@@ -54,7 +52,6 @@ serde_derive = "1"
 thiserror = "1"
 maxminddb = { version = "0.23", features = ["mmap"] }
 pqcrypto-traits = "0.3.5"
-# governor = "0.6"  # أبقِ فقط governor إذا كنت تستخدمه فعليًا في الكود
 
 [dev-dependencies]
 proptest = "1.7.0"
