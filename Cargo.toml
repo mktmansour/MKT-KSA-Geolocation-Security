@@ -27,7 +27,7 @@ hex = "0.4.3"
 hmac = "0.12.1"
 sha2 = "0.10.9"
 blake3 = "1.8.2"
-base64 = "0.21.7"
+base64 = "0.22.1"
 jsonwebtoken = "9.3.1"
 # pqcrypto-kyber = "0.7.9"  # تم استبدالها
 pqcrypto-mlkem = "0.1.0"
@@ -50,7 +50,7 @@ reqwest = { version = "0.12", default-features = false, features = ["json", "rus
 serde = { version = "1", features = ["derive"] }
 serde_derive = "1"
 thiserror = "2"
-maxminddb = { version = "0.23", features = ["mmap"] }
+maxminddb = { version = "0.26", features = ["mmap"] }
 pqcrypto-traits = "0.3.5"
 
 [dev-dependencies]
