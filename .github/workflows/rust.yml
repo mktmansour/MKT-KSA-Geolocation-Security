@@ -1,4 +1,4 @@
-name: Rust
+name: CI
 
 on:
   push:
@@ -6,18 +6,52 @@ on:
   pull_request:
     branches: [ "main" ]
 
-env:
-  CARGO_TERM_COLOR: always
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
-  build:
+  build-test-sec:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
-    - name: Security audit
-      run: cargo install cargo-audit && cargo audit --json
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+
+      # كاش تلقائي لمجلدات Cargo/target
+      - name: Cache cargo/target
+        uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Format check
+        run: cargo fmt --all -- --check
+
+      - name: Clippy (deny warnings)
+        run: cargo clippy --all-targets --all-features -D warnings
+
+      - name: Build (release)
+        run: cargo build --all-features --release --verbose
+
+      # run: cargo nextest run --all-features
+      - name: Tests
+        run: cargo test --all-features --verbose
+
+      # 5) تدقيق أمني للتبعيات
+      - name: Install security tools
+        run: |
+          cargo install cargo-audit --locked
+          cargo install cargo-deny --locked
+      - name: Cargo audit (advisories)
+        run: cargo audit --json
+      - name: Cargo deny (licenses, bans, sources)
+        run: cargo deny check
+
+
