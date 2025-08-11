@@ -20,7 +20,7 @@ log = "0.4"
 # Database
 mysql_async = "0.36.1"
 tokio = { version = "1", features = ["full"] }
-uuid = { version = "1.17.0", features = ["v4", "serde"] }
+uuid = { version = "1.18.0", features = ["v4", "serde"] }
 # Crypto & Security
 aes-gcm = "0.10.3"
 secrecy = { version = "0.8", features = ["serde"] }
