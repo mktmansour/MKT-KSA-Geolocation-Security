@@ -1,6 +1,6 @@
 [package]
 name = "MKT_KSA_Geolocation_Security"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Mansour Khalid <mkt-edge@outlook.sa>"]
 edition = "2021"
 license = "Apache-2.0"
@@ -9,6 +9,15 @@ readme = "README_EN.md"
 repository = "https://github.com/mktmansour/MKT-KSA-Geolocation-Security"
 categories = ["network-programming", "authentication", "cryptography"]
 keywords = ["geolocation", "behavior", "device-fingerprint", "rate-limiting", "security"]
+documentation = "https://docs.rs/MKT_KSA_Geolocation_Security"
+homepage = "https://github.com/mktmansour/MKT-KSA-Geolocation-Security"
+include = [
+    "src/**",
+    "Cargo.toml",
+    "README.md",
+    "README_EN.md",
+    "LICENSE"
+]
 [dependencies]
 actix-web = "4.0"
 actix-rt = "2.10"
