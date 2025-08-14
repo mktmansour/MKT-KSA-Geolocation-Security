@@ -69,10 +69,11 @@ pub async fn trigger_alert(
 
     // --- تحقق JWT عبر security فقط ---
     // JWT validation using the security module only
+    // استخدام سر JWT من متغير البيئة مع قيمة افتراضية لضمان عدم كسر السلوك
+    let jwt_secret = std::env::var("JWT_SECRET")
+        .unwrap_or_else(|_| "a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string());
     let jwt_manager = JwtManager::new(
-        secrecy::Secret::new(
-            "a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string(),
-        ),
+        secrecy::Secret::new(jwt_secret),
         60,
         "my_app".to_string(),
         "user_service".to_string(),

@@ -228,7 +228,8 @@ impl NetworkAnalyzer {
     /// يحدد الموقع الجغرافي للـ IP باستخدام قاعدة بيانات MaxMind.
     /// Geolocates an IP using the MaxMind database.
     fn geolocate_ip(&self, ip: &IpAddr) -> Option<GeoLocation> {
-        let city_data = self.geo_reader.lookup_city(*ip).ok()?;
+        let city_opt = self.geo_reader.lookup_city(*ip).ok()?;
+        let city_data = match city_opt { Some(c) => c, None => return None };
         Some(GeoLocation {
             country_iso: city_data.country?.iso_code?.to_string(),
             city: city_data.city?.names?.get("en")?.to_string(),
