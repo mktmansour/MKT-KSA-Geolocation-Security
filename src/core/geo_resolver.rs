@@ -208,25 +208,24 @@ pub enum GeoReaderEnum {
 }
 
 impl GeoReaderEnum {
-    pub fn lookup<T>(&self, ip: std::net::IpAddr) -> Result<T, maxminddb::MaxMindDBError>
+    pub fn lookup<T>(&self, ip: std::net::IpAddr) -> Result<Option<T>, maxminddb::MaxMindDbError>
     where
         T: for<'de> serde::Deserialize<'de> + 'static,
     {
         match self {
             GeoReaderEnum::Real(reader) => reader.lookup(ip),
-            GeoReaderEnum::Mock(mock) => mock.lookup(ip),
+            // في وضع التطوير: لا توجد قاعدة بيانات حقيقية
+            GeoReaderEnum::Mock(_mock) => Ok(None),
         }
     }
 
     pub fn lookup_city<'a>(
         &'a self,
         ip: std::net::IpAddr,
-    ) -> Result<maxminddb::geoip2::City<'a>, maxminddb::MaxMindDBError> {
+    ) -> Result<Option<maxminddb::geoip2::City<'a>>, maxminddb::MaxMindDbError> {
         match self {
             GeoReaderEnum::Real(reader) => reader.lookup(ip),
-            GeoReaderEnum::Mock(_) => Err(maxminddb::MaxMindDBError::AddressNotFoundError(
-                "Mock: No geo DB in dev mode".to_string(),
-            )),
+            GeoReaderEnum::Mock(_) => Ok(None),
         }
     }
 }
@@ -799,13 +798,12 @@ impl std::ops::Deref for MockGeoReader {
 }
 
 impl MockGeoReader {
-    pub fn lookup<T>(&self, _ip: std::net::IpAddr) -> Result<T, maxminddb::MaxMindDBError>
+    pub fn lookup<T>(&self, _ip: std::net::IpAddr) -> Result<T, maxminddb::MaxMindDbError>
     where
         T: for<'de> serde::Deserialize<'de> + 'static,
     {
-        Err(maxminddb::MaxMindDBError::AddressNotFoundError(
-            "Mock: No geo DB in dev mode".to_string(),
-        ))
+        // في وضع التطوير، لا توجد قاعدة بيانات؛ هذا المسار غير مستخدم فعلياً
+        panic!("MockGeoReader::lookup should not be called in dev mode")
     }
 }
 

@@ -136,6 +136,7 @@
 | Key Name      | Role                    | Example                       |
 | ------------- | ----------------------- | ----------------------------- |
 | API_KEY       | Main authentication key | API_KEY=your_secret_key       |
+| JWT_SECRET    | JWT signing/verification secret | JWT_SECRET=32+_chars_secret |
 | DATABASE_URL  | DB connection string    | DATABASE_URL=mysql://...      |
 | LOG_LEVEL     | Logging verbosity       | LOG_LEVEL=debug               |
 | GEO_PROVIDER  | Geolocation provider    | GEO_PROVIDER=ipapi            |
@@ -346,8 +347,11 @@ if role_row.is_some() {
 | assert-json-diff  | Dev          | Yes     | No        | JSON diff assertions   |
 
 **Stability Notes (Update):**
-- Pinned `anyhow` to `1.0.99` to ensure pulling latest compatible patches.
-- Added `categories` and `keywords` in `Cargo.toml` to improve discoverability.
+- Updated on: 14 Aug 2025
+- Pinned `anyhow` to `1.0.99`.
+- Upgraded: `base64 0.22.1`, `lru 0.16.0`, `maxminddb 0.26.0`, `reqwest 0.12.22`, `thiserror 2.0.12`, `uuid 1.18.0`.
+- Added `categories` and `keywords` in `Cargo.toml`.
+- Using `JWT_SECRET` for JWT instead of a hardcoded value.
 - No functional changes; all tests still pass.
 
 **Security Notes:**

@@ -142,6 +142,7 @@ It uses geolocation, behavioral analytics, device fingerprinting, and AI-driven 
 | اسم المفتاح   | Key Name      | الدور                  | Role                    | مثال                       | Example |
 | ------------- | ------------- | ---------------------- | ----------------------- | -------------------------- | ------- |
 | API_KEY      | API_KEY      | مفتاح المصادقة الرئيسي | Main authentication key | API_KEY=your_secret_key |         |
+| JWT_SECRET   | JWT_SECRET   | سر توقيع/تحقق JWT      | JWT signing/verification secret | JWT_SECRET=32+_chars_secret |         |
 | DATABASE_URL | DATABASE_URL | رابط قاعدة البيانات    | DB connection string    | DATABASE_URL=mysql://...  |         |
 | LOG_LEVEL    | LOG_LEVEL    | مستوى السجلات          | Logging verbosity       | LOG_LEVEL=debug           |         |
 | GEO_PROVIDER | GEO_PROVIDER | مزود الموقع (اختياري)  | Geolocation provider    | GEO_PROVIDER=ipapi        |         |
@@ -359,8 +360,11 @@ if role_row.is_some() {
 | assert-json-diff     | assert-json-diff  | dev   | Dev          | نعم    | Yes     | لا         | No        | مقارنة JSON           | JSON diff assertions   |
 
 **ملاحظات الاستقرار (تحديث):**
-- تم ضبط تبعية `anyhow` بدقة إلى `1.0.99` لضمان جلب أحدث التصحيحات المتوافقة.
-- تمت إضافة `categories` و`keywords` في `Cargo.toml` لتحسين الاكتشاف.
+- تاريخ التحديث: 14 أغسطس 2025
+- تم ضبط تبعية `anyhow` بدقة إلى `1.0.99`.
+- ترقية التبعيات: `base64 0.22.1`, `lru 0.16.0`, `maxminddb 0.26.0`, `reqwest 0.12.22`, `thiserror 2.0.12`, `uuid 1.18.0`.
+- إضافة `categories` و`keywords` في `Cargo.toml`.
+- استخدام `JWT_SECRET` كسرّ JWT بدلاً من قيمة ثابتة.
 - لا تغييرات وظيفية؛ جميع الاختبارات ما زالت تمر.
 
 **Security Notes:**
