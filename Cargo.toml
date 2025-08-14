@@ -7,11 +7,13 @@ license = "Apache-2.0"
 description = "Smart geolocation & behavioral security library for Rust"
 readme = "README_EN.md"
 repository = "https://github.com/mktmansour/MKT-KSA-Geolocation-Security"
+categories = ["network-programming", "authentication", "cryptography"]
+keywords = ["geolocation", "behavior", "device-fingerprint", "rate-limiting", "security"]
 [dependencies]
 actix-web = "4.0"
 actix-rt = "2.10"
 ammonia = "4.1.1"
-anyhow = "1"
+anyhow = "1.0.99"
 async-trait = "0.1"
 # تم حذف dotenv
 config = "0.15.13"
@@ -38,7 +40,7 @@ validator = "0.20"
 regex = "1.11.1"
 getrandom = "0.2.16"
 lru = "0.12.5"
-rayon = "1.10.0"
+rayon = "1.11.0"
 once_cell = "1.21.3"
 lazy_static = "1.5.0"
 cfg-if = "1.0.1"

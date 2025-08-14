@@ -8,7 +8,7 @@
 
     File Name: models.rs
     Path:     src/db/models.rs
-   
+
 
     File Role:
     يحتوي هذا الملف على تعريفات هياكل البيانات (structs) التي تمثل الجداول
@@ -24,7 +24,7 @@
 
     File Name: models.rs
     Path:     src/db/models.rs
-    
+
 
     File Role:
     This file contains the struct definitions that represent tables in the database.
@@ -38,7 +38,6 @@
 ******************************************************************************************/
 
 use serde::{Deserialize, Serialize};
-
 
 // ===================== نماذج البيانات الأساسية =====================
 // ===================== Core Data Models =====================
@@ -96,7 +95,6 @@ pub struct BehavioralEvent {
     pub event_data: serde_json::Value,
     pub created_at: chrono::NaiveDateTime,
 }
-
 
 /// Arabic: يمثل تنبيهًا أمنيًا تم إطلاقه بواسطة النظام وتوقيعه.
 /// التوقيع يثبت أن التنبيه صادر من نظامنا وليس تنبيهًا زائفًا تم حقنه.

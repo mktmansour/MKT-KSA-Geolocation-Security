@@ -3,7 +3,7 @@
 * 📄 رخصة Apache 2.0 – يسمح بالاستخدام والتعديل بشرط النسبة وعدم تقديم ضمانات.
 * MKT KSA Geolocation Security – Developed by Mansour Bin Khalid (KSA 🇸🇦)
 * Licensed under Apache 2.0 – https://www.apache.org/licenses/LICENSE-2.0
-* © 2025 All rights reserved. 
+* © 2025 All rights reserved.
 
      اسم الملف: network_analyzer.rs
     المسار:    src/core/network_analyzer.rs
@@ -34,7 +34,11 @@
     5.  A fully `async` design for high performance and low resource consumption.
 ******************************************************************************************/
 
+use aes_gcm::aead::{Aead, KeyInit};
+use aes_gcm::AeadCore;
+use aes_gcm::{Aes256Gcm, Key};
 use async_trait::async_trait;
+use maxminddb::Reader;
 use secrecy::{ExposeSecret, SecretVec};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -42,10 +46,6 @@ use std::net::IpAddr;
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::RwLock;
-use aes_gcm::aead::{Aead, KeyInit};
-use aes_gcm::{Aes256Gcm, Key};
-use aes_gcm::AeadCore;
-use maxminddb::Reader;
 
 // ================================================================
 // الأخطاء المخصصة للوحدة
@@ -116,14 +116,19 @@ pub struct ProxyDatabase {
 }
 
 impl ProxyDatabase {
-    pub fn is_vpn(&self, ip: &IpAddr) -> bool { self.vpn_ips.contains(ip) }
-    pub fn is_proxy(&self, ip: &IpAddr) -> bool { self.proxy_ips.contains(ip) }
-    pub fn is_tor(&self, ip: &IpAddr) -> bool { self.tor_nodes.contains(ip) }
-    
+    pub fn is_vpn(&self, ip: &IpAddr) -> bool {
+        self.vpn_ips.contains(ip)
+    }
+    pub fn is_proxy(&self, ip: &IpAddr) -> bool {
+        self.proxy_ips.contains(ip)
+    }
+    pub fn is_tor(&self, ip: &IpAddr) -> bool {
+        self.tor_nodes.contains(ip)
+    }
+
     // ملاحظة: في تطبيق حقيقي، ستكون هناك دالة لتحديث هذه القوائم من مصدر خارجي.
     // Note: In a real application, a function would exist to update these lists from an external source.
 }
-
 
 // ================================================================
 // واجهات (Traits) للمكونات القابلة للحقن
@@ -144,7 +149,6 @@ pub trait NetworkInfoProvider: Send + Sync {
 pub trait AiNetworkAnalyzer: Send + Sync {
     async fn analyze(&self, result: &mut NetworkAnalysisResult);
 }
-
 
 // ================================================================
 // محرك تحليل الشبكات (NetworkAnalyzer)
@@ -176,9 +180,13 @@ impl NetworkAnalyzer {
 
     /// تنفيذ تحليل كامل للشبكة.
     /// Executes a full network analysis.
-    pub async fn analyze(&self, provider: &dyn NetworkInfoProvider) -> Result<NetworkAnalysisResult, NetworkError> {
-        let ip = provider.get_public_ip().await
-            .ok_or_else(|| NetworkError::InvalidInput("Public IP address could not be obtained.".to_string()))?;
+    pub async fn analyze(
+        &self,
+        provider: &dyn NetworkInfoProvider,
+    ) -> Result<NetworkAnalysisResult, NetworkError> {
+        let ip = provider.get_public_ip().await.ok_or_else(|| {
+            NetworkError::InvalidInput("Public IP address could not be obtained.".to_string())
+        })?;
 
         // 1. كشف أدوات التخفي
         // 1. Detect concealment tools
@@ -201,7 +209,7 @@ impl NetworkAnalyzer {
         // 4. تشفير الـ IP
         // 4. Encrypt the IP
         let encrypted_ip = self.encrypt_ip(&ip)?;
-        
+
         // 5. بناء النتيجة وتطبيق تحليل الذكاء الاصطناعي
         // 5. Build result and apply AI analysis
         let mut result = NetworkAnalysisResult {
@@ -230,15 +238,27 @@ impl NetworkAnalyzer {
 
     /// يحسب درجة الأمان بناءً على وجود أدوات تخفي.
     /// Calculates the security score based on the presence of concealment tools.
-    fn calculate_base_score(&self, concealment: &ConcealmentReport, geo: &Option<GeoLocation>) -> f32 {
+    fn calculate_base_score(
+        &self,
+        concealment: &ConcealmentReport,
+        geo: &Option<GeoLocation>,
+    ) -> f32 {
         let mut score: f32 = 1.0;
-        if concealment.is_vpn { score -= 0.4; }
-        if concealment.is_proxy { score -= 0.3; }
-        if concealment.is_tor { score -= 0.6; }
-        
+        if concealment.is_vpn {
+            score -= 0.4;
+        }
+        if concealment.is_proxy {
+            score -= 0.3;
+        }
+        if concealment.is_tor {
+            score -= 0.6;
+        }
+
         // تعتبر الاتصالات من مواقع غير معروفة أكثر خطورة
         // Connections from unknown locations are considered riskier
-        if geo.is_none() { score -= 0.1; }
+        if geo.is_none() {
+            score -= 0.1;
+        }
 
         score.max(0.0)
     }
@@ -251,9 +271,10 @@ impl NetworkAnalyzer {
         let cipher = Aes256Gcm::new(key);
         let nonce = Aes256Gcm::generate_nonce(&mut rand::rngs::OsRng);
 
-        let ciphertext = cipher.encrypt(&nonce, ip.to_string().as_bytes())
+        let ciphertext = cipher
+            .encrypt(&nonce, ip.to_string().as_bytes())
             .map_err(|e| NetworkError::CryptoError(e.to_string()))?;
-            
+
         // دمج nonce مع النص المشفر
         // Combine nonce with ciphertext
         let mut combined = nonce.to_vec();
@@ -261,7 +282,6 @@ impl NetworkAnalyzer {
         Ok(hex::encode(combined))
     }
 }
-
 
 // ================================================================
 // التطبيقات الافتراضية (Default Implementations)
@@ -295,10 +315,13 @@ pub struct MockNetworkProvider {
 
 #[async_trait]
 impl NetworkInfoProvider for MockNetworkProvider {
-    async fn get_connection_type(&self) -> ConnectionType { self.conn_type.clone() }
-    async fn get_public_ip(&self) -> Option<IpAddr> { Some(self.ip) }
+    async fn get_connection_type(&self) -> ConnectionType {
+        self.conn_type.clone()
+    }
+    async fn get_public_ip(&self) -> Option<IpAddr> {
+        Some(self.ip)
+    }
 }
-
 
 // ================================================================
 // اختبارات شاملة (محدثة بالكامل)
@@ -316,16 +339,20 @@ mod tests {
         db.vpn_ips.insert(IpAddr::from_str("1.1.1.1").unwrap());
         db.tor_nodes.insert(IpAddr::from_str("2.2.2.2").unwrap());
         let proxy_db = Arc::new(RwLock::new(db));
-        
+
         // 2. Load geo database: try file, fallback to hex
         use std::fs;
         let geo_reader = if let Ok(bytes) = fs::read("GeoLite2-City-Test.mmdb") {
-            Arc::new(crate::core::geo_resolver::GeoReaderEnum::Real(Reader::from_source(bytes).expect("Failed to read mmdb file")))
+            Arc::new(crate::core::geo_resolver::GeoReaderEnum::Real(
+                Reader::from_source(bytes).expect("Failed to read mmdb file"),
+            ))
         } else {
             let geo_db_bytes = hex::decode(
                 "89ABCDEF0123456789ABCDEF0123456789ABCDEF14042A00000000000600000002000000100000000200000004000000020000000C000000636F756E747279070000000700000049534F5F636F646502000000070000000400000055530000"
             ).unwrap();
-            Arc::new(crate::core::geo_resolver::GeoReaderEnum::Real(Reader::from_source(geo_db_bytes).unwrap()))
+            Arc::new(crate::core::geo_resolver::GeoReaderEnum::Real(
+                Reader::from_source(geo_db_bytes).unwrap(),
+            ))
         };
 
         // 3. Setup other components
@@ -334,7 +361,7 @@ mod tests {
 
         NetworkAnalyzer::new(encryption_key, proxy_db, geo_reader, ai_analyzer)
     }
-    
+
     #[tokio::test]
     async fn test_normal_connection() {
         let engine = setup_test_engine();
@@ -359,14 +386,14 @@ mod tests {
             ip: "1.1.1.1".parse().unwrap(), // This IP is in our mock VPN DB
             conn_type: ConnectionType::Ethernet,
         };
-        
+
         let result = engine.analyze(&provider).await.unwrap();
 
         assert!(result.concealment.is_vpn);
         // Score is reduced, demonstrating the "prevention" of trust
         assert!((result.security_score - 0.6).abs() < 0.15);
     }
-    
+
     #[tokio::test]
     async fn test_tor_detection_and_prevention() {
         let engine = setup_test_engine();
@@ -374,7 +401,7 @@ mod tests {
             ip: "2.2.2.2".parse().unwrap(), // This IP is in our mock Tor DB
             conn_type: ConnectionType::Cellular,
         };
-        
+
         let result = engine.analyze(&provider).await.unwrap();
 
         assert!(result.concealment.is_tor);
@@ -389,7 +416,7 @@ mod tests {
             ip: "123.123.123.123".parse().unwrap(),
             conn_type: ConnectionType::WiFi,
         };
-        
+
         let result = engine.analyze(&provider).await.unwrap();
 
         // The encrypted IP should not be the same as the original

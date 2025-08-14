@@ -25,30 +25,30 @@
     It verifies user authorization via JWT before performing the analysis, ensuring every analysis operation is secure and reliable.
     The file is designed as a central point for any external system or user interface wishing to analyze or monitor sensor data (such as motion, temperature, humidity, etc.).
 ******************************************************************************************/
-use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
-use crate::security::jwt::JwtManager;
 use crate::core::sensors_analyzer::SensorReading;
+use crate::security::jwt::JwtManager;
 use crate::AppState;
+use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
 use serde::Deserialize;
 
 /// نموذج الطلب لتحليل بيانات الحساسات.
 /// Request model for sensor data analysis.
 #[derive(Deserialize)]
 pub struct SensorsAnalyzeRequest {
-    pub reading: SensorReading,         // قراءة الحساس الحالية
-                                       // Current sensor reading
-    pub history: Vec<SensorReading>,   // تاريخ قراءات الحساسات السابقة
-                                       // History of previous sensor readings
+    pub reading: SensorReading, // قراءة الحساس الحالية
+    // Current sensor reading
+    pub history: Vec<SensorReading>, // تاريخ قراءات الحساسات السابقة
+                                     // History of previous sensor readings
 }
 
 /// نقطة نهاية لتحليل بيانات الحساسات عبر POST /sensors/analyze
 /// Endpoint to analyze sensor data via POST /sensors/analyze
 #[post("/sensors/analyze")]
 pub async fn analyze_sensors(
-    req: HttpRequest,                  // الطلب الأصلي (للحصول على الهيدر)
+    req: HttpRequest, // الطلب الأصلي (للحصول على الهيدر)
     // The original request (to extract headers)
-    payload: web::Json<SensorsAnalyzeRequest> // بيانات الطلب (تحليل الحساسات)
-    // Request payload (sensor analysis data)
+    payload: web::Json<SensorsAnalyzeRequest>, // بيانات الطلب (تحليل الحساسات)
+                                               // Request payload (sensor analysis data)
 ) -> impl Responder {
     // --- استخراج التوكن من الهيدر ---
     // Extract the token from the header
@@ -63,23 +63,32 @@ pub async fn analyze_sensors(
     // --- تحقق JWT عبر security فقط ---
     // JWT validation using the security module only
     let jwt_manager = JwtManager::new(
-        secrecy::Secret::new("a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string()),
+        secrecy::Secret::new(
+            "a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string(),
+        ),
         60,
         "my_app".to_string(),
         "user_service".to_string(),
     );
     match jwt_manager.decode_token(&token) {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(_) => return HttpResponse::Unauthorized().body("Invalid or expired token"),
     };
 
     // --- تمرير الطلب لمحرك core ---
     // Pass the request to the core sensor analysis engine
-    let engine = &req.app_data::<web::Data<AppState>>().unwrap().x_engine.sensors_engine;
-    match engine.analyze(payload.reading.clone(), &payload.history).await {
+    let engine = &req
+        .app_data::<web::Data<AppState>>()
+        .unwrap()
+        .x_engine
+        .sensors_engine;
+    match engine
+        .analyze(payload.reading.clone(), &payload.history)
+        .await
+    {
         Ok(result) => HttpResponse::Ok().json(result), // إعادة نتيجة التحليل بنجاح
-                                                      // Return analysis result on success
+        // Return analysis result on success
         Err(e) => HttpResponse::InternalServerError().json(e.to_string()), // معالجة الخطأ وإرجاعه
-                                                                          // Handle and return error
+                                                                           // Handle and return error
     }
 }

@@ -22,8 +22,8 @@
 // سيتم إعادة بناء هذا الملف لاحقًا باستخدام mysql_async فقط.
 
 use mysql_async::Pool;
-use uuid::Uuid;
 use mysql_async::Row;
+use uuid::Uuid;
 
 // --- User Operations ---
 
@@ -35,21 +35,24 @@ pub async fn get_user_by_id(
 ) -> Result<Option<crate::db::models::User>, mysql_async::Error> {
     let mut conn = pool.get_conn().await?;
     let query = r#"SELECT id, username, email, password_hash, status, created_at, last_login_at FROM users WHERE id = ?"#;
-    let row: Option<Row> = mysql_async::prelude::Queryable::exec_first(
-        &mut conn,
-        query,
-        (user_id.to_string(),),
-    ).await?;
+    let row: Option<Row> =
+        mysql_async::prelude::Queryable::exec_first(&mut conn, query, (user_id.to_string(),))
+            .await?;
     let user = row.map(|row| {
         let last_login_at_str: Option<String> = row.get("last_login_at");
-        let last_login_at = last_login_at_str.and_then(|s| chrono::NaiveDateTime::parse_from_str(&s, "%Y-%m-%d %H:%M:%S").ok());
+        let last_login_at = last_login_at_str
+            .and_then(|s| chrono::NaiveDateTime::parse_from_str(&s, "%Y-%m-%d %H:%M:%S").ok());
         crate::db::models::User {
             id: Uuid::parse_str(row.get::<String, _>("id").unwrap().as_str()).unwrap(),
             username: row.get("username").unwrap(),
             email: row.get("email").unwrap(),
             password_hash: row.get("password_hash").unwrap(),
             status: row.get("status").unwrap(),
-            created_at: chrono::NaiveDateTime::parse_from_str(&row.get::<String, _>("created_at").unwrap(), "%Y-%m-%d %H:%M:%S").unwrap(),
+            created_at: chrono::NaiveDateTime::parse_from_str(
+                &row.get::<String, _>("created_at").unwrap(),
+                "%Y-%m-%d %H:%M:%S",
+            )
+            .unwrap(),
             last_login_at,
         }
     });
@@ -64,21 +67,23 @@ pub async fn get_user_by_username(
 ) -> Result<Option<crate::db::models::User>, mysql_async::Error> {
     let mut conn = pool.get_conn().await?;
     let query = r#"SELECT id, username, email, password_hash, status, created_at, last_login_at FROM users WHERE username = ?"#;
-    let row: Option<Row> = mysql_async::prelude::Queryable::exec_first(
-        &mut conn,
-        query,
-        (username,),
-    ).await?;
+    let row: Option<Row> =
+        mysql_async::prelude::Queryable::exec_first(&mut conn, query, (username,)).await?;
     let user = row.map(|row| {
         let last_login_at_str: Option<String> = row.get("last_login_at");
-        let last_login_at = last_login_at_str.and_then(|s| chrono::NaiveDateTime::parse_from_str(&s, "%Y-%m-%d %H:%M:%S").ok());
+        let last_login_at = last_login_at_str
+            .and_then(|s| chrono::NaiveDateTime::parse_from_str(&s, "%Y-%m-%d %H:%M:%S").ok());
         crate::db::models::User {
             id: Uuid::parse_str(row.get::<String, _>("id").unwrap().as_str()).unwrap(),
             username: row.get("username").unwrap(),
             email: row.get("email").unwrap(),
             password_hash: row.get("password_hash").unwrap(),
             status: row.get("status").unwrap(),
-            created_at: chrono::NaiveDateTime::parse_from_str(&row.get::<String, _>("created_at").unwrap(), "%Y-%m-%d %H:%M:%S").unwrap(),
+            created_at: chrono::NaiveDateTime::parse_from_str(
+                &row.get::<String, _>("created_at").unwrap(),
+                "%Y-%m-%d %H:%M:%S",
+            )
+            .unwrap(),
             last_login_at,
         }
     });
@@ -93,19 +98,27 @@ pub async fn get_all_users(
     let mut conn = pool.get_conn().await?;
     let query = r#"SELECT id, username, email, password_hash, status, created_at, last_login_at FROM users"#;
     let rows: Vec<Row> = mysql_async::prelude::Queryable::query(&mut conn, query).await?;
-    let users = rows.into_iter().map(|row| {
-        let last_login_at_str: Option<String> = row.get("last_login_at");
-        let last_login_at = last_login_at_str.and_then(|s| chrono::NaiveDateTime::parse_from_str(&s, "%Y-%m-%d %H:%M:%S").ok());
-        crate::db::models::User {
-            id: Uuid::parse_str(row.get::<String, _>("id").unwrap().as_str()).unwrap(),
-            username: row.get("username").unwrap(),
-            email: row.get("email").unwrap(),
-            password_hash: row.get("password_hash").unwrap(),
-            status: row.get("status").unwrap(),
-            created_at: chrono::NaiveDateTime::parse_from_str(&row.get::<String, _>("created_at").unwrap(), "%Y-%m-%d %H:%M:%S").unwrap(),
-            last_login_at,
-        }
-    }).collect();
+    let users = rows
+        .into_iter()
+        .map(|row| {
+            let last_login_at_str: Option<String> = row.get("last_login_at");
+            let last_login_at = last_login_at_str
+                .and_then(|s| chrono::NaiveDateTime::parse_from_str(&s, "%Y-%m-%d %H:%M:%S").ok());
+            crate::db::models::User {
+                id: Uuid::parse_str(row.get::<String, _>("id").unwrap().as_str()).unwrap(),
+                username: row.get("username").unwrap(),
+                email: row.get("email").unwrap(),
+                password_hash: row.get("password_hash").unwrap(),
+                status: row.get("status").unwrap(),
+                created_at: chrono::NaiveDateTime::parse_from_str(
+                    &row.get::<String, _>("created_at").unwrap(),
+                    "%Y-%m-%d %H:%M:%S",
+                )
+                .unwrap(),
+                last_login_at,
+            }
+        })
+        .collect();
     Ok(users)
 }
 
@@ -127,7 +140,8 @@ pub async fn create_user(
         &mut conn,
         query,
         (user_id.to_string(), username, password_hash),
-    ).await?;
+    )
+    .await?;
     Ok(user_id)
 }
 
@@ -143,10 +157,7 @@ Security verification function (direct DB check)
 - Does NOT rely on cache, always queries the live database
 ******************************************************************************************/
 
-pub async fn verify_user_security(
-    pool: &Pool,
-    user_id: &Uuid,
-) -> Result<bool, mysql_async::Error> {
+pub async fn verify_user_security(pool: &Pool, user_id: &Uuid) -> Result<bool, mysql_async::Error> {
     let user = get_user_by_id(pool, user_id).await?;
     if let Some(user) = user {
         // تحقق من حالة الحساب (مثال: يجب أن يكون Active)
@@ -195,7 +206,8 @@ pub async fn verify_user_device_and_role(
                 &mut conn,
                 device_query,
                 (device_id.to_string(), user_id.to_string()),
-            ).await?;
+            )
+            .await?;
             if device_row.is_some() {
                 // تحقق من الصلاحية (مثال: جدول user_roles)
                 let role_query = r#"SELECT role FROM user_roles WHERE user_id = ? AND role = ?"#;
@@ -203,7 +215,8 @@ pub async fn verify_user_device_and_role(
                     &mut conn,
                     role_query,
                     (user_id.to_string(), required_role),
-                ).await?;
+                )
+                .await?;
                 if role_row.is_some() {
                     // تحقق أمني مركب ناجح
                     return Ok(true);

@@ -8,7 +8,7 @@
     المسار:    src/core/geo_resolver.rs
 
     دور الملف:
-    محلل المواقع الجغرافية الذكي الآمن،  
+    محلل المواقع الجغرافية الذكي الآمن،
     يوفر معالجة متقدمة ومتوازية لمصادر الإحداثيات،
     ويستخدم بنية Traits-based قابلة للتوسيع لحقن وحدات الذكاء الاصطناعي والبلوك تشين،
     مما يضمن تصميمًا معياريًا، عالي الأداء، وآمنًا، وقابلًا للاختبار.
@@ -43,27 +43,27 @@
 //     clippy::pedantic,
 // )]
 
-use std::env;
-use pqcrypto_traits::kem::{Ciphertext, SharedSecret};
+use crate::utils::helpers::{aes_encrypt, calculate_distance};
+use anyhow::anyhow;
+use async_trait::async_trait;
+use blake3::Hasher;
 use hmac::{Hmac, Mac};
 use log::error;
-use maxminddb::{Reader};
+use lru::LruCache;
+use maxminddb::Reader;
+use pqcrypto_mlkem::mlkem1024;
+use pqcrypto_traits::kem::{Ciphertext, SharedSecret};
+use rayon::prelude::*;
 use secrecy::{ExposeSecret, SecretVec};
 use serde::{Deserialize, Serialize};
+use sha2::Sha512; // Using SHA512 for HMAC as it's a common strong choice
 use std::collections::VecDeque;
+use std::env;
 use std::net::IpAddr;
+use std::num::NonZeroUsize;
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::Mutex;
-use blake3::Hasher;
-use lru::LruCache;
-use std::num::NonZeroUsize;
-use pqcrypto_mlkem::mlkem1024;
-use sha2::Sha512; // Using SHA512 for HMAC as it's a common strong choice
-use rayon::prelude::*;
-use async_trait::async_trait;
-use anyhow::anyhow;
-use crate::utils::helpers::{aes_encrypt, calculate_distance};
 
 // 1. ===== الثوابت وإعدادات الأمان المتقدمة =====
 const MAX_ACCURACY_THRESHOLD: f64 = 50.0;
@@ -77,34 +77,34 @@ const QUANTUM_SECURITY_LEVEL: u8 = 90;
 pub enum GeoResolverError {
     #[error("فشل تحميل قاعدة بيانات GeoIP: {0} / GeoIP database load failed: {0}")]
     DatabaseLoadFailure(String),
-    
+
     #[error("مسار قاعدة البيانات غير محدد / Database path not set")]
     DatabasePathNotSet,
-    
+
     #[error("إحداثيات غير صالحة: خط العرض {0}, خط الطول {1} / Invalid coordinates: latitude {0}, longitude {1}")]
     InvalidCoordinates(f64, f64),
-    
+
     #[error("فشل في قراءة الموقع: {0} / Location lookup failed: {0}")]
     LookupFailure(String),
-    
+
     #[error("مستوى ثقة غير كاف: {0}% / Insufficient confidence level: {0}%")]
     InsufficientConfidence(u8),
-    
+
     #[error("خطأ أمني: {0} / Security violation: {0}")]
     SecurityViolation(String),
-    
+
     #[error("إشارة ضعيفة: {0}% / Weak signal strength: {0}%")]
     WeakSignalStrength(u8),
-    
+
     #[error("خطأ في التشفير أو التوقيع: {0} / Crypto or signature error: {0}")]
     CryptoError(#[from] anyhow::Error),
-    
+
     #[error("فشل المصادقة المتعددة: {0} / Multi-factor authentication failed: {0}")]
     MultiFactorAuthFailure(String),
-    
+
     #[error("شذوذ في نمط الحركة: {0} / Movement anomaly: {0}")]
     MovementAnomaly(String),
-    
+
     #[error("فشل تحقق البلوكشين: {0} / Blockchain verification failed: {0}")]
     BlockchainVerificationFailure(String),
 }
@@ -180,7 +180,11 @@ pub trait AiModel: Send + Sync {
     async fn analyze_movement(&self, history: &[GeoLocation]) -> Option<(f64, f64)>;
     /// التنبؤ بالموقع التالي
     /// Predicts the next location
-    async fn predict_next_location(&self, current: &GeoLocation, history: &[GeoLocation]) -> Option<(f64, f64)>;
+    async fn predict_next_location(
+        &self,
+        current: &GeoLocation,
+        history: &[GeoLocation],
+    ) -> Option<(f64, f64)>;
 }
 
 #[async_trait]
@@ -205,17 +209,24 @@ pub enum GeoReaderEnum {
 
 impl GeoReaderEnum {
     pub fn lookup<T>(&self, ip: std::net::IpAddr) -> Result<T, maxminddb::MaxMindDBError>
-    where T: for<'de> serde::Deserialize<'de> + 'static {
+    where
+        T: for<'de> serde::Deserialize<'de> + 'static,
+    {
         match self {
             GeoReaderEnum::Real(reader) => reader.lookup(ip),
             GeoReaderEnum::Mock(mock) => mock.lookup(ip),
         }
     }
 
-    pub fn lookup_city<'a>(&'a self, ip: std::net::IpAddr) -> Result<maxminddb::geoip2::City<'a>, maxminddb::MaxMindDBError> {
+    pub fn lookup_city<'a>(
+        &'a self,
+        ip: std::net::IpAddr,
+    ) -> Result<maxminddb::geoip2::City<'a>, maxminddb::MaxMindDBError> {
         match self {
             GeoReaderEnum::Real(reader) => reader.lookup(ip),
-            GeoReaderEnum::Mock(_) => Err(maxminddb::MaxMindDBError::AddressNotFoundError("Mock: No geo DB in dev mode".to_string())),
+            GeoReaderEnum::Mock(_) => Err(maxminddb::MaxMindDBError::AddressNotFoundError(
+                "Mock: No geo DB in dev mode".to_string(),
+            )),
         }
     }
 }
@@ -248,7 +259,6 @@ impl LocationHistory {
         self.positions.lock().await.iter().cloned().collect()
     }
 }
-
 
 // 8. ===== المحلل الجغرافي المتقدم (معاد هيكلته) =====
 // 8. ===== Advanced Geo-Resolver (Refactored) =====
@@ -300,7 +310,7 @@ impl GeoResolver {
         type HmacSha512 = Hmac<Sha512>;
         let mut mac = HmacSha512::new_from_slice(self.secret_key.expose_secret())
             .map_err(|e| anyhow!("Failed to create HMAC: {}", e))?;
-        
+
         mac.update(&self.get_signable_data(location)?);
         let result = mac.finalize();
         Ok(hex::encode(result.into_bytes()))
@@ -313,14 +323,14 @@ impl GeoResolver {
             Some(sig) => sig,
             None => return Ok(false), // لا يمكن التحقق من موقع بدون توقيع / Cannot verify a location without a signature
         };
-        let signature_bytes = hex::decode(signature_hex).map_err(|e|anyhow!(e))?;
+        let signature_bytes = hex::decode(signature_hex).map_err(|e| anyhow!(e))?;
 
         type HmacSha512 = Hmac<Sha512>;
         let mut mac = HmacSha512::new_from_slice(self.secret_key.expose_secret())
             .map_err(|e| anyhow!("Failed to create HMAC: {}", e))?;
-            
+
         mac.update(&self.get_signable_data(location)?);
-        
+
         Ok(mac.verify_slice(&signature_bytes).is_ok())
     }
 
@@ -348,7 +358,7 @@ impl GeoResolver {
             (move || self.process_indoor_source(indoor_data))(),
             (move || self.process_ar_source(ar_data))(),
         ];
-        
+
         // استخدام Rayon للمعالجة المتوازية الحقيقية
         let evaluated_sources: Vec<_> = sources
             .into_par_iter()
@@ -356,7 +366,9 @@ impl GeoResolver {
             .collect();
 
         if evaluated_sources.is_empty() {
-            return Err(GeoResolverError::LookupFailure("لا توجد مصادر متاحة".to_string()));
+            return Err(GeoResolverError::LookupFailure(
+                "لا توجد مصادر متاحة".to_string(),
+            ));
         }
 
         let best_source = self.select_best_source(&evaluated_sources);
@@ -380,7 +392,7 @@ impl GeoResolver {
         }
 
         location.movement_vector = self.ai_model.analyze_movement(&_history).await;
-        
+
         // **توقيع الموقع في نهاية العملية**
         // **Sign the location at the end of the process**
         location.signature = Some(self.sign_location(&location)?);
@@ -392,15 +404,57 @@ impl GeoResolver {
 
     // ... (بقية دوال المعالجة مثل process_indoor_source تبقى كما هي نسبيًا)
     // ... (The rest of the processing functions like process_indoor_source remain relatively unchanged)
-    fn process_gps_source(&self, _gps: Option<(f64, f64, u8, f64)>) -> Result<GeoLocation, GeoResolverError> { Err(GeoResolverError::LookupFailure("Not implemented".to_string())) }
-    fn process_satellite_source(&self, _satellite: Option<(f64, f64, u8, f64)>) -> Result<GeoLocation, GeoResolverError> { Err(GeoResolverError::LookupFailure("Not implemented".to_string())) }
-    fn process_sim_source(&self, _sim: Option<(f64, f64, u8, f64)>) -> Result<GeoLocation, GeoResolverError> { Err(GeoResolverError::LookupFailure("Not implemented".to_string())) }
-    fn process_geoip_source(&self, _ip: Option<IpAddr>) -> Result<GeoLocation, GeoResolverError> { Err(GeoResolverError::LookupFailure("Not implemented".to_string())) }
-    fn select_best_source(&self, _sources: &[GeoLocation]) -> GeoLocation { GeoLocation::default() }
-    fn build_location(&self, _source: &GeoLocation) -> Result<GeoLocation, GeoResolverError> { Ok(GeoLocation::default()) }
-    fn process_indoor_source(&self, _data: Option<IndoorPositioningData>) -> Result<GeoLocation, GeoResolverError> { Err(GeoResolverError::LookupFailure("Not implemented".to_string())) }
-    fn process_ar_source(&self, _data: Option<AugmentedRealityData>) -> Result<GeoLocation, GeoResolverError> { Err(GeoResolverError::LookupFailure("Not implemented".to_string())) }
-
+    fn process_gps_source(
+        &self,
+        _gps: Option<(f64, f64, u8, f64)>,
+    ) -> Result<GeoLocation, GeoResolverError> {
+        Err(GeoResolverError::LookupFailure(
+            "Not implemented".to_string(),
+        ))
+    }
+    fn process_satellite_source(
+        &self,
+        _satellite: Option<(f64, f64, u8, f64)>,
+    ) -> Result<GeoLocation, GeoResolverError> {
+        Err(GeoResolverError::LookupFailure(
+            "Not implemented".to_string(),
+        ))
+    }
+    fn process_sim_source(
+        &self,
+        _sim: Option<(f64, f64, u8, f64)>,
+    ) -> Result<GeoLocation, GeoResolverError> {
+        Err(GeoResolverError::LookupFailure(
+            "Not implemented".to_string(),
+        ))
+    }
+    fn process_geoip_source(&self, _ip: Option<IpAddr>) -> Result<GeoLocation, GeoResolverError> {
+        Err(GeoResolverError::LookupFailure(
+            "Not implemented".to_string(),
+        ))
+    }
+    fn select_best_source(&self, _sources: &[GeoLocation]) -> GeoLocation {
+        GeoLocation::default()
+    }
+    fn build_location(&self, _source: &GeoLocation) -> Result<GeoLocation, GeoResolverError> {
+        Ok(GeoLocation::default())
+    }
+    fn process_indoor_source(
+        &self,
+        _data: Option<IndoorPositioningData>,
+    ) -> Result<GeoLocation, GeoResolverError> {
+        Err(GeoResolverError::LookupFailure(
+            "Not implemented".to_string(),
+        ))
+    }
+    fn process_ar_source(
+        &self,
+        _data: Option<AugmentedRealityData>,
+    ) -> Result<GeoLocation, GeoResolverError> {
+        Err(GeoResolverError::LookupFailure(
+            "Not implemented".to_string(),
+        ))
+    }
 
     async fn analyze_movement_pattern(&self, _location: &GeoLocation) -> Option<(f64, f64)> {
         let history = self.location_history.get_history_vec().await;
@@ -413,9 +467,16 @@ impl GeoResolver {
         self.ai_model.detect_fraud(location, &history).await
     }
 
-    pub async fn predict_next_location(&self, current_location: &GeoLocation) -> Option<GeoLocation> {
+    pub async fn predict_next_location(
+        &self,
+        current_location: &GeoLocation,
+    ) -> Option<GeoLocation> {
         let history = self.location_history.get_history_vec().await;
-        if let Some((dlat, dlng)) = self.ai_model.predict_next_location(current_location, &history).await {
+        if let Some((dlat, dlng)) = self
+            .ai_model
+            .predict_next_location(current_location, &history)
+            .await
+        {
             Some(GeoLocation {
                 lat: current_location.lat + dlat,
                 lng: current_location.lng + dlng,
@@ -426,8 +487,11 @@ impl GeoResolver {
             None
         }
     }
-    
-    fn quantum_encrypt_location(&self, location: &GeoLocation) -> Result<Vec<u8>, GeoResolverError> {
+
+    fn quantum_encrypt_location(
+        &self,
+        location: &GeoLocation,
+    ) -> Result<Vec<u8>, GeoResolverError> {
         let data = serde_json::to_vec(location).map_err(|e| anyhow!(e))?;
         let (_pk, _) = mlkem1024::keypair();
         let (ct, ss) = mlkem1024::encapsulate(&_pk);
@@ -439,10 +503,17 @@ impl GeoResolver {
 
     fn verify_mfa(&self, token: Option<String>) -> Result<(), GeoResolverError> {
         if let Some(token) = token {
-            if token == "VALID_MFA_TOKEN" { Ok(()) } 
-            else { Err(GeoResolverError::MultiFactorAuthFailure("توكن المصادقة غير صالح".to_string())) }
+            if token == "VALID_MFA_TOKEN" {
+                Ok(())
+            } else {
+                Err(GeoResolverError::MultiFactorAuthFailure(
+                    "توكن المصادقة غير صالح".to_string(),
+                ))
+            }
         } else {
-            Err(GeoResolverError::MultiFactorAuthFailure("مطلوب توكن المصادقة".to_string()))
+            Err(GeoResolverError::MultiFactorAuthFailure(
+                "مطلوب توكن المصادقة".to_string(),
+            ))
         }
     }
 }
@@ -457,21 +528,33 @@ impl AiModel for DefaultAiModel {
         if let Some(last) = history.last() {
             let distance = calculate_distance(location.lat, location.lng, last.lat, last.lng);
             let time_diff = location.timestamp.saturating_sub(last.timestamp);
-            if distance > 1000.0 && time_diff < 600 { // 1000 km in 10 mins
+            if distance > 1000.0 && time_diff < 600 {
+                // 1000 km in 10 mins
                 return true;
             }
         }
         false
     }
-    async fn analyze_movement(&self, _history: &[GeoLocation]) -> Option<(f64, f64)> { None }
-    async fn predict_next_location(&self, _current: &GeoLocation, _history: &[GeoLocation]) -> Option<(f64, f64)> { None }
+    async fn analyze_movement(&self, _history: &[GeoLocation]) -> Option<(f64, f64)> {
+        None
+    }
+    async fn predict_next_location(
+        &self,
+        _current: &GeoLocation,
+        _history: &[GeoLocation],
+    ) -> Option<(f64, f64)> {
+        None
+    }
 }
 
 pub struct DefaultBlockchain;
 #[async_trait]
 impl Blockchain for DefaultBlockchain {
     async fn store_location(&self, location: &GeoLocation) -> Result<String, GeoResolverError> {
-        Ok(format!("tx_{}_{}_{}", location.lat, location.lng, location.timestamp))
+        Ok(format!(
+            "tx_{}_{}_{}",
+            location.lat, location.lng, location.timestamp
+        ))
     }
     async fn verify_location(&self, location: &GeoLocation) -> bool {
         location.blockchain_tx.is_some()
@@ -484,7 +567,6 @@ impl Blockchain for DefaultBlockchain {
         format!("token_{}", hex::encode(hasher.finalize().as_bytes()))
     }
 }
-
 
 // 11. ===== نظام التخزين المؤقت الموزع (لا تغيير هنا) =====
 // 11. ===== Distributed Cache System (no change here) =====
@@ -499,8 +581,12 @@ impl DistributedCache {
             cache: Arc::new(Mutex::new(LruCache::new(NonZeroUsize::new(1000).unwrap()))),
         }
     }
-    async fn get(&self, key: &str) -> Option<GeoLocation> { self.cache.lock().await.get(key).cloned() }
-    async fn set(&self, key: String, value: GeoLocation) { self.cache.lock().await.put(key, value); }
+    async fn get(&self, key: &str) -> Option<GeoLocation> {
+        self.cache.lock().await.get(key).cloned()
+    }
+    async fn set(&self, key: String, value: GeoLocation) {
+        self.cache.lock().await.put(key, value);
+    }
 
     // This is a placeholder for the actual implementation
     fn process_beacon_data(&self) -> (f64, f64, f64) {
@@ -512,7 +598,6 @@ impl DistributedCache {
         (0.0, 0.0, 0.0)
     }
 }
-
 
 // 12. ===== دعم الملاحة الداخلية (لا تغيير هنا) =====
 // 12. ===== Indoor Navigation Support (no change here) =====
@@ -545,14 +630,14 @@ impl GeoResolver {
         // Three-stage algorithm
         let mut estimated_position = (0.0, 0.0);
         let mut total_weight = 0.0;
-        
+
         // 1. معالجة بيانات UWB (أعلى دقة)
         // 1. Process UWB data (highest accuracy)
         if let Some((x, y, _)) = data.uwb_data {
             estimated_position = (x, y);
             total_weight += 0.7;
         }
-        
+
         // 2. معالجة بيانات البلوتوث
         // 2. Process Bluetooth data
         if !data.beacon_data.is_empty() {
@@ -561,7 +646,7 @@ impl GeoResolver {
             estimated_position.1 += by * bweight;
             total_weight += bweight;
         }
-        
+
         // 3. معالجة بيانات Wi-Fi
         // 3. Process Wi-Fi data
         if !data.wifi_signals.is_empty() {
@@ -570,17 +655,19 @@ impl GeoResolver {
             estimated_position.1 += wy * wweight;
             total_weight += wweight;
         }
-        
+
         if total_weight > 0.0 {
             estimated_position.0 /= total_weight;
             estimated_position.1 /= total_weight;
             Ok(estimated_position)
         } else {
-            Err(GeoResolverError::LookupFailure("بيانات غير كافية لتحديد الموقع الداخلي".to_string()))
+            Err(GeoResolverError::LookupFailure(
+                "بيانات غير كافية لتحديد الموقع الداخلي".to_string(),
+            ))
             // Insufficient data to determine indoor location
         }
     }
-    
+
     fn resolve_ar_position(
         &self,
         data: &AugmentedRealityData,
@@ -592,17 +679,19 @@ impl GeoResolver {
         let mut avg_x = 0.0;
         let mut avg_y = 0.0;
         let mut count = 0;
-        
+
         for (x, y, _) in &data.feature_points {
             avg_x += x;
             avg_y += y;
             count += 1;
         }
-        
+
         if count > 0 {
             Ok((avg_x / count as f64, avg_y / count as f64))
         } else {
-            Err(GeoResolverError::LookupFailure("بيانات غير كافية لتحديد الموقع بواسطة الواقع المعزز".to_string()))
+            Err(GeoResolverError::LookupFailure(
+                "بيانات غير كافية لتحديد الموقع بواسطة الواقع المعزز".to_string(),
+            ))
             // Insufficient data to determine location via AR
         }
     }
@@ -621,36 +710,44 @@ impl GeoResolver {
         // 2. Advanced encryption for lower levels
         // الجمع بين البيانات والتوقيع
         // Combine data and signature
-        let data = serde_json::to_vec(location)
-            .map_err(|e| GeoResolverError::CryptoError(e.into()))?;
-        
+        let data =
+            serde_json::to_vec(location).map_err(|e| GeoResolverError::CryptoError(e.into()))?;
+
         let _secret = env::var("LOCATION_SECRET_KEY")
             .map_err(|_| GeoResolverError::SecurityViolation("مفتاح الأمان غير محدد".to_string()))?;
-        
+
         let mut mac = Hmac::<Sha512>::new_from_slice(_secret.as_bytes())
             .map_err(|e| GeoResolverError::CryptoError(e.into()))?;
-        
+
         mac.update(&data);
         let signature = mac.finalize().into_bytes();
-        
+
         // الجمع بين البيانات والتوقيع
         // Combine data and signature
         let mut result = data;
         result.extend_from_slice(&signature);
-        
+
         Ok(result)
     }
-    
-    async fn decrypt_location_data(&self, _encrypted_data: &[u8]) -> Result<GeoLocation, GeoResolverError> {
-        let _secret = env::var("LOCATION_SECRET_KEY")
-            .map_err(|_| GeoResolverError::CryptoError(anyhow::anyhow!("LOCATION_SECRET_KEY not set")))?;
+
+    async fn decrypt_location_data(
+        &self,
+        _encrypted_data: &[u8],
+    ) -> Result<GeoLocation, GeoResolverError> {
+        let _secret = env::var("LOCATION_SECRET_KEY").map_err(|_| {
+            GeoResolverError::CryptoError(anyhow::anyhow!("LOCATION_SECRET_KEY not set"))
+        })?;
         // Placeholder for decryption logic
         Ok(GeoLocation::default())
     }
 
-    async fn encrypt_location_data(&self, location: &GeoLocation) -> Result<Vec<u8>, GeoResolverError> {
-        let _secret = env::var("LOCATION_SECRET_KEY")
-            .map_err(|_| GeoResolverError::CryptoError(anyhow::anyhow!("LOCATION_SECRET_KEY not set")))?;
+    async fn encrypt_location_data(
+        &self,
+        location: &GeoLocation,
+    ) -> Result<Vec<u8>, GeoResolverError> {
+        let _secret = env::var("LOCATION_SECRET_KEY").map_err(|_| {
+            GeoResolverError::CryptoError(anyhow::anyhow!("LOCATION_SECRET_KEY not set"))
+        })?;
         // Placeholder for encryption logic
         Ok(Vec::new())
     }
@@ -661,27 +758,26 @@ impl GeoResolver {
                 "بيانات مشفرة غير صالحة"
             )));
         }
-        
+
         // فصل البيانات والتوقيع
         // Separate data and signature
         let (encrypted, signature) = data.split_at(data.len() - 64);
-        
+
         // التحقق من التوقيع
         // Signature verification
         let _secret = env::var("LOCATION_SECRET_KEY")
             .map_err(|_| GeoResolverError::SecurityViolation("مفتاح الأمان غير محدد".to_string()))?;
-        
+
         let mut mac = Hmac::<Sha512>::new_from_slice(_secret.as_bytes())
             .map_err(|e| GeoResolverError::CryptoError(e.into()))?;
-        
+
         mac.update(encrypted);
         mac.verify_slice(signature)
             .map_err(|_| GeoResolverError::SecurityViolation("توقيع غير صالح".to_string()))?;
-        
+
         // فك التشفير
         // Decryption
-        serde_json::from_slice(encrypted)
-            .map_err(|e| GeoResolverError::CryptoError(e.into()))
+        serde_json::from_slice(encrypted).map_err(|e| GeoResolverError::CryptoError(e.into()))
     }
 }
 
@@ -690,7 +786,9 @@ impl GeoResolver {
 pub struct MockGeoReader;
 
 impl MockGeoReader {
-    pub fn new() -> Self { MockGeoReader }
+    pub fn new() -> Self {
+        MockGeoReader
+    }
 }
 
 impl std::ops::Deref for MockGeoReader {
@@ -702,8 +800,12 @@ impl std::ops::Deref for MockGeoReader {
 
 impl MockGeoReader {
     pub fn lookup<T>(&self, _ip: std::net::IpAddr) -> Result<T, maxminddb::MaxMindDBError>
-    where T: for<'de> serde::Deserialize<'de> + 'static {
-        Err(maxminddb::MaxMindDBError::AddressNotFoundError("Mock: No geo DB in dev mode".to_string()))
+    where
+        T: for<'de> serde::Deserialize<'de> + 'static,
+    {
+        Err(maxminddb::MaxMindDBError::AddressNotFoundError(
+            "Mock: No geo DB in dev mode".to_string(),
+        ))
     }
 }
 
@@ -730,7 +832,9 @@ mod tests {
             Ok(reader) => Arc::new(GeoReaderEnum::Real(reader)),
             Err(_) => return None,
         };
-        Some(GeoResolver::new(secret, ai_model, blockchain, true, false, geo_reader))
+        Some(GeoResolver::new(
+            secret, ai_model, blockchain, true, false, geo_reader,
+        ))
     }
 
     #[tokio::test]
@@ -775,8 +879,16 @@ mod tests {
         async fn detect_fraud(&self, _location: &GeoLocation, _history: &[GeoLocation]) -> bool {
             true // هذا النموذج دائمًا يكتشف تلاعبًا / This model always detects fraud
         }
-        async fn analyze_movement(&self, _history: &[GeoLocation]) -> Option<(f64, f64)> { None }
-        async fn predict_next_location(&self, _current: &GeoLocation, _history: &[GeoLocation]) -> Option<(f64, f64)> { None }
+        async fn analyze_movement(&self, _history: &[GeoLocation]) -> Option<(f64, f64)> {
+            None
+        }
+        async fn predict_next_location(
+            &self,
+            _current: &GeoLocation,
+            _history: &[GeoLocation],
+        ) -> Option<(f64, f64)> {
+            None
+        }
     }
 
     #[tokio::test]
@@ -795,12 +907,21 @@ mod tests {
             Err(_) => return,
         };
         let resolver = GeoResolver::new(secret, ai_model, blockchain, false, false, geo_reader);
-        let result = resolver.resolve(None, Some((1.0, 1.0, 99, 1.0)), None, None, None, None, None).await;
+        let result = resolver
+            .resolve(
+                None,
+                Some((1.0, 1.0, 99, 1.0)),
+                None,
+                None,
+                None,
+                None,
+                None,
+            )
+            .await;
         match result {
-            Err(GeoResolverError::SecurityViolation(_)) => {},
+            Err(GeoResolverError::SecurityViolation(_)) => {}
             Err(_) => return,
             Ok(_) => panic!("Expected SecurityViolation error"),
         }
     }
 }
-

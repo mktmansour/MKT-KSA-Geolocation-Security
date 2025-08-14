@@ -7,7 +7,7 @@
 
      File Name: mod.rs
     Path:      src/api/mod.rs
-    
+
 
     File Role:
     هذا الملف هو "موجه المرور" لطبقة الـ API. يقوم بتجميع وتسجيل جميع
@@ -20,7 +20,7 @@
     --------------------------------------------------------------
     File Name: mod.rs
     Path:      src/api/mod.rs
-    
+
     File Role:
     This file is the "traffic director" for the API layer. It aggregates and
     registers all endpoints from the different modules (like auth, geo, device)
@@ -58,7 +58,6 @@ pub fn config(cfg: &mut web::ServiceConfig) {
             .service(network::analyze_network)
             .service(alerts::trigger_alert)
             .service(dashboard::dashboard_summary)
-            .service(weather::weather_summary)
-        // TODO: Register other services from geo, device, etc. here
+            .service(weather::weather_summary), // TODO: Register other services from geo, device, etc. here
     );
 }

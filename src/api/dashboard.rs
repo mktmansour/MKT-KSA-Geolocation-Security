@@ -24,30 +24,30 @@
     The file is designed as a central point for any external system or dashboard wishing to display system statistics securely and reliably.
     It can be integrated with the database in the future to fetch real statistics instead of static values.
 ******************************************************************************************/
-use actix_web::{get, HttpRequest, HttpResponse, Responder};
 use crate::security::jwt::JwtManager;
+use actix_web::{get, HttpRequest, HttpResponse, Responder};
 use serde::Serialize;
 
 /// نموذج الاستجابة لملخص لوحة التحكم.
 /// Response model for dashboard summary.
 #[derive(Serialize)]
 pub struct DashboardSummary {
-    pub user_count: usize,           // عدد المستخدمين في النظام
-                                    // Number of users in the system
-    pub device_count: usize,         // عدد الأجهزة المسجلة
-                                    // Number of registered devices
-    pub alert_count: usize,          // عدد التنبيهات المسجلة
-                                    // Number of registered alerts
+    pub user_count: usize, // عدد المستخدمين في النظام
+    // Number of users in the system
+    pub device_count: usize, // عدد الأجهزة المسجلة
+    // Number of registered devices
+    pub alert_count: usize, // عدد التنبيهات المسجلة
+    // Number of registered alerts
     pub last_alert_type: Option<String>, // نوع آخر تنبيه تم تسجيله
-                                        // Type of the last registered alert
+                                         // Type of the last registered alert
 }
 
 /// نقطة نهاية لعرض ملخص لوحة التحكم عبر GET /dashboard/summary
 /// Endpoint to show dashboard summary via GET /dashboard/summary
 #[get("/dashboard/summary")]
 pub async fn dashboard_summary(
-    req: HttpRequest,                  // الطلب الأصلي (للحصول على الهيدر)
-    // The original request (to extract headers)
+    req: HttpRequest, // الطلب الأصلي (للحصول على الهيدر)
+                      // The original request (to extract headers)
 ) -> impl Responder {
     // --- استخراج التوكن من الهيدر ---
     // Extract the token from the header
@@ -62,29 +62,31 @@ pub async fn dashboard_summary(
     // --- تحقق JWT عبر security فقط ---
     // JWT validation using the security module only
     let jwt_manager = JwtManager::new(
-        secrecy::Secret::new("a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string()),
+        secrecy::Secret::new(
+            "a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string(),
+        ),
         60,
         "my_app".to_string(),
         "user_service".to_string(),
     );
     match jwt_manager.decode_token(&token) {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(_) => return HttpResponse::Unauthorized().body("Invalid or expired token"),
     };
 
     // --- منطق وهمي للإحصائيات (يمكن ربطه بقاعدة البيانات لاحقًا) ---
     // Dummy logic for statistics (can be connected to the database later)
     let summary = DashboardSummary {
-        user_count: 42,                         // عدد المستخدمين (قيمة ثابتة حالياً)
-                                               // User count (currently static)
-        device_count: 17,                       // عدد الأجهزة (قيمة ثابتة حالياً)
-                                               // Device count (currently static)
-        alert_count: 5,                         // عدد التنبيهات (قيمة ثابتة حالياً)
-                                               // Alert count (currently static)
+        user_count: 42, // عدد المستخدمين (قيمة ثابتة حالياً)
+        // User count (currently static)
+        device_count: 17, // عدد الأجهزة (قيمة ثابتة حالياً)
+        // Device count (currently static)
+        alert_count: 5, // عدد التنبيهات (قيمة ثابتة حالياً)
+        // Alert count (currently static)
         last_alert_type: Some("ProxyDetected".to_string()), // نوع آخر تنبيه (قيمة ثابتة)
-                                                           // Last alert type (currently static)
+                                                            // Last alert type (currently static)
     };
 
     HttpResponse::Ok().json(summary) // إعادة ملخص لوحة التحكم بنجاح
-                                    // Return dashboard summary on success
+                                     // Return dashboard summary on success
 }

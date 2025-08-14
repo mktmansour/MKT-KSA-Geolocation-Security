@@ -43,7 +43,7 @@
     clippy::cast_sign_loss
 )]
 
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 use std::sync::Arc;
 use std::time::Instant;
@@ -165,7 +165,12 @@ impl AdaptiveFingerprintEngine {
         ai: Arc<dyn AiProcessor>,
         env_profiles: Arc<RwLock<HashMap<String, EnvironmentProfile>>>,
     ) -> Self {
-        Self { security, quantum, ai, env_profiles }
+        Self {
+            security,
+            quantum,
+            ai,
+            env_profiles,
+        }
     }
 
     /// توليد بصمة متطورة
@@ -177,7 +182,7 @@ impl AdaptiveFingerprintEngine {
         environment_data: &str,
     ) -> Result<AdaptiveFingerprint, FingerprintError> {
         let start_time = Instant::now();
-        
+
         // 1. الفحص الأمني الأولي
         // 1. Initial security scan
         self.security.scan_environment(os, device_info).await?;
@@ -190,18 +195,25 @@ impl AdaptiveFingerprintEngine {
             .get(&env_type)
             .cloned()
             .ok_or_else(|| FingerprintError::UnsupportedEnvironment(env_type.clone()))?;
-        
+
         // 3. إنشاء البصمة الأساسية
         // 3. Create the base fingerprint
-        let base_fp = self.create_base_fingerprint(os, device_info, &env_profile).await?;
+        let base_fp = self
+            .create_base_fingerprint(os, device_info, &env_profile)
+            .await?;
 
         // 4. إنشاء البصمة التكيفية
         // 4. Create the adaptive fingerprint
-        let adaptive_fp = self.create_adaptive_fingerprint(&base_fp, &env_profile).await?;
+        let adaptive_fp = self
+            .create_adaptive_fingerprint(&base_fp, &env_profile)
+            .await?;
 
         // 5. إنشاء توقيع الذكاء الاصطناعي
         // 5. Create the AI signature
-        let ai_signature = self.ai.generate_ai_signature(&base_fp, &adaptive_fp, &env_profile).await?;
+        let ai_signature = self
+            .ai
+            .generate_ai_signature(&base_fp, &adaptive_fp, &env_profile)
+            .await?;
 
         Ok(AdaptiveFingerprint {
             base_fp,
@@ -214,7 +226,7 @@ impl AdaptiveFingerprintEngine {
             generation_time_us: start_time.elapsed().as_micros() as u64,
         })
     }
-    
+
     // --- وظائف مساعدة داخلية ---
     // --- Internal helper functions ---
 
@@ -232,7 +244,7 @@ impl AdaptiveFingerprintEngine {
         // Use a secret key to make the fingerprint unique per system
         let key = self.quantum.get_secure_key();
         hasher.update(key.expose_secret());
-        
+
         Ok(hasher.finalize().to_hex().to_string())
     }
 
@@ -264,7 +276,6 @@ impl AdaptiveFingerprintEngine {
     }
 }
 
-
 // ================================================================
 // التطبيقات الافتراضية للمكونات
 // Default Component Implementations
@@ -294,7 +305,10 @@ impl SecurityMonitor for DefaultSecurityMonitor {
         let db = self.threat_database.read().await;
         for (threat, _) in db.iter() {
             if os.contains(threat) || device_info.contains(threat) {
-                return Err(FingerprintError::SecurityThreat(format!("{} detected", threat)));
+                return Err(FingerprintError::SecurityThreat(format!(
+                    "{} detected",
+                    threat
+                )));
             }
         }
         Ok(())
@@ -309,7 +323,6 @@ impl SecurityMonitor for DefaultSecurityMonitor {
         *self.security_level.read().await
     }
 }
-
 
 // --- QuantumEngine ---
 pub struct DefaultQuantumEngine {
@@ -337,7 +350,6 @@ impl QuantumEngine for DefaultQuantumEngine {
     }
 }
 
-
 // --- AiProcessor ---
 pub struct DefaultAiProcessor;
 
@@ -361,7 +373,6 @@ impl AiProcessor for DefaultAiProcessor {
     }
 }
 
-
 // ================================================================
 // واجهة النظام الخارجية (FFI) - باستخدام Singleton
 // External System Interface (FFI) - Using Singleton
@@ -378,15 +389,31 @@ impl FullEngine {
         // --- تهيئة البيئات ---
         // --- Initialize Environments ---
         let mut profiles = HashMap::new();
-        profiles.insert("mobile".to_string(), EnvironmentProfile {
-            os_type: "Mobile".to_string(), device_category: "Phone/Tablet".to_string(), threat_level: 6,
-            resource_constraints: ResourceConstraints { max_memory_kb: 512, max_processing_us: 5000 }
-        });
-        profiles.insert("desktop".to_string(), EnvironmentProfile {
-            os_type: "Desktop".to_string(), device_category: "PC/Workstation".to_string(), threat_level: 4,
-            resource_constraints: ResourceConstraints { max_memory_kb: 2048, max_processing_us: 10000 }
-        });
-        
+        profiles.insert(
+            "mobile".to_string(),
+            EnvironmentProfile {
+                os_type: "Mobile".to_string(),
+                device_category: "Phone/Tablet".to_string(),
+                threat_level: 6,
+                resource_constraints: ResourceConstraints {
+                    max_memory_kb: 512,
+                    max_processing_us: 5000,
+                },
+            },
+        );
+        profiles.insert(
+            "desktop".to_string(),
+            EnvironmentProfile {
+                os_type: "Desktop".to_string(),
+                device_category: "PC/Workstation".to_string(),
+                threat_level: 4,
+                resource_constraints: ResourceConstraints {
+                    max_memory_kb: 2048,
+                    max_processing_us: 10000,
+                },
+            },
+        );
+
         let engine = AdaptiveFingerprintEngine::new(
             Arc::new(DefaultSecurityMonitor::new()),
             Arc::new(DefaultQuantumEngine::new()?),
@@ -397,13 +424,13 @@ impl FullEngine {
     }
 }
 
-
 // استخدام once_cell لضمان التهيئة لمرة واحدة فقط
 // Use once_cell to ensure one-time initialization
 static ENGINE: Lazy<Result<FullEngine, FingerprintError>> = Lazy::new(FullEngine::new);
 
 /// توليد بصمة (واجهة C) - الآن تستخدم النسخة الوحيدة
 /// Generate fingerprint (C interface) - now uses the singleton instance
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
 #[no_mangle]
 pub extern "C" fn generate_adaptive_fingerprint(
     os: *const std::ffi::c_char,
@@ -414,7 +441,7 @@ pub extern "C" fn generate_adaptive_fingerprint(
         let os_str = unsafe { CStr::from_ptr(os).to_str()? };
         let device_str = unsafe { CStr::from_ptr(device_info).to_str()? };
         let env_str = unsafe { CStr::from_ptr(env_data).to_str()? };
-        
+
         // الوصول إلى المحرك المهيأ
         // Access the initialized engine
         let full_engine = match &*ENGINE {
@@ -427,12 +454,16 @@ pub extern "C" fn generate_adaptive_fingerprint(
         let fp = tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()?
-            .block_on(full_engine.engine.generate_fingerprint(os_str, device_str, env_str))?;
-        
+            .block_on(
+                full_engine
+                    .engine
+                    .generate_fingerprint(os_str, device_str, env_str),
+            )?;
+
         let json = serde_json::to_string(&fp)?;
         Ok(CString::new(json)?)
     };
-    
+
     match result() {
         Ok(cstring) => cstring.into_raw(),
         Err(_) => std::ptr::null_mut(),
@@ -441,13 +472,15 @@ pub extern "C" fn generate_adaptive_fingerprint(
 
 /// تحرير الذاكرة
 /// Free memory
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
 #[no_mangle]
 pub extern "C" fn free_fingerprint_string(ptr: *mut std::ffi::c_char) {
     if !ptr.is_null() {
-        unsafe { let _ = CString::from_raw(ptr); }
+        unsafe {
+            let _ = CString::from_raw(ptr);
+        }
     }
 }
-
 
 // ================================================================
 // اختبارات شاملة (محدثة بالكامل)
@@ -466,15 +499,23 @@ mod tests {
     }
     #[async_trait]
     impl SecurityMonitor for MockSecurityMonitor {
-        async fn scan_environment(&self, _os: &str, _device_info: &str) -> Result<(), FingerprintError> {
+        async fn scan_environment(
+            &self,
+            _os: &str,
+            _device_info: &str,
+        ) -> Result<(), FingerprintError> {
             if self.should_fail {
                 Err(FingerprintError::SecurityThreat("mock threat".to_string()))
             } else {
                 Ok(())
             }
         }
-        async fn update_threat_database(&self, _threat_data: &str) -> Result<(), FingerprintError> { Ok(()) }
-        async fn current_security_level(&self) -> u8 { self.level.load(Ordering::Relaxed) }
+        async fn update_threat_database(&self, _threat_data: &str) -> Result<(), FingerprintError> {
+            Ok(())
+        }
+        async fn current_security_level(&self) -> u8 {
+            self.level.load(Ordering::Relaxed)
+        }
     }
 
     struct MockQuantumEngine;
@@ -486,13 +527,20 @@ mod tests {
             static MOCK_KEY: Lazy<SecretVec<u8>> = Lazy::new(|| SecretVec::new(vec![1; 32]));
             &MOCK_KEY
         }
-        fn is_quantum_resistant(&self) -> bool { true }
+        fn is_quantum_resistant(&self) -> bool {
+            true
+        }
     }
-    
+
     struct MockAiProcessor;
     #[async_trait]
     impl AiProcessor for MockAiProcessor {
-        async fn generate_ai_signature(&self, _b: &str, _a: &str, _e: &EnvironmentProfile) -> Result<String, FingerprintError> {
+        async fn generate_ai_signature(
+            &self,
+            _b: &str,
+            _a: &str,
+            _e: &EnvironmentProfile,
+        ) -> Result<String, FingerprintError> {
             Ok("mock_ai_signature".to_string())
         }
     }
@@ -500,11 +548,19 @@ mod tests {
     // --- Helper to build engine for tests ---
     fn setup_test_engine(sec_monitor: Arc<dyn SecurityMonitor>) -> AdaptiveFingerprintEngine {
         let mut profiles = HashMap::new();
-        profiles.insert("desktop".to_string(), EnvironmentProfile {
-            os_type: "Desktop".to_string(), device_category: "PC".to_string(), threat_level: 4,
-            resource_constraints: ResourceConstraints { max_memory_kb: 2048, max_processing_us: 10000 }
-        });
-        
+        profiles.insert(
+            "desktop".to_string(),
+            EnvironmentProfile {
+                os_type: "Desktop".to_string(),
+                device_category: "PC".to_string(),
+                threat_level: 4,
+                resource_constraints: ResourceConstraints {
+                    max_memory_kb: 2048,
+                    max_processing_us: 10000,
+                },
+            },
+        );
+
         AdaptiveFingerprintEngine::new(
             sec_monitor,
             Arc::new(MockQuantumEngine),
@@ -515,10 +571,16 @@ mod tests {
 
     #[tokio::test]
     async fn test_successful_fingerprint_generation() {
-        let sec_monitor = Arc::new(MockSecurityMonitor { level: AtomicU8::new(9), should_fail: false });
+        let sec_monitor = Arc::new(MockSecurityMonitor {
+            level: AtomicU8::new(9),
+            should_fail: false,
+        });
         let engine = setup_test_engine(sec_monitor);
 
-        let fp = engine.generate_fingerprint("Windows 11", "Dell XPS", "desktop").await.unwrap();
+        let fp = engine
+            .generate_fingerprint("Windows 11", "Dell XPS", "desktop")
+            .await
+            .unwrap();
 
         assert!(!fp.base_fp.is_empty());
         assert!(!fp.adaptive_fp.is_empty());
@@ -529,11 +591,16 @@ mod tests {
 
     #[tokio::test]
     async fn test_security_threat_scenario() {
-        let sec_monitor = Arc::new(MockSecurityMonitor { level: AtomicU8::new(5), should_fail: true });
+        let sec_monitor = Arc::new(MockSecurityMonitor {
+            level: AtomicU8::new(5),
+            should_fail: true,
+        });
         let engine = setup_test_engine(sec_monitor);
-        
-        let result = engine.generate_fingerprint("Infected OS", "Device", "desktop").await;
-        
+
+        let result = engine
+            .generate_fingerprint("Infected OS", "Device", "desktop")
+            .await;
+
         assert!(matches!(result, Err(FingerprintError::SecurityThreat(_))));
     }
 }

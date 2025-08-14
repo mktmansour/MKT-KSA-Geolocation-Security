@@ -34,14 +34,14 @@
 ******************************************************************************************/
 
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
+use hmac::{Hmac, Mac};
+use secrecy::{ExposeSecret, SecretVec};
 use serde::{Deserialize, Serialize};
+use sha2::Sha384;
+use std::collections::HashMap;
 use std::sync::Arc;
 use thiserror::Error;
-use secrecy::{ExposeSecret, SecretVec};
-use hmac::{Hmac, Mac};
-use sha2::Sha384;
-use chrono::{DateTime, Utc};
-use std::collections::HashMap;
 
 // ================================================================
 // الأخطاء المخصصة للوحدة
@@ -79,7 +79,7 @@ pub struct SensorReading {
 pub struct SensorAnalysisResult {
     pub reading: SensorReading,
     pub anomaly_score: f32, // 0.0 (Normal) to 1.0 (Highly Anomalous)
-    pub is_tampered: bool, // A flag indicating likely tampering
+    pub is_tampered: bool,  // A flag indicating likely tampering
     pub reasoning: String,
     pub signature: String,
 }
@@ -112,7 +112,10 @@ impl SensorsAnalyzerEngine {
     /// إنشاء محرك جديد مع حقن التبعيات.
     /// Creates a new engine with dependency injection.
     pub fn new(signing_key: SecretVec<u8>, detector: Arc<dyn SensorAnomalyDetector>) -> Self {
-        Self { signing_key, detector }
+        Self {
+            signing_key,
+            detector,
+        }
     }
 
     /// تنفيذ تحليل كامل لقراءة حساس واحدة.
@@ -139,12 +142,12 @@ impl SensorsAnalyzerEngine {
             reasoning,
             signature: String::new(), // سيتم ملؤها لاحقًا
         };
-        
+
         // 4. توقيع الشهادة لضمان عدم التلاعب بها
         // 4. Sign the certificate to ensure its integrity
         let signature = self.sign_result(&result)?;
         result.signature = signature;
-        
+
         Ok(result)
     }
 
@@ -152,12 +155,16 @@ impl SensorsAnalyzerEngine {
     /// Validates the logical sanity of the reading data.
     fn validate_reading(&self, reading: &SensorReading) -> Result<(), SensorError> {
         if reading.sensor_type.trim().is_empty() {
-            return Err(SensorError::InvalidData("Sensor type cannot be empty.".to_string()));
+            return Err(SensorError::InvalidData(
+                "Sensor type cannot be empty.".to_string(),
+            ));
         }
         if !reading.value.is_finite() {
-            return Err(SensorError::InvalidData("Sensor value must be a finite number.".to_string()));
+            return Err(SensorError::InvalidData(
+                "Sensor value must be a finite number.".to_string(),
+            ));
         }
-            Ok(())
+        Ok(())
     }
 
     /// يوقع على نتيجة التحليل باستخدام مفتاح HMAC-SHA384.
@@ -171,7 +178,7 @@ impl SensorsAnalyzerEngine {
         result_to_sign.signature = String::new();
         let serialized = serde_json::to_vec(&result_to_sign)
             .map_err(|e| SensorError::SignatureError(e.to_string()))?;
-            
+
         mac.update(&serialized);
         let signature_bytes = mac.finalize().into_bytes();
         Ok(hex::encode(signature_bytes))
@@ -218,24 +225,29 @@ impl SensorAnomalyDetector for DefaultSensorAnomalyDetector {
     ) -> Result<(f32, String), SensorError> {
         // البحث عن آخر قراءة من نفس نوع الحساس في التاريخ
         // Find the last reading of the same sensor type in history
-        let last_reading = history.iter().rev()
+        let last_reading = history
+            .iter()
+            .rev()
             .find(|r| r.sensor_type == current.sensor_type);
 
         let (mut score, mut reasoning) = (0.05, "Normal fluctuation.".to_string());
 
         if let Some(last) = last_reading {
-            let time_delta = (current.timestamp - last.timestamp).num_milliseconds() as f64 / 1000.0;
-            if time_delta > 0.001 { // تجنب القسمة على صفر
+            let time_delta =
+                (current.timestamp - last.timestamp).num_milliseconds() as f64 / 1000.0;
+            if time_delta > 0.001 {
+                // تجنب القسمة على صفر
                 let value_delta = (current.value - last.value).abs();
                 let rate_of_change = value_delta / time_delta;
-                
+
                 // الحصول على العتبة المخصصة لهذا الحساس، أو استخدام قيمة افتراضية عالية
                 // Get the threshold for this sensor, or use a high default
-                let threshold = self.rate_change_thresholds
+                let threshold = self
+                    .rate_change_thresholds
                     .get(&current.sensor_type)
                     .copied()
                     .unwrap_or(1000.0);
-                
+
                 if rate_of_change > threshold {
                     score = 0.9;
                     reasoning = format!(
@@ -245,11 +257,10 @@ impl SensorAnomalyDetector for DefaultSensorAnomalyDetector {
                 }
             }
         }
-        
+
         Ok((score, reasoning))
     }
 }
-
 
 // ================================================================
 // اختبارات شاملة (محدثة بالكامل)
@@ -259,12 +270,16 @@ impl SensorAnomalyDetector for DefaultSensorAnomalyDetector {
 mod tests {
     use super::*;
     use std::time::Duration;
-    
+
     // --- Mock detector for precise testing ---
     struct MockTamperDetector;
     #[async_trait]
     impl SensorAnomalyDetector for MockTamperDetector {
-        async fn analyze(&self, _: &SensorReading, _: &[SensorReading]) -> Result<(f32, String), SensorError> {
+        async fn analyze(
+            &self,
+            _: &SensorReading,
+            _: &[SensorReading],
+        ) -> Result<(f32, String), SensorError> {
             Ok((0.95, "Tampering detected by mock!".to_string()))
         }
     }
@@ -284,16 +299,18 @@ mod tests {
 
     #[tokio::test]
     async fn test_normal_reading_with_default_detector() {
-        let engine = setup_test_engine(Arc::new(DefaultSensorAnomalyDetector::create(HashMap::new())));
+        let engine = setup_test_engine(Arc::new(DefaultSensorAnomalyDetector::create(
+            HashMap::new(),
+        )));
         let reading = create_reading("Accelerometer", 1.5);
-        
+
         let result = engine.analyze(reading, &[]).await.unwrap();
 
         assert!(result.anomaly_score < 0.1);
         assert!(!result.is_tampered);
         assert!(result.reasoning.contains("Normal"));
     }
-    
+
     #[tokio::test]
     async fn test_mock_detector_always_finds_tampering() {
         let engine = setup_test_engine(Arc::new(MockTamperDetector));
@@ -308,10 +325,12 @@ mod tests {
 
     #[tokio::test]
     async fn test_default_detector_finds_unrealistic_change() {
-        let engine = setup_test_engine(Arc::new(DefaultSensorAnomalyDetector::create(HashMap::new())));
-        
+        let engine = setup_test_engine(Arc::new(DefaultSensorAnomalyDetector::create(
+            HashMap::new(),
+        )));
+
         let mut history = vec![];
-        
+
         // 1. Initial reading
         let reading1 = create_reading("Accelerometer", 0.0);
         history.push(reading1.clone());
@@ -319,7 +338,7 @@ mod tests {
 
         // 2. Second reading, huge jump in value over a short time
         let reading2 = create_reading("Accelerometer", 50.0);
-        
+
         let result = engine.analyze(reading2, &history).await.unwrap();
 
         assert!(result.anomaly_score > 0.8);
@@ -329,12 +348,14 @@ mod tests {
 
     #[tokio::test]
     async fn test_signature_verification_roundtrip() {
-        let engine = setup_test_engine(Arc::new(DefaultSensorAnomalyDetector::create(HashMap::new())));
+        let engine = setup_test_engine(Arc::new(DefaultSensorAnomalyDetector::create(
+            HashMap::new(),
+        )));
         let reading = create_reading("Test", 1.0);
-        
+
         // 1. Get the signed result
         let result = engine.analyze(reading, &[]).await.unwrap();
-        
+
         // 2. Verify the signature
         let mut mac = Hmac::<Sha384>::new_from_slice(engine.signing_key.expose_secret()).unwrap();
         let mut result_to_verify = result.clone();
@@ -346,4 +367,3 @@ mod tests {
         assert!(mac.verify_slice(&decoded_signature).is_ok());
     }
 }
-

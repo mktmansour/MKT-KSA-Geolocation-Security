@@ -35,10 +35,10 @@
 ******************************************************************************************/
 
 use async_trait::async_trait;
+use futures::future::join_all;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use thiserror::Error;
-use futures::future::join_all;
 
 // ================================================================
 // الأخطاء المخصصة للوحدة
@@ -78,7 +78,8 @@ pub struct WeatherData {
 pub trait WeatherProvider: Send + Sync {
     /// يجلب بيانات الطقس لموقع جغرافي معين.
     /// Fetches weather data for a specific geographic location.
-    async fn get_weather(&self, latitude: f64, longitude: f64) -> Result<WeatherData, WeatherError>;
+    async fn get_weather(&self, latitude: f64, longitude: f64)
+        -> Result<WeatherData, WeatherError>;
     /// اسم المزود للتعريف به.
     /// The name of the provider for identification.
     fn provider_name(&self) -> &'static str;
@@ -101,19 +102,27 @@ impl WeatherEngine {
 
     /// يجلب ويدقق بيانات الطقس من جميع المزودين المتاحين.
     /// Fetches and validates weather data from all available providers.
-    pub async fn fetch_and_validate(&self, latitude: f64, longitude: f64) -> Result<WeatherData, WeatherError> {
+    pub async fn fetch_and_validate(
+        &self,
+        latitude: f64,
+        longitude: f64,
+    ) -> Result<WeatherData, WeatherError> {
         if self.providers.is_empty() {
             return Err(WeatherError::NoReliableData);
         }
 
         // استدعاء جميع المزودين على التوازي
         // Call all providers in parallel
-        let futures = self.providers.iter().map(|p| p.get_weather(latitude, longitude));
+        let futures = self
+            .providers
+            .iter()
+            .map(|p| p.get_weather(latitude, longitude));
         let results = join_all(futures).await;
 
         // تصفية النتائج الناجحة فقط
         // Filter for successful results only
-        let successful_results: Vec<WeatherData> = results.into_iter().filter_map(Result::ok).collect();
+        let successful_results: Vec<WeatherData> =
+            results.into_iter().filter_map(Result::ok).collect();
 
         if successful_results.is_empty() {
             return Err(WeatherError::NoReliableData);
@@ -122,11 +131,27 @@ impl WeatherEngine {
         // منطق التدقيق والمقارنة (هنا نستخدم المتوسط)
         // Validation and comparison logic (here we use an average)
         let count = successful_results.len() as f32;
-        let avg_temp = successful_results.iter().map(|d| d.temperature_celsius).sum::<f32>() / count;
-        let avg_humidity = successful_results.iter().map(|d| d.humidity_percent).sum::<f32>() / count;
-        let avg_wind = successful_results.iter().map(|d| d.wind_speed_kmh).sum::<f32>() / count;
-        let avg_precip = successful_results.iter().map(|d| d.precipitation_mm).sum::<f32>() / count;
-        
+        let avg_temp = successful_results
+            .iter()
+            .map(|d| d.temperature_celsius)
+            .sum::<f32>()
+            / count;
+        let avg_humidity = successful_results
+            .iter()
+            .map(|d| d.humidity_percent)
+            .sum::<f32>()
+            / count;
+        let avg_wind = successful_results
+            .iter()
+            .map(|d| d.wind_speed_kmh)
+            .sum::<f32>()
+            / count;
+        let avg_precip = successful_results
+            .iter()
+            .map(|d| d.precipitation_mm)
+            .sum::<f32>()
+            / count;
+
         // اختيار رمز الطقس الأكثر شيوعًا
         // Choose the most common weather code
         let weather_code = successful_results
@@ -145,7 +170,6 @@ impl WeatherEngine {
     }
 }
 
-
 // ================================================================
 // تطبيق افتراضي جاهز للعمل (OpenMeteo)
 // Default Ready-to-use Implementation (OpenMeteo)
@@ -159,7 +183,9 @@ pub struct OpenMeteoProvider {
 
 impl OpenMeteoProvider {
     pub fn new() -> Self {
-        Self { client: reqwest::Client::new() }
+        Self {
+            client: reqwest::Client::new(),
+        }
     }
 }
 
@@ -180,22 +206,35 @@ struct OpenMeteoCurrent {
 
 #[async_trait]
 impl WeatherProvider for OpenMeteoProvider {
-    async fn get_weather(&self, latitude: f64, longitude: f64) -> Result<WeatherData, WeatherError> {
+    async fn get_weather(
+        &self,
+        latitude: f64,
+        longitude: f64,
+    ) -> Result<WeatherData, WeatherError> {
         let url = format!(
             "https://api.open-meteo.com/v1/forecast?latitude={}&longitude={}&current_weather=true",
             latitude, longitude
         );
-        
-        let response = self.client.get(&url).send().await
+
+        let response = self
+            .client
+            .get(&url)
+            .send()
+            .await
             .map_err(|e| WeatherError::FetchError(e.to_string()))?;
 
         if !response.status().is_success() {
-            return Err(WeatherError::FetchError(format!("API returned status: {}", response.status())));
+            return Err(WeatherError::FetchError(format!(
+                "API returned status: {}",
+                response.status()
+            )));
         }
 
-        let api_response = response.json::<OpenMeteoResponse>().await
+        let api_response = response
+            .json::<OpenMeteoResponse>()
+            .await
             .map_err(|e| WeatherError::ParseError(e.to_string()))?;
-            
+
         Ok(WeatherData {
             temperature_celsius: api_response.current_weather.temperature,
             humidity_percent: 50.0, // قيمة افتراضية / placeholder
@@ -204,10 +243,11 @@ impl WeatherProvider for OpenMeteoProvider {
             weather_code: api_response.current_weather.weathercode,
         })
     }
-    
-    fn provider_name(&self) -> &'static str { "Open-Meteo" }
-}
 
+    fn provider_name(&self) -> &'static str {
+        "Open-Meteo"
+    }
+}
 
 // ================================================================
 // اختبارات شاملة (محدثة بالكامل)
@@ -216,7 +256,7 @@ impl WeatherProvider for OpenMeteoProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     // --- Mock Providers for Precise Testing ---
 
     struct MockSunnyProvider;
@@ -231,7 +271,9 @@ mod tests {
                 weather_code: 1, // Sunny
             })
         }
-        fn provider_name(&self) -> &'static str { "Sunny" }
+        fn provider_name(&self) -> &'static str {
+            "Sunny"
+        }
     }
 
     struct MockRainyProvider;
@@ -246,18 +288,24 @@ mod tests {
                 weather_code: 61, // Rainy
             })
         }
-        fn provider_name(&self) -> &'static str { "Rainy" }
+        fn provider_name(&self) -> &'static str {
+            "Rainy"
+        }
     }
 
     struct MockErrorProvider;
     #[async_trait]
     impl WeatherProvider for MockErrorProvider {
         async fn get_weather(&self, _: f64, _: f64) -> Result<WeatherData, WeatherError> {
-            Err(WeatherError::FetchError("Simulated provider failure".to_string()))
+            Err(WeatherError::FetchError(
+                "Simulated provider failure".to_string(),
+            ))
         }
-        fn provider_name(&self) -> &'static str { "Error" }
+        fn provider_name(&self) -> &'static str {
+            "Error"
+        }
     }
-    
+
     #[tokio::test]
     async fn test_engine_with_single_provider() {
         let providers: Vec<Arc<dyn WeatherProvider>> = vec![Arc::new(MockSunnyProvider)];
@@ -267,15 +315,13 @@ mod tests {
 
         assert_eq!(result.temperature_celsius, 25.0);
     }
-    
+
     #[tokio::test]
     async fn test_engine_averages_multiple_providers() {
-        let providers: Vec<Arc<dyn WeatherProvider>> = vec![
-            Arc::new(MockSunnyProvider),
-            Arc::new(MockRainyProvider),
-        ];
+        let providers: Vec<Arc<dyn WeatherProvider>> =
+            vec![Arc::new(MockSunnyProvider), Arc::new(MockRainyProvider)];
         let engine = WeatherEngine::new(providers);
-        
+
         let result = engine.fetch_and_validate(0.0, 0.0).await.unwrap();
 
         // Temperature should be the average of 25.0 and 15.0
@@ -285,7 +331,7 @@ mod tests {
         // Weather code should be the one from the rainy provider (higher number)
         assert_eq!(result.weather_code, 61);
     }
-    
+
     #[tokio::test]
     async fn test_engine_handles_failing_provider() {
         let providers: Vec<Arc<dyn WeatherProvider>> = vec![
@@ -302,10 +348,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_engine_fails_if_all_providers_fail() {
-        let providers: Vec<Arc<dyn WeatherProvider>> = vec![
-            Arc::new(MockErrorProvider),
-            Arc::new(MockErrorProvider),
-        ];
+        let providers: Vec<Arc<dyn WeatherProvider>> =
+            vec![Arc::new(MockErrorProvider), Arc::new(MockErrorProvider)];
         let engine = WeatherEngine::new(providers);
 
         let result = engine.fetch_and_validate(0.0, 0.0).await;
@@ -313,4 +357,3 @@ mod tests {
         assert!(matches!(result, Err(WeatherError::NoReliableData)));
     }
 }
-

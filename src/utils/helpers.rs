@@ -21,7 +21,6 @@
 ******************************************************************************************/
 use anyhow::Error;
 
-
 /// Arabic: يقوم بتشفير البيانات باستخدام مفتاح مشترك. هذا تنفيذ وهمي.
 /// English: Encrypts data using a shared key. This is a dummy implementation.
 pub fn aes_encrypt(data: &[u8], _key: &[u8]) -> Result<Vec<u8>, Error> {

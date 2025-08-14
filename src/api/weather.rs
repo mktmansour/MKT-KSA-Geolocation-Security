@@ -26,29 +26,29 @@
     The file is designed as a central point for any external system or user interface wishing to display or analyze weather data.
     It can be integrated with a real weather engine or external service in the future.
 ******************************************************************************************/
-use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
-use crate::security::jwt::JwtManager;
 use crate::core::weather_val::WeatherData;
+use crate::security::jwt::JwtManager;
+use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
 use serde::Deserialize;
 
 /// نموذج الطلب لجلب بيانات الطقس.
 /// Request model for weather summary.
 #[derive(Deserialize)]
 pub struct WeatherSummaryRequest {
-    pub latitude: f64,      // خط العرض للموقع المطلوب
-                           // Latitude of the requested location
-    pub longitude: f64,     // خط الطول للموقع المطلوب
-                           // Longitude of the requested location
+    pub latitude: f64, // خط العرض للموقع المطلوب
+    // Latitude of the requested location
+    pub longitude: f64, // خط الطول للموقع المطلوب
+                        // Longitude of the requested location
 }
 
 /// نقطة نهاية لجلب ملخص الطقس عبر POST /weather/summary
 /// Endpoint to get weather summary via POST /weather/summary
 #[post("/weather/summary")]
 pub async fn weather_summary(
-    req: HttpRequest,                  // الطلب الأصلي (للحصول على الهيدر)
+    req: HttpRequest, // الطلب الأصلي (للحصول على الهيدر)
     // The original request (to extract headers)
-    _payload: web::Json<WeatherSummaryRequest> // بيانات الطلب (إحداثيات الموقع)
-    // Request payload (location coordinates)
+    _payload: web::Json<WeatherSummaryRequest>, // بيانات الطلب (إحداثيات الموقع)
+                                                // Request payload (location coordinates)
 ) -> impl Responder {
     // --- استخراج التوكن من الهيدر ---
     // Extract the token from the header
@@ -63,13 +63,15 @@ pub async fn weather_summary(
     // --- تحقق JWT عبر security فقط ---
     // JWT validation using the security module only
     let jwt_manager = JwtManager::new(
-        secrecy::Secret::new("a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string()),
+        secrecy::Secret::new(
+            "a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string(),
+        ),
         60,
         "my_app".to_string(),
         "user_service".to_string(),
     );
     match jwt_manager.decode_token(&token) {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(_) => return HttpResponse::Unauthorized().body("Invalid or expired token"),
     };
 
@@ -78,18 +80,18 @@ pub async fn weather_summary(
     // في تطبيق حقيقي: استخدم state.x_engine.weather_engine.fetch_and_validate(...)
     // In a real application: use state.x_engine.weather_engine.fetch_and_validate(...)
     let weather = WeatherData {
-        temperature_celsius: 23.5,   // درجة الحرارة الحالية (مئوية)
-                                    // Current temperature (Celsius)
-        humidity_percent: 55.0,      // نسبة الرطوبة
-                                    // Humidity percentage
-        wind_speed_kmh: 12.0,        // سرعة الرياح (كم/س)
-                                    // Wind speed (km/h)
-        precipitation_mm: 0.0,       // كمية الهطول (ملم)
-                                    // Precipitation (mm)
-        weather_code: 1,             // كود حالة الطقس
-                                    // Weather condition code
+        temperature_celsius: 23.5, // درجة الحرارة الحالية (مئوية)
+        // Current temperature (Celsius)
+        humidity_percent: 55.0, // نسبة الرطوبة
+        // Humidity percentage
+        wind_speed_kmh: 12.0, // سرعة الرياح (كم/س)
+        // Wind speed (km/h)
+        precipitation_mm: 0.0, // كمية الهطول (ملم)
+        // Precipitation (mm)
+        weather_code: 1, // كود حالة الطقس
+                         // Weather condition code
     };
 
     HttpResponse::Ok().json(weather) // إعادة بيانات الطقس بنجاح
-                                    // Return weather data on success
+                                     // Return weather data on success
 }

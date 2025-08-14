@@ -121,7 +121,6 @@ pub struct PolicyContext<'a> {
     // TODO: Add more context like request_ip: IpAddr, device_tier: String
 }
 
-
 /// Arabic: تعريف الإجراءات المختلفة التي يمكن للمستخدم القيام بها.
 /// هذا يسمح بفحص الصلاحيات بشكل دقيق ومفصل.
 /// English: Defines the different actions a user can perform.
@@ -148,7 +147,6 @@ pub enum Action<'a> {
     PerformSensitiveTransaction,
 }
 
-
 /// Arabic: محرك السياسات الذكي.
 /// يستخدم "سياق السياسة" لاتخاذ قرارات دقيقة ومدروسة.
 /// English: The smart policy engine.
@@ -174,14 +172,17 @@ impl PolicyEngine {
         if context.roles.contains(&Role::Admin) {
             return Ok(());
         }
-        
+
         // --- المرحلة الثالثة: التحقق القائم على السياق (ABAC) ---
         // --- Stage 3: Context-Based Checks (ABAC) ---
         match action {
             Action::PerformSensitiveTransaction => {
                 let required_score = 0.9;
                 if context.trust_score < required_score {
-                    return Err(PolicyError::LowTrustScore(context.trust_score, required_score));
+                    return Err(PolicyError::LowTrustScore(
+                        context.trust_score,
+                        required_score,
+                    ));
                 }
             }
             _ => (), // لا توجد فحوصات أخرى لدرجة الثقة حاليًا
@@ -189,16 +190,14 @@ impl PolicyEngine {
 
         // --- المرحلة الرابعة: التحقق القائم على الأدوار (RBAC) ---
         // --- Stage 4: Role-Based Checks (RBAC) ---
-        let has_permission = context.roles.iter().any(|role| {
-            match action {
-                Action::ReadOwnData | Action::UpdateOwnProfile => true,
-                Action::ReadDeviceData { .. } => *role >= Role::Moderator,
-                Action::ReadUserData { target_user_id } => {
-                    &context.user_id == *target_user_id || *role >= Role::Moderator
-                }
-                Action::PerformSensitiveTransaction => *role >= Role::TrustedUser,
-                Action::GenerateSecurityReport => *role >= Role::Moderator,
+        let has_permission = context.roles.iter().any(|role| match action {
+            Action::ReadOwnData | Action::UpdateOwnProfile => true,
+            Action::ReadDeviceData { .. } => *role >= Role::Moderator,
+            Action::ReadUserData { target_user_id } => {
+                &context.user_id == *target_user_id || *role >= Role::Moderator
             }
+            Action::PerformSensitiveTransaction => *role >= Role::TrustedUser,
+            Action::GenerateSecurityReport => *role >= Role::Moderator,
         });
 
         if has_permission {
@@ -208,7 +207,6 @@ impl PolicyEngine {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -222,35 +220,104 @@ mod tests {
         let user_id = Uuid::new_v4();
         let other_user_id = Uuid::new_v4();
 
-        let user_context = PolicyContext { user_id, roles: &[Role::User], status: &active_status, trust_score: 0.7 };
-        let trusted_user_context = PolicyContext { user_id, roles: &[Role::User, Role::TrustedUser], status: &active_status, trust_score: 0.95 };
-        let moderator_context = PolicyContext { user_id, roles: &[Role::Moderator], status: &active_status, trust_score: 0.8 };
-        let admin_context = PolicyContext { user_id, roles: &[Role::Admin], status: &active_status, trust_score: 1.0 };
-
+        let user_context = PolicyContext {
+            user_id,
+            roles: &[Role::User],
+            status: &active_status,
+            trust_score: 0.7,
+        };
+        let trusted_user_context = PolicyContext {
+            user_id,
+            roles: &[Role::User, Role::TrustedUser],
+            status: &active_status,
+            trust_score: 0.95,
+        };
+        let moderator_context = PolicyContext {
+            user_id,
+            roles: &[Role::Moderator],
+            status: &active_status,
+            trust_score: 0.8,
+        };
+        let admin_context = PolicyContext {
+            user_id,
+            roles: &[Role::Admin],
+            status: &active_status,
+            trust_score: 1.0,
+        };
 
         // --- صلاحيات المستخدم العادي ---
         // --- Basic user permissions ---
-        assert_eq!(PolicyEngine::can_execute(&user_context, &Action::ReadOwnData), Ok(()));
-        assert_eq!(PolicyEngine::can_execute(&user_context, &Action::ReadUserData { target_user_id: &user_id }), Ok(()));
-        assert_eq!(PolicyEngine::can_execute(&user_context, &Action::ReadUserData { target_user_id: &other_user_id }), Err(PolicyError::InsufficientPermissions));
+        assert_eq!(
+            PolicyEngine::can_execute(&user_context, &Action::ReadOwnData),
+            Ok(())
+        );
+        assert_eq!(
+            PolicyEngine::can_execute(
+                &user_context,
+                &Action::ReadUserData {
+                    target_user_id: &user_id
+                }
+            ),
+            Ok(())
+        );
+        assert_eq!(
+            PolicyEngine::can_execute(
+                &user_context,
+                &Action::ReadUserData {
+                    target_user_id: &other_user_id
+                }
+            ),
+            Err(PolicyError::InsufficientPermissions)
+        );
 
         // --- صلاحيات المشرف ---
         // --- Moderator permissions ---
-        assert_eq!(PolicyEngine::can_execute(&moderator_context, &Action::ReadUserData { target_user_id: &other_user_id }), Ok(()));
-        assert_eq!(PolicyEngine::can_execute(&moderator_context, &Action::GenerateSecurityReport), Ok(()));
-        assert_eq!(PolicyEngine::can_execute(&user_context, &Action::GenerateSecurityReport), Err(PolicyError::InsufficientPermissions));
-        
+        assert_eq!(
+            PolicyEngine::can_execute(
+                &moderator_context,
+                &Action::ReadUserData {
+                    target_user_id: &other_user_id
+                }
+            ),
+            Ok(())
+        );
+        assert_eq!(
+            PolicyEngine::can_execute(&moderator_context, &Action::GenerateSecurityReport),
+            Ok(())
+        );
+        assert_eq!(
+            PolicyEngine::can_execute(&user_context, &Action::GenerateSecurityReport),
+            Err(PolicyError::InsufficientPermissions)
+        );
+
         // --- صلاحيات درجة الثقة ---
         // --- Trust score permissions ---
-        assert_eq!(PolicyEngine::can_execute(&trusted_user_context, &Action::PerformSensitiveTransaction), Ok(()));
-        assert_eq!(PolicyEngine::can_execute(&user_context, &Action::PerformSensitiveTransaction), Err(PolicyError::LowTrustScore(0.7, 0.9)));
-    
+        assert_eq!(
+            PolicyEngine::can_execute(&trusted_user_context, &Action::PerformSensitiveTransaction),
+            Ok(())
+        );
+        assert_eq!(
+            PolicyEngine::can_execute(&user_context, &Action::PerformSensitiveTransaction),
+            Err(PolicyError::LowTrustScore(0.7, 0.9))
+        );
+
         // --- صلاحيات المدير ---
         // --- Admin override ---
-        assert_eq!(PolicyEngine::can_execute(&admin_context, &Action::GenerateSecurityReport), Ok(()));
-        assert_eq!(PolicyEngine::can_execute(&admin_context, &Action::ReadUserData { target_user_id: &other_user_id}), Ok(()));
+        assert_eq!(
+            PolicyEngine::can_execute(&admin_context, &Action::GenerateSecurityReport),
+            Ok(())
+        );
+        assert_eq!(
+            PolicyEngine::can_execute(
+                &admin_context,
+                &Action::ReadUserData {
+                    target_user_id: &other_user_id
+                }
+            ),
+            Ok(())
+        );
     }
-    
+
     /// Arabic: اختبار رفض الإجراءات بناءً على حالة الحساب (موقوف/محظور).
     /// English: Tests action denials based on account status (suspended/banned).
     #[test]
@@ -258,15 +325,31 @@ mod tests {
         let user_id = Uuid::new_v4();
         let admin_roles = &[Role::Admin];
 
-        let suspended_context = PolicyContext { user_id, roles: admin_roles, status: &UserStatus::Suspended, trust_score: 1.0 };
-        let banned_context = PolicyContext { user_id, roles: admin_roles, status: &UserStatus::Banned, trust_score: 1.0 };
+        let suspended_context = PolicyContext {
+            user_id,
+            roles: admin_roles,
+            status: &UserStatus::Suspended,
+            trust_score: 1.0,
+        };
+        let banned_context = PolicyContext {
+            user_id,
+            roles: admin_roles,
+            status: &UserStatus::Banned,
+            trust_score: 1.0,
+        };
 
         // --- حتى المدير يتم حظره بناءً على حالته ---
         // --- Even an admin is blocked by status ---
-        assert_eq!(PolicyEngine::can_execute(&suspended_context, &Action::ReadOwnData), Err(PolicyError::UserSuspended));
-        assert_eq!(PolicyEngine::can_execute(&banned_context, &Action::ReadOwnData), Err(PolicyError::UserBanned));
+        assert_eq!(
+            PolicyEngine::can_execute(&suspended_context, &Action::ReadOwnData),
+            Err(PolicyError::UserSuspended)
+        );
+        assert_eq!(
+            PolicyEngine::can_execute(&banned_context, &Action::ReadOwnData),
+            Err(PolicyError::UserBanned)
+        );
     }
-    
+
     /// Arabic: اختبار تحويل السلاسل النصية إلى أدوار.
     /// English: Tests the conversion from strings to roles.
     #[test]

@@ -37,20 +37,18 @@
 ******************************************************************************************/
 
 use async_trait::async_trait;
+use chrono::{DateTime, TimeZone, Timelike, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::RwLock;
-use chrono::{DateTime, Utc, Timelike};
 use uuid::Uuid;
 // use sqlx::PgPool; // تم التعليق بعد التحويل إلى sea-orm
-
 
 // --- Local Imports ---
 use crate::db::models::User;
 use crate::security::policy::PolicyError;
-
 
 // ================================================================
 // الأخطاء المخصصة للوحدة
@@ -63,7 +61,7 @@ pub enum BehaviorError {
 
     #[error("Analysis model failed: {0}")]
     ModelFailed(String),
-    
+
     #[error("Historical data is insufficient for analysis")]
     InsufficientHistory,
 
@@ -71,7 +69,7 @@ pub enum BehaviorError {
     /// English: A database access error.
     #[error("Database error: {0}")]
     DatabaseError(anyhow::Error),
-    
+
     /// Arabic: خطأ في الصلاحيات من محرك السياسات.
     /// English: A permission error from the policy engine.
     #[error("Policy error: {0}")]
@@ -186,7 +184,7 @@ impl BehaviorEngine {
     /// Executes a full analysis for a single behavior.
     pub async fn process(&self, input: BehaviorInput) -> Result<AnalysisResult, BehaviorError> {
         let history_guard = self.history.read().await;
-        
+
         // 1. كشف الشذوذ
         // 1. Anomaly Detection
         let anomaly = self.detector.detect(&input, &history_guard).await?;
@@ -194,16 +192,17 @@ impl BehaviorEngine {
         // 2. تحليل النموذج السلوكي لتحديد درجة الخطورة
         // 2. Behavioral model analysis to determine risk score
         let risk_score = self.model.analyze(&input, &history_guard).await?;
-        
+
         let risk_level = self.score_to_level(risk_score);
-        
+
         // 3. بناء النتيجة النهائية
         // 3. Construct the final result
         let result = AnalysisResult {
             risk_score,
             risk_level,
             anomaly_detected: anomaly.is_some(),
-            reasoning: anomaly.unwrap_or_else(|| "Behavior is within normal parameters.".to_string()),
+            reasoning: anomaly
+                .unwrap_or_else(|| "Behavior is within normal parameters.".to_string()),
         };
 
         // 4. تحديث السجل التاريخي (بعد انتهاء القراءة)
@@ -230,7 +229,6 @@ impl BehaviorEngine {
         }
     }
 }
-
 
 // ================================================================
 // التطبيقات الافتراضية (Default Implementations)
@@ -284,7 +282,6 @@ impl DefaultBehavioralModel {
     }
 }
 
-
 /// تطبيق افتراضي لكاشف الشذوذ.
 /// A default implementation for the anomaly detector.
 pub struct DefaultAnomalyDetector {
@@ -307,13 +304,12 @@ impl AnomalyDetector for DefaultAnomalyDetector {
 
         // فحص "الانتقال الآني" (Teleportation)
         // Check for "Teleportation"
-        let distance_km = haversine_distance(
-            current.location,
-            last_behavior.location,
-        );
-        
+        let distance_km = haversine_distance(current.location, last_behavior.location);
+
         let time_diff_secs = current.timestamp.timestamp() - last_behavior.timestamp.timestamp();
-        if time_diff_secs <= 0 { return Ok(None); }
+        if time_diff_secs <= 0 {
+            return Ok(None);
+        }
 
         let speed_kmh = distance_km / (time_diff_secs as f64 / 3600.0);
 
@@ -344,7 +340,6 @@ fn haversine_distance(p1: (f64, f64), p2: (f64, f64)) -> f64 {
     EARTH_RADIUS_KM * c
 }
 
-
 // ================================================================
 // خدمة المستخدم (User Service)
 // User Service
@@ -359,8 +354,7 @@ pub struct UserService {
 impl UserService {
     /// Arabic: إنشاء نسخة جديدة من خدمة المستخدم.
     /// English: Creates a new instance of the user service.
-    pub fn new(
-        // pool: Arc<PgPool>, // تم التعليق بعد التحويل إلى sea-orm
+    pub fn new(// pool: Arc<PgPool>, // تم التعليق بعد التحويل إلى sea-orm
     ) -> Self {
         Self {
             // pool, // تم التعليق بعد التحويل إلى sea-orm
@@ -383,7 +377,7 @@ impl UserService {
         // let roles: Vec<Role> = requester.roles.iter()
         //     .map(|r| Role::from_str(r).unwrap_or(Role::User))
         //     .collect();
-        
+
         // let status = match requester.status.as_str() {
         //     "Active" => UserStatus::Active,
         //     "Suspended" => UserStatus::Suspended,
@@ -410,7 +404,6 @@ impl UserService {
     }
 }
 
-
 // ================================================================
 // اختبارات شاملة (محدثة بالكامل)
 // Comprehensive Tests (Fully Updated)
@@ -425,7 +418,11 @@ mod tests {
     struct MockCriticalModel;
     #[async_trait]
     impl BehavioralModel for MockCriticalModel {
-        async fn analyze(&self, _: &BehaviorInput, _: &VecDeque<BehaviorInput>) -> Result<f32, BehaviorError> {
+        async fn analyze(
+            &self,
+            _: &BehaviorInput,
+            _: &VecDeque<BehaviorInput>,
+        ) -> Result<f32, BehaviorError> {
             Ok(0.95) // Always return a critical score
         }
     }
@@ -433,11 +430,15 @@ mod tests {
     struct MockTeleportDetector;
     #[async_trait]
     impl AnomalyDetector for MockTeleportDetector {
-        async fn detect(&self, _: &BehaviorInput, _: &VecDeque<BehaviorInput>) -> Result<Option<String>, BehaviorError> {
+        async fn detect(
+            &self,
+            _: &BehaviorInput,
+            _: &VecDeque<BehaviorInput>,
+        ) -> Result<Option<String>, BehaviorError> {
             Ok(Some("Teleportation detected!".to_string()))
         }
     }
-    
+
     fn create_sample_input(entity_id: &str) -> BehaviorInput {
         BehaviorInput {
             entity_id: entity_id.to_string(),
@@ -456,26 +457,34 @@ mod tests {
     async fn test_engine_with_default_components() {
         let engine = BehaviorEngine::new(
             Arc::new(DefaultBehavioralModel),
-            Arc::new(DefaultAnomalyDetector { max_speed_kmh: 1200.0 }),
+            Arc::new(DefaultAnomalyDetector {
+                max_speed_kmh: 1200.0,
+            }),
             10,
         );
-        let input = create_sample_input("user1");
+        // نجعل الطابع الزمني في وقت غير مريب لضمان حتمية الاختبار
+        // Set timestamp to a non-suspicious hour to make the test deterministic
+        let mut input = create_sample_input("user1");
+        let fixed_dt = Utc.with_ymd_and_hms(2025, 1, 15, 12, 0, 0).unwrap();
+        input.timestamp = fixed_dt;
         let result = engine.process(input).await.unwrap();
-        
+
         assert_eq!(result.risk_level, RiskLevel::None); // A single event has no risk, not low.
         assert!(!result.anomaly_detected);
     }
-    
+
     #[tokio::test]
     async fn test_engine_with_mocked_critical_risk() {
         let engine = BehaviorEngine::new(
             Arc::new(MockCriticalModel), // Inject mock model
-            Arc::new(DefaultAnomalyDetector { max_speed_kmh: 1200.0 }),
+            Arc::new(DefaultAnomalyDetector {
+                max_speed_kmh: 1200.0,
+            }),
             10,
         );
         let input = create_sample_input("user2");
         let result = engine.process(input).await.unwrap();
-        
+
         assert_eq!(result.risk_score, 0.95);
         assert_eq!(result.risk_level, RiskLevel::Critical);
     }
@@ -489,7 +498,7 @@ mod tests {
         );
         let input = create_sample_input("user3");
         let result = engine.process(input).await.unwrap();
-        
+
         assert!(result.anomaly_detected);
         assert_eq!(result.reasoning, "Teleportation detected!");
     }
@@ -498,17 +507,19 @@ mod tests {
     async fn test_impossible_travel_anomaly() {
         let engine = BehaviorEngine::new(
             Arc::new(DefaultBehavioralModel),
-            Arc::new(DefaultAnomalyDetector { max_speed_kmh: 1200.0 }), // Supersonic jet speed
+            Arc::new(DefaultAnomalyDetector {
+                max_speed_kmh: 1200.0,
+            }), // Supersonic jet speed
             10,
         );
-        
+
         // 1. First event in New York
         let mut input1 = create_sample_input("user4");
         input1.location = (40.7128, -74.0060); // New York
         engine.process(input1).await.unwrap();
 
         tokio::time::sleep(Duration::from_secs(1)).await;
-        
+
         // 2. Second event, 1 second later, in London (impossible travel)
         let mut input2 = create_sample_input("user4");
         input2.location = (51.5074, -0.1278); // London

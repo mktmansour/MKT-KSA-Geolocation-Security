@@ -141,14 +141,14 @@ impl JwtManager {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    
 
     fn create_manager() -> JwtManager {
-        let secret = Secret::new("a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string());
+        let secret = Secret::new(
+            "a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string(),
+        );
         JwtManager::new(secret, 60, "my_app".to_string(), "user_service".to_string())
     }
 
@@ -204,7 +204,12 @@ mod tests {
 
         // Create another manager with a different secret
         let wrong_secret = Secret::new("this_is_the_wrong_secret_key_and_should_fail".to_string());
-        let manager2 = JwtManager::new(wrong_secret, 60, "my_app".to_string(), "user_service".to_string());
+        let manager2 = JwtManager::new(
+            wrong_secret,
+            60,
+            "my_app".to_string(),
+            "user_service".to_string(),
+        );
 
         let result = manager2.decode_token(&token);
         assert!(result.is_err());
@@ -226,7 +231,9 @@ mod tests {
         let token = manager.generate_token(user_id, vec![]).unwrap();
 
         let wrong_issuer_manager = JwtManager::new(
-            Secret::new("a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string()),
+            Secret::new(
+                "a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string(),
+            ),
             60,
             "wrong_issuer".to_string(),
             "user_service".to_string(),

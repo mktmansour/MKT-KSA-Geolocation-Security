@@ -37,10 +37,10 @@ use crate::core::behavior_bio::UserService;
 /// Applies permission checks before returning data.
 #[get("/users/{id}")]
 pub async fn get_user(
-    path: web::Path<Uuid>,         // معرف المستخدم المطلوب (من المسار)
-                                   // Target user ID (from the path)
-    // pool: web::Data<PgPool>,       // الاتصال بقاعدة البيانات
-                                   // Database connection
+    path: web::Path<Uuid>, // معرف المستخدم المطلوب (من المسار)
+                           // Target user ID (from the path)
+                           // pool: web::Data<PgPool>,       // الاتصال بقاعدة البيانات
+                           // Database connection
 ) -> impl Responder {
     let target_user_id = path.into_inner();
 
@@ -59,7 +59,7 @@ pub async fn get_user(
         .await
     {
         Ok(user) => HttpResponse::Ok().json(user), // إعادة البيانات بنجاح
-                                                   // Return user data on success
+        // Return user data on success
         Err(e) => {
             // معالجة الأخطاء بشكل بسيط (يفضل تحسينها مستقبلاً)
             // Basic error handling (should be improved in the future)

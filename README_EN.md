@@ -22,6 +22,8 @@
 * [🔄 Cross-Validation Engine](#-cross-validation-engine)
 * [⚠️ Dependency Audit](#-dependency-audit)
 * [✅ Test Results](#-test-results)
+* [🔒 Current Release Stability](#-current-release-stability)
+* [⬆️ Full Dependency Upgrade Plan](#-full-dependency-upgrade-plan)
 * [⭐ Features](#-features)
 * [🧠 Developer Guide](#-developer-guide)
 * [📈 System State](#-system-state)
@@ -343,11 +345,14 @@ if role_row.is_some() {
 | rstest            | Dev          | Yes     | No        | Scenario-based testing |
 | assert-json-diff  | Dev          | Yes     | No        | JSON diff assertions   |
 
+**Stability Notes (Update):**
+- Pinned `anyhow` to `1.0.99` to ensure pulling latest compatible patches.
+- Added `categories` and `keywords` in `Cargo.toml` to improve discoverability.
+- No functional changes; all tests still pass.
+
 **Security Notes:**
 - All dependencies are carefully selected, with no reliance on OpenSSL (all crypto is Rust-native or Rustls).
-- All packages are up-to-date and secure as of the latest update.
 - It is recommended to run `cargo audit` and `cargo update` regularly.
-- No deprecated or high-risk packages are used.
 
 ---
 
@@ -363,6 +368,41 @@ test result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fin
 * All tests passed (35 tests).
 
 ---
+
+## 🔒 Current Release Stability
+
+- Toolchain/Env: Stable Rust 1.89.0 (Windows MSVC), with `$env:CARGO_HOME` and `$env:RUSTUP_HOME` configured.
+- Build: `cargo check` successful.
+- Tests: `cargo test` fully passing (35/35) after making a time-dependent test deterministic using a fixed timestamp, with no logic changes.
+- Formatting: `cargo fmt --check` clean.
+- Linter: `cargo clippy` shows only non-critical warnings (unused imports/variables and style suggestions), no behavior changes.
+- Security: `cargo audit` reports no known vulnerabilities.
+- Operational note: `RateLimiter` module exists and is intentionally disabled by default pending later decision.
+
+---
+
+## ⬆️ Full Dependency Upgrade Plan
+
+### Scope
+- Crates with newer releases available: `base64 (0.22)`, `getrandom (0.3)`, `lru (0.16)`, `maxminddb (0.26)`, `rand (0.9)`, `reqwest (0.12)`, `rstest (0.26)`, `secrecy (0.10)`, `thiserror (2)`.
+
+### Policy
+- No general breaking changes: upgrade in stages, running build/tests and `audit/clippy/fmt` after each stage.
+- Do not modify the public API behavior in this track; any breaking adjustments are deferred to a major release.
+
+### Stages
+1) thiserror 2 → verify build & tests.
+2) secrecy 0.10 → ensure integration with `zeroize` and secret wrappers.
+3) reqwest 0.12 + compatible rustls → review simple API shifts if any.
+4) maxminddb 0.26 → minor API updates if needed, with GeoIP test.
+5) rand 0.9 + getrandom 0.3 → review random generation call sites.
+6) base64 0.22 → adjust encode/decode calls if API changed.
+7) lru 0.16 → review constructor/traits.
+8) rstest 0.26 (dev) → update test annotations if needed.
+
+### Guarantees
+- Run full CI at each stage: `check`, `test`, `fmt`, `clippy`, `audit`.
+- Document outcomes of each stage in release notes before merge.
 
 ## ⭐ Features & Target Audiences
 

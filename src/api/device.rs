@@ -25,31 +25,31 @@
     It verifies user authorization via JWT before performing the analysis, ensuring every analysis operation is secure and reliable.
     The file is designed as a central point for any external system or user interface wishing to analyze or verify device fingerprints.
 ******************************************************************************************/
-use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
 use crate::security::jwt::JwtManager;
 use crate::AppState;
+use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
 use serde::Deserialize;
 
 /// نموذج الطلب لتحليل بصمة الجهاز.
 /// Request model for device fingerprint analysis.
 #[derive(Deserialize)]
 pub struct DeviceResolveRequest {
-    pub os: String,                // نظام التشغيل للجهاز
-                                   // Device operating system
-    pub device_info: String,       // معلومات الجهاز (موديل، نوع...)
-                                   // Device information (model, type, ...)
-    pub environment_data: String,  // بيانات البيئة (شبكة، موقع، إلخ)
-                                   // Environment data (network, location, etc.)
+    pub os: String, // نظام التشغيل للجهاز
+    // Device operating system
+    pub device_info: String, // معلومات الجهاز (موديل، نوع...)
+    // Device information (model, type, ...)
+    pub environment_data: String, // بيانات البيئة (شبكة، موقع، إلخ)
+                                  // Environment data (network, location, etc.)
 }
 
 /// نقطة نهاية لحل بصمة الجهاز عبر POST /device/resolve
 /// Endpoint to resolve device fingerprint via POST /device/resolve
 #[post("/device/resolve")]
 pub async fn resolve_device(
-    req: HttpRequest,                  // الطلب الأصلي (للحصول على الهيدر)
+    req: HttpRequest, // الطلب الأصلي (للحصول على الهيدر)
     // The original request (to extract headers)
-    payload: web::Json<DeviceResolveRequest> // بيانات الطلب (بصمة الجهاز)
-    // Request payload (device fingerprint data)
+    payload: web::Json<DeviceResolveRequest>, // بيانات الطلب (بصمة الجهاز)
+                                              // Request payload (device fingerprint data)
 ) -> impl Responder {
     // --- استخراج التوكن من الهيدر ---
     // Extract the token from the header
@@ -64,23 +64,32 @@ pub async fn resolve_device(
     // --- تحقق JWT عبر security فقط ---
     // JWT validation using the security module only
     let jwt_manager = JwtManager::new(
-        secrecy::Secret::new("a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string()),
+        secrecy::Secret::new(
+            "a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string(),
+        ),
         60,
         "my_app".to_string(),
         "user_service".to_string(),
     );
     match jwt_manager.decode_token(&token) {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(_) => return HttpResponse::Unauthorized().body("Invalid or expired token"),
     };
 
     // --- تمرير الطلب لمحرك core ---
     // Pass the request to the core fingerprint engine
-    let engine = &req.app_data::<web::Data<AppState>>().unwrap().x_engine.fp_engine;
-    match engine.generate_fingerprint(&payload.os, &payload.device_info, &payload.environment_data).await {
+    let engine = &req
+        .app_data::<web::Data<AppState>>()
+        .unwrap()
+        .x_engine
+        .fp_engine;
+    match engine
+        .generate_fingerprint(&payload.os, &payload.device_info, &payload.environment_data)
+        .await
+    {
         Ok(result) => HttpResponse::Ok().json(result), // إعادة نتيجة التحليل بنجاح
-                                                      // Return analysis result on success
+        // Return analysis result on success
         Err(e) => HttpResponse::InternalServerError().json(e.to_string()), // معالجة الخطأ وإرجاعه
-                                                                          // Handle and return error
+                                                                           // Handle and return error
     }
 }

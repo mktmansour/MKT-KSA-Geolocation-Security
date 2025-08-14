@@ -30,8 +30,8 @@
 use ammonia::clean;
 use once_cell::sync::Lazy;
 use regex::Regex;
+use unicode_normalization::{is_nfc, UnicodeNormalization};
 use validator::ValidationError;
-use unicode_normalization::{UnicodeNormalization, is_nfc};
 
 // =========================================================================================
 // === Security Pipeline Recommendation ====================================================
@@ -49,16 +49,13 @@ use unicode_normalization::{UnicodeNormalization, is_nfc};
 //
 // =========================================================================================
 
-
 // --- Pre-compiled Regex for Performance ---
 static PHONE_RE: Lazy<Regex> = Lazy::new(|| {
     // A simple international phone number regex
     Regex::new(r"^\+?[1-9]\d{1,14}$").unwrap()
 });
-static USERNAME_BLACKLIST: Lazy<Vec<&'static str>> = Lazy::new(|| {
-    vec!["admin", "root", "administrator", "support", "superuser"]
-});
-
+static USERNAME_BLACKLIST: Lazy<Vec<&'static str>> =
+    Lazy::new(|| vec!["admin", "root", "administrator", "support", "superuser"]);
 
 // --- Sanitization Functions ---
 
@@ -83,7 +80,6 @@ pub fn normalize_and_sanitize(text: &str) -> String {
     let normalized: String = text.nfc().collect();
     sanitize_text(&normalized)
 }
-
 
 // --- Custom Validation Functions ---
 
@@ -121,7 +117,10 @@ pub fn validate_username(username: &str) -> Result<(), ValidationError> {
         // TODO: Log failed username validation attempt (length).
         return Err(ValidationError::new("invalid_username_length"));
     }
-    if USERNAME_BLACKLIST.iter().any(|&name| username.eq_ignore_ascii_case(name)) {
+    if USERNAME_BLACKLIST
+        .iter()
+        .any(|&name| username.eq_ignore_ascii_case(name))
+    {
         // TODO: Log failed username validation attempt (blacklist).
         return Err(ValidationError::new("blacklisted_username"));
     }
@@ -138,7 +137,6 @@ pub fn validate_phone_number(phone: &str) -> Result<(), ValidationError> {
     Ok(())
 }
 
-
 // Example of how this will be used on a struct in the `api` layer later:
 /*
 use validator::Validate;
@@ -153,12 +151,11 @@ pub struct SignupData {
 
     #[validate(custom = "validate_username")]
     pub username: String, // This field would be first processed with normalize_and_sanitize
-    
+
     #[validate(custom = "validate_phone_number")]
     pub phone_number: String,
 }
 */
-
 
 #[cfg(test)]
 mod tests {
@@ -206,9 +203,9 @@ mod tests {
         // This is a simplified test; real-world homoglyph attacks can be more complex.
         // The goal is to ensure the normalization logic runs.
         if is_nfc(homoglyph_input) {
-             assert_eq!(normalized, homoglyph_input);
+            assert_eq!(normalized, homoglyph_input);
         } else {
-             assert_ne!(normalized, homoglyph_input);
+            assert_ne!(normalized, homoglyph_input);
         }
 
         // Test with script tags

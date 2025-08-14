@@ -3,11 +3,11 @@
 * 📄 رخصة Apache 2.0 – يسمح بالاستخدام والتعديل بشرط النسبة وعدم تقديم ضمانات.
 * MKT KSA Geolocation Security – Developed by Mansour Bin Khalid (KSA 🇸🇦)
 * Licensed under Apache 2.0 – https://www.apache.org/licenses/LICENSE-2.0
-* © 2025 All rights reserved.  
+* © 2025 All rights reserved.
 
     File Name: mod.rs
     Path:     src/db/mod.rs
-    
+
 
     File Role:
     يعمل هذا الملف كـ "فهرس" لوحدة قاعدة البيانات. يقوم بتجميع والإعلان عن جميع الوحدات
@@ -22,7 +22,7 @@
 
     File Name: mod.rs
     Path:     src/db/mod.rs
-    
+
 
     File Role:
     This file serves as the index for the database module. It aggregates and declares

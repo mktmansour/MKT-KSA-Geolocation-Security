@@ -3,7 +3,7 @@
 * 📄 رخصة Apache 2.0 – يسمح بالاستخدام والتعديل بشرط النسبة وعدم تقديم ضمانات.
 * MKT KSA Geolocation Security – Developed by Mansour Bin Khalid (KSA 🇸🇦)
 * Licensed under Apache 2.0 – https://www.apache.org/licenses/LICENSE-2.0
-* © 2025 All rights reserved. 
+* © 2025 All rights reserved.
 
 
      اسم الملف: logger.rs

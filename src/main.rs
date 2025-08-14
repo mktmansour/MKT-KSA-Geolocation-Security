@@ -3,7 +3,7 @@
 * 📄 رخصة Apache 2.0 – يسمح بالاستخدام والتعديل بشرط النسبة وعدم تقديم ضمانات.
 * MKT KSA Geolocation Security – Developed by Mansour Bin Khalid (KSA 🇸🇦)
 * Licensed under Apache 2.0 – https://www.apache.org/licenses/LICENSE-2.0
-* © 2025 All rights reserved. 
+* © 2025 All rights reserved.
 
 
     File Name: main.rs
@@ -25,7 +25,7 @@
 
     File Name: main.rs
     Path:      src/main.rs
-   
+
 
     File Role:
     The main entry point for the application. This file is responsible for initializing
@@ -43,23 +43,26 @@ pub mod security;
 pub mod utils;
 
 use actix_web::{web, App, HttpServer};
-use mysql_async::Pool;
-use std::sync::Arc;
-use tokio::sync::RwLock;
-use std::collections::HashMap;
-use secrecy::SecretVec;
-use maxminddb::Reader;
 use config::Config;
 use config::Environment;
+use maxminddb::Reader;
+use mysql_async::Pool;
+use secrecy::SecretVec;
+use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 // --- استيراد شامل لجميع المحركات وتبعياتها ---
 // --- Comprehensive import of all engines and their dependencies ---
+use crate::core::behavior_bio::{BehaviorEngine, DefaultAnomalyDetector, DefaultBehavioralModel};
 use crate::core::cross_location::{CrossValidationEngine, DefaultScoringStrategy};
-use crate::core::geo_resolver::{GeoResolver, DefaultAiModel as GeoAiModel, DefaultBlockchain};
-use crate::core::device_fp::{AdaptiveFingerprintEngine, DefaultSecurityMonitor, DefaultQuantumEngine, DefaultAiProcessor as FpAiProcessor};
-use crate::core::behavior_bio::{BehaviorEngine, DefaultBehavioralModel, DefaultAnomalyDetector};
-use crate::core::sensors_analyzer::SensorsAnalyzerEngine;
+use crate::core::device_fp::{
+    AdaptiveFingerprintEngine, DefaultAiProcessor as FpAiProcessor, DefaultQuantumEngine,
+    DefaultSecurityMonitor,
+};
+use crate::core::geo_resolver::{DefaultAiModel as GeoAiModel, DefaultBlockchain, GeoResolver};
 use crate::core::network_analyzer::NetworkAnalyzer;
+use crate::core::sensors_analyzer::SensorsAnalyzerEngine;
 // إذا فعّلت النسخة من GitHub استخدم:
 // use crate::security::ratelimit::rate_limiter_dynamic;
 
@@ -83,7 +86,7 @@ async fn main() -> std::io::Result<()> {
         .build()
         .unwrap();
     let api_key: String = settings.get_string("API_KEY").expect("API_KEY not set");
-    
+
     // Arabic: إعداد نظام تسجيل الأحداث (سيتم تفعيله بالكامل لاحقًا في utils/logger.rs)
     // English: Setup logging system (will be fully enabled later in utils/logger.rs)
     // env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
@@ -108,10 +111,16 @@ async fn main() -> std::io::Result<()> {
     // English: In development mode, use a mock geo DB reader via unified enum
     let geo_reader: Arc<crate::core::geo_resolver::GeoReaderEnum> = if db_pool.is_some() {
         let geo_db_bytes = hex::decode("4d4d44425f434954590000000000000002000000000000000c000000636f756e747279000700000049534f5f434f44450000").expect("Failed to decode mock geo DB");
-        Arc::new(crate::core::geo_resolver::GeoReaderEnum::Real(Reader::from_source(geo_db_bytes).expect("Failed to create geo DB reader")))
+        Arc::new(crate::core::geo_resolver::GeoReaderEnum::Real(
+            Reader::from_source(geo_db_bytes).expect("Failed to create geo DB reader"),
+        ))
     } else {
-        println!("[DEV MODE] لن يتم تحميل قاعدة بيانات MaxMind geo DB. سيتم استخدام كائن وهمي عبر Enum.");
-        Arc::new(crate::core::geo_resolver::GeoReaderEnum::Mock(crate::core::geo_resolver::MockGeoReader::new()))
+        println!(
+            "[DEV MODE] لن يتم تحميل قاعدة بيانات MaxMind geo DB. سيتم استخدام كائن وهمي عبر Enum."
+        );
+        Arc::new(crate::core::geo_resolver::GeoReaderEnum::Mock(
+            crate::core::geo_resolver::MockGeoReader::new(),
+        ))
     };
 
     let geo_resolver = Arc::new(GeoResolver::new(
@@ -120,7 +129,7 @@ async fn main() -> std::io::Result<()> {
         Arc::new(DefaultBlockchain),
         true,
         false,
-        geo_reader.clone()
+        geo_reader.clone(),
     ));
 
     // 2. إنشاء محرك DeviceFPEngine
@@ -128,14 +137,16 @@ async fn main() -> std::io::Result<()> {
         Arc::new(DefaultSecurityMonitor::new()),
         Arc::new(DefaultQuantumEngine::new().expect("Failed to create quantum engine")),
         Arc::new(FpAiProcessor),
-        Arc::new(RwLock::new(HashMap::new()))
+        Arc::new(RwLock::new(HashMap::new())),
     ));
 
     // 3. إنشاء محرك BehaviorEngine
     let behavior_engine = Arc::new(BehaviorEngine::new(
         Arc::new(DefaultBehavioralModel),
-        Arc::new(DefaultAnomalyDetector { max_speed_kmh: 1200.0 }),
-        10
+        Arc::new(DefaultAnomalyDetector {
+            max_speed_kmh: 1200.0,
+        }),
+        10,
     ));
 
     // 4. إنشاء استراتيجية حساب النقاط
@@ -150,7 +161,9 @@ async fn main() -> std::io::Result<()> {
         Arc::new(crate::core::sensors_analyzer::DefaultSensorAnomalyDetector::default()),
     ));
 
-    let proxy_db = Arc::new(RwLock::new(crate::core::network_analyzer::ProxyDatabase::default()));
+    let proxy_db = Arc::new(RwLock::new(
+        crate::core::network_analyzer::ProxyDatabase::default(),
+    ));
     let network_engine = Arc::new(NetworkAnalyzer::new(
         SecretVec::new(vec![42; 32]),
         proxy_db,
@@ -165,9 +178,9 @@ async fn main() -> std::io::Result<()> {
         sensors_engine,
         network_engine,
         scoring_strategy,
-        SecretVec::new(b"a_very_secret_final_verdict_key".to_vec())
+        SecretVec::new(b"a_very_secret_final_verdict_key".to_vec()),
     ));
-    
+
     // 6. تجميع كل الخدمات في الحالة المشتركة
     let app_state = web::Data::new(AppState {
         x_engine: Arc::clone(&x_engine),
@@ -191,4 +204,4 @@ async fn main() -> std::io::Result<()> {
     .bind("127.0.0.1:8080")?
     .run()
     .await
-} 
+}
