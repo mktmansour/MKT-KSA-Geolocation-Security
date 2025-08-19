@@ -6,17 +6,30 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+
 jobs:
   clippy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
+
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
-      - name: Run clippy
+        with:
+          cache-on-failure: true
+
+      - name: Clippy (deny warnings)
         run: cargo clippy --all-targets --all-features -- -W clippy::all -W clippy::pedantic -W clippy::cargo -W clippy::nursery -D warnings
 
+      - name: Format check
+        run: cargo fmt --all -- --check
