@@ -29,12 +29,20 @@ use uuid::Uuid;
 
 /// جلب مستخدم عبر معرف UUID
 /// Fetch a user by their UUID
+///
+/// # Panics
+/// قد تفشل عمليات `unwrap()` على الحقول النصية إذا كانت البيانات غير متوافقة مع المخطط المتوقع.
+/// Will panic if expected string fields are missing or malformed.
+///
+/// # Errors
+/// يعيد خطأ من `mysql_async` إذا فشل الاستعلام أو الاتصال.
+/// Returns `mysql_async::Error` on query or connection failure.
 pub async fn get_user_by_id(
     pool: &Pool,
     user_id: &Uuid,
 ) -> Result<Option<crate::db::models::User>, mysql_async::Error> {
     let mut conn = pool.get_conn().await?;
-    let query = r#"SELECT id, username, email, password_hash, status, created_at, last_login_at FROM users WHERE id = ?"#;
+    let query = r"SELECT id, username, email, password_hash, status, created_at, last_login_at FROM users WHERE id = ?";
     let row: Option<Row> =
         mysql_async::prelude::Queryable::exec_first(&mut conn, query, (user_id.to_string(),))
             .await?;
@@ -61,12 +69,18 @@ pub async fn get_user_by_id(
 
 /// جلب مستخدم عبر اسم المستخدم
 /// Fetch a user by their username
+///
+/// # Panics
+/// قد تفشل عمليات `unwrap()` على الحقول النصية إذا كانت البيانات غير متوافقة مع المخطط المتوقع.
+///
+/// # Errors
+/// يعيد خطأ من `mysql_async` إذا فشل الاستعلام أو الاتصال.
 pub async fn get_user_by_username(
     pool: &Pool,
     username: &str,
 ) -> Result<Option<crate::db::models::User>, mysql_async::Error> {
     let mut conn = pool.get_conn().await?;
-    let query = r#"SELECT id, username, email, password_hash, status, created_at, last_login_at FROM users WHERE username = ?"#;
+    let query = r"SELECT id, username, email, password_hash, status, created_at, last_login_at FROM users WHERE username = ?";
     let row: Option<Row> =
         mysql_async::prelude::Queryable::exec_first(&mut conn, query, (username,)).await?;
     let user = row.map(|row| {
@@ -92,11 +106,18 @@ pub async fn get_user_by_username(
 
 /// جلب جميع المستخدمين (يمكن للمطور تعديل الاستعلام بسهولة)
 /// Fetch all users (developer can easily modify the query)
+///
+/// # Panics
+/// قد تفشل عمليات `unwrap()` على الحقول النصية إذا كانت البيانات غير متوافقة مع المخطط المتوقع.
+///
+/// # Errors
+/// يعيد خطأ من `mysql_async` إذا فشل الاستعلام أو الاتصال.
 pub async fn get_all_users(
     pool: &Pool,
 ) -> Result<Vec<crate::db::models::User>, mysql_async::Error> {
     let mut conn = pool.get_conn().await?;
-    let query = r#"SELECT id, username, email, password_hash, status, created_at, last_login_at FROM users"#;
+    let query =
+        r"SELECT id, username, email, password_hash, status, created_at, last_login_at FROM users";
     let rows: Vec<Row> = mysql_async::prelude::Queryable::query(&mut conn, query).await?;
     let users = rows
         .into_iter()
@@ -122,8 +143,11 @@ pub async fn get_all_users(
     Ok(users)
 }
 
-/// دالة إضافة مستخدم جديد إلى قاعدة البيانات باستخدام mysql_async.
-/// This function inserts a new user into the users table using mysql_async.
+/// دالة إضافة مستخدم جديد إلى قاعدة البيانات باستخدام `mysql_async`.
+/// This function inserts a new user into the users table using `mysql_async`.
+///
+/// # Errors
+/// يعيد خطأ من `mysql_async` إذا فشل الإدراج أو الاتصال.
 pub async fn create_user(
     pool: &Pool,
     username: &str,
@@ -132,10 +156,10 @@ pub async fn create_user(
     // توليد UUID جديد للمستخدم
     let user_id = Uuid::new_v4();
     let mut conn = pool.get_conn().await?;
-    let query = r#"
+    let query = r"
         INSERT INTO users (id, username, password_hash, created_at)
         VALUES (?, ?, ?, NOW())
-    "#;
+    ";
     mysql_async::prelude::Queryable::exec_drop(
         &mut conn,
         query,
@@ -157,6 +181,9 @@ Security verification function (direct DB check)
 - Does NOT rely on cache, always queries the live database
 ******************************************************************************************/
 
+///
+/// # Errors
+/// يعيد خطأ من `mysql_async` إذا فشل الاستعلام الداخلي.
 pub async fn verify_user_security(pool: &Pool, user_id: &Uuid) -> Result<bool, mysql_async::Error> {
     let user = get_user_by_id(pool, user_id).await?;
     if let Some(user) = user {
@@ -189,6 +216,9 @@ Advanced security verification: user + device + role
 - Shows developers how to build composite security checks
 ******************************************************************************************/
 
+///
+/// # Errors
+/// يعيد خطأ من `mysql_async` إذا فشل أي استعلام داخلي.
 pub async fn verify_user_device_and_role(
     pool: &Pool,
     user_id: &Uuid,
@@ -201,7 +231,7 @@ pub async fn verify_user_device_and_role(
         if user.status == "active" && user.last_login_at.is_some() {
             // تحقق من الجهاز
             let mut conn = pool.get_conn().await?;
-            let device_query = r#"SELECT id FROM devices WHERE id = ? AND user_id = ?"#;
+            let device_query = r"SELECT id FROM devices WHERE id = ? AND user_id = ?";
             let device_row: Option<Row> = mysql_async::prelude::Queryable::exec_first(
                 &mut conn,
                 device_query,
@@ -210,7 +240,7 @@ pub async fn verify_user_device_and_role(
             .await?;
             if device_row.is_some() {
                 // تحقق من الصلاحية (مثال: جدول user_roles)
-                let role_query = r#"SELECT role FROM user_roles WHERE user_id = ? AND role = ?"#;
+                let role_query = r"SELECT role FROM user_roles WHERE user_id = ? AND role = ?";
                 let role_row: Option<Row> = mysql_async::prelude::Queryable::exec_first(
                     &mut conn,
                     role_query,

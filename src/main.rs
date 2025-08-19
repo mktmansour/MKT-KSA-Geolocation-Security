@@ -1,3 +1,4 @@
+#![allow(clippy::multiple_crate_versions)]
 /******************************************************************************************
        📍 منصة تحليل الأمان الجغرافي MKT KSA – تطوير منصور بن خالد
 * 📄 رخصة Apache 2.0 – يسمح بالاستخدام والتعديل بشرط النسبة وعدم تقديم ضمانات.
@@ -34,13 +35,10 @@
     parts together.
 ******************************************************************************************/
 
-// Arabic: وحدات التطبيق الرئيسية
-// English: Main application modules
-pub mod api;
-pub mod core;
-pub mod db;
-pub mod security;
-pub mod utils;
+// Arabic: استخدام وحدات المكتبة العامة بدل تضمينها في الثنائي
+// English: Use library modules instead of re-declaring them in the bin target
+use mkt_ksa_geo_sec as lib;
+use mkt_ksa_geo_sec::{api, core, db, security, utils};
 
 use actix_web::{web, App, HttpServer};
 use config::Config;
@@ -54,15 +52,15 @@ use tokio::sync::RwLock;
 
 // --- استيراد شامل لجميع المحركات وتبعياتها ---
 // --- Comprehensive import of all engines and their dependencies ---
-use crate::core::behavior_bio::{BehaviorEngine, DefaultAnomalyDetector, DefaultBehavioralModel};
-use crate::core::cross_location::{CrossValidationEngine, DefaultScoringStrategy};
-use crate::core::device_fp::{
+use mkt_ksa_geo_sec::core::behavior_bio::{BehaviorEngine, DefaultAnomalyDetector, DefaultBehavioralModel};
+use mkt_ksa_geo_sec::core::cross_location::{CrossValidationEngine, DefaultScoringStrategy};
+use mkt_ksa_geo_sec::core::device_fp::{
     AdaptiveFingerprintEngine, DefaultAiProcessor as FpAiProcessor, DefaultQuantumEngine,
     DefaultSecurityMonitor,
 };
-use crate::core::geo_resolver::{DefaultAiModel as GeoAiModel, DefaultBlockchain, GeoResolver};
-use crate::core::network_analyzer::NetworkAnalyzer;
-use crate::core::sensors_analyzer::SensorsAnalyzerEngine;
+use mkt_ksa_geo_sec::core::geo_resolver::{DefaultAiModel as GeoAiModel, DefaultBlockchain, GeoResolver};
+use mkt_ksa_geo_sec::core::network_analyzer::NetworkAnalyzer;
+use mkt_ksa_geo_sec::core::sensors_analyzer::SensorsAnalyzerEngine;
 // إذا فعّلت النسخة من GitHub استخدم:
 // use crate::security::ratelimit::rate_limiter_dynamic;
 
@@ -71,10 +69,7 @@ use crate::core::sensors_analyzer::SensorsAnalyzerEngine;
 
 // Arabic: تعريف الحالة المشتركة للتطبيق مع اتصال قاعدة البيانات اختياري
 // English: Shared application state with optional database connection
-pub struct AppState {
-    pub x_engine: Arc<CrossValidationEngine>,
-    pub db_pool: Option<Pool>,
-}
+use mkt_ksa_geo_sec::AppState;
 
 // Arabic: نقطة الدخول الرئيسية للتطبيق
 // English: Main entry point for the application
@@ -84,8 +79,8 @@ async fn main() -> std::io::Result<()> {
     let settings = Config::builder()
         .add_source(Environment::default())
         .build()
-        .unwrap();
-    let api_key: String = settings.get_string("API_KEY").expect("API_KEY not set");
+        .expect("Failed to build configuration from environment");
+    let _api_key: String = settings.get_string("API_KEY").expect("API_KEY not set");
 
     // Arabic: إعداد نظام تسجيل الأحداث (سيتم تفعيله بالكامل لاحقًا في utils/logger.rs)
     // English: Setup logging system (will be fully enabled later in utils/logger.rs)
@@ -96,12 +91,20 @@ async fn main() -> std::io::Result<()> {
     let database_url = std::env::var("DATABASE_URL").ok();
     // Arabic: تهيئة اتصال قاعدة البيانات بشكل متكيف
     // English: Adaptively initialize the database connection
-    let db_pool = if let Some(url) = database_url {
-        Some(Pool::new(mysql_async::Opts::from_url(&url).unwrap()))
-    } else {
-        println!("⚠️  لم يتم ضبط DATABASE_URL. سيعمل التطبيق في وضع التطوير (بدون قاعدة بيانات).");
-        None
-    };
+    let db_pool = database_url.map_or_else(
+        || {
+            println!(
+                "⚠️  لم يتم ضبط DATABASE_URL. سيعمل التطبيق في وضع التطوير (بدون قاعدة بيانات)."
+            );
+            None
+        },
+        |url| {
+            let opts = mysql_async::Opts::from_url(&url)
+                .map_err(|_| ())
+                .expect("Invalid DATABASE_URL format for mysql_async");
+            Some(Pool::new(opts))
+        },
+    );
 
     // Arabic: تهيئة المحركات والخدمات المشتركة فقط إذا كان التطبيق في وضع الإنتاج
     // English: Initialize engines/services only if not in development mode
@@ -109,17 +112,17 @@ async fn main() -> std::io::Result<()> {
 
     // Arabic: إذا كان التطبيق في وضع التطوير، استخدم كائن وهمي لقاعدة بيانات MaxMind عبر Enum موحد
     // English: In development mode, use a mock geo DB reader via unified enum
-    let geo_reader: Arc<crate::core::geo_resolver::GeoReaderEnum> = if db_pool.is_some() {
+    let geo_reader: Arc<mkt_ksa_geo_sec::core::geo_resolver::GeoReaderEnum> = if db_pool.is_some() {
         let geo_db_bytes = hex::decode("4d4d44425f434954590000000000000002000000000000000c000000636f756e747279000700000049534f5f434f44450000").expect("Failed to decode mock geo DB");
-        Arc::new(crate::core::geo_resolver::GeoReaderEnum::Real(
+        Arc::new(mkt_ksa_geo_sec::core::geo_resolver::GeoReaderEnum::Real(
             Reader::from_source(geo_db_bytes).expect("Failed to create geo DB reader"),
         ))
     } else {
         println!(
             "[DEV MODE] لن يتم تحميل قاعدة بيانات MaxMind geo DB. سيتم استخدام كائن وهمي عبر Enum."
         );
-        Arc::new(crate::core::geo_resolver::GeoReaderEnum::Mock(
-            crate::core::geo_resolver::MockGeoReader::new(),
+        Arc::new(mkt_ksa_geo_sec::core::geo_resolver::GeoReaderEnum::Mock(
+            mkt_ksa_geo_sec::core::geo_resolver::MockGeoReader::new(),
         ))
     };
 
@@ -158,17 +161,17 @@ async fn main() -> std::io::Result<()> {
 
     let sensors_engine = Arc::new(SensorsAnalyzerEngine::new(
         SecretVec::new(vec![42; 48]),
-        Arc::new(crate::core::sensors_analyzer::DefaultSensorAnomalyDetector::default()),
+        Arc::new(mkt_ksa_geo_sec::core::sensors_analyzer::DefaultSensorAnomalyDetector::default()),
     ));
 
     let proxy_db = Arc::new(RwLock::new(
-        crate::core::network_analyzer::ProxyDatabase::default(),
+        mkt_ksa_geo_sec::core::network_analyzer::ProxyDatabase::default(),
     ));
     let network_engine = Arc::new(NetworkAnalyzer::new(
         SecretVec::new(vec![42; 32]),
         proxy_db,
         geo_reader.clone(),
-        Arc::new(crate::core::network_analyzer::DefaultAiNetworkAnalyzer),
+        Arc::new(mkt_ksa_geo_sec::core::network_analyzer::DefaultAiNetworkAnalyzer),
     ));
 
     let x_engine = Arc::new(CrossValidationEngine::new(

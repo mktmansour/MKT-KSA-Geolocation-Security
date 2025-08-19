@@ -23,6 +23,8 @@
 * [🗺️ Project Overview](#-project-overview)
 * [📂 Main Files](#-main-files)
 * [🧩 Constants & Public Functions](#-constants--public-functions)
+  * [🖊️ Signing Module Functions](#-signing-module-functions)
+  * [⏱️ Precision Module Functions](#-precision-module-functions)
 * [🔑 Config & Endpoints](#-config--endpoints)
 * [🧭 Architecture](#-architecture)
 * [🛠️ Verification Examples](#-verification-examples)
@@ -38,6 +40,12 @@
 * [⭐ Features](#-features)
 * [🧠 Developer Guide](#-developer-guide)
 * [📈 System State](#-system-state)
+* [📝 Release Notes v1.0.2](#-release-notes-v102)
+  * [🔧 Internal Signature Changes](#-internal-signature-changes-no-behaviorroute-changes)
+  * [📑 Current Signatures (Reference)](#-current-signatures-reference)
+  * [🧹 Formatting and Extra Checks](#-formatting-and-extra-checks)
+* [📦 Using as a Rust library](#-using-as-a-rust-library)
+* [🔗 Linking via C-ABI](#-linking-via-c-abi)
 
 ---
 
@@ -81,9 +89,11 @@
 | smart_access.rs      | src/api/smart_access.rs          | Smart access endpoint                          |
 | mod.rs (api)         | src/api/mod.rs                   | API module index                               |
 | mod.rs (utils)       | src/utils/mod.rs                 | Utils module index                             |
+| precision.rs         | src/utils/precision.rs           | Precision utilities (time/numeric/geospatial)  |
 | helpers.rs           | src/utils/helpers.rs             | General helper functions                       |
 | logger.rs            | src/utils/logger.rs              | Logger module                                  |
 | cache.rs             | src/utils/cache.rs               | Cache module                                   |
+| signing.rs           | src/security/signing.rs          | High-security signing (HMAC) utilities         |
 | Cargo.toml           | Cargo.toml                       | Dependency management file                     |
 
 ---
@@ -121,6 +131,30 @@
 
 ---
 
+### 🖊️ Signing Module Functions
+
+| Function Name                   | Signature                                                                 | Defined In                | Description                                  |
+| --------------------------------| ------------------------------------------------------------------------- | ------------------------- | -------------------------------------------- |
+| sign_hmac_sha512                | fn sign_hmac_sha512(data: &[u8], key: &SecretVec<u8>) -> Result<Vec<u8>, SigningError> | src/security/signing.rs   | HMAC-SHA512 signature over bytes             |
+| verify_hmac_sha512              | fn verify_hmac_sha512(data: &[u8], sig: &[u8], key: &SecretVec<u8>) -> bool            | src/security/signing.rs   | Verifies HMAC-SHA512                         |
+| sign_hmac_sha384                | fn sign_hmac_sha384(data: &[u8], key: &SecretVec<u8>) -> Result<Vec<u8>, SigningError> | src/security/signing.rs   | HMAC-SHA384 signature                        |
+| verify_hmac_sha384              | fn verify_hmac_sha384(data: &[u8], sig: &[u8], key: &SecretVec<u8>) -> bool            | src/security/signing.rs   | Verifies HMAC-SHA384                         |
+| sign_struct_excluding_field     | fn sign_struct_excluding_field<T: Serialize>(value: &T, exclude_field: &str, key: &SecretVec<u8>) -> Result<Vec<u8>, SigningError> | src/security/signing.rs | Sign serializable struct excluding one field |
+| verify_struct_excluding_field   | fn verify_struct_excluding_field<T: Serialize>(value: &T, exclude_field: &str, sig: &[u8], key: &SecretVec<u8>) -> bool | src/security/signing.rs | Verify serializable struct excluding field   |
+
+---
+
+### ⏱️ Precision Module Functions
+
+| Function Name           | Signature                                                               | Defined In                | Description                                          |
+| ----------------------- | ----------------------------------------------------------------------- | ------------------------- | ---------------------------------------------------- |
+| time_delta_secs         | fn time_delta_secs(start: DateTime<Utc>, end: DateTime<Utc>) -> f64     | src/utils/precision.rs    | Time delta in seconds (with negative guard)          |
+| time_delta_secs_high_res| fn time_delta_secs_high_res(start: DateTime<Utc>, end: DateTime<Utc>) -> f64 | src/utils/precision.rs | High-resolution time delta (secs + nanos)            |
+| avg_f32                 | fn avg_f32(values: &[f32]) -> f32                                       | src/utils/precision.rs    | f32 average using internal f64 accumulation          |
+| haversine_km            | fn haversine_km(a: (f64, f64), b: (f64, f64)) -> f64                    | src/utils/precision.rs    | Haversine distance in kilometers                     |
+| speed_kmh               | fn speed_kmh(distance_km: f64, seconds: f64) -> f64                     | src/utils/precision.rs    | Speed (km/h) with division-by-zero guard             |
+| weighted_sum_f64        | fn weighted_sum_f64(values: &[f64], weights: &[f64]) -> Option<f64>     | src/utils/precision.rs    | Weighted sum (f64), None if lengths mismatch         |
+| rate_of_change_f64      | fn rate_of_change_f64(value_delta: f64, seconds: f64) -> f64            | src/utils/precision.rs    | Rate of change per second with zero-division guard   |
 ### Main Traits
 
 | Trait Name                | Signature                        | Defined In           | Description (English)                       |
@@ -540,11 +574,177 @@ toml
 | `v3_0`                | Enables next-gen modules for upcoming API version 3.0.                                       |
 | `zkp`                 | Adds support for Zero-Knowledge Proofs for privacy-preserving validation and access control. |
 ```
+ 
+## 📦 Using as a Rust library
 
+```toml
+[dependencies]
+mkt_ksa = { git = "https://github.com/mktmansour/MKT-KSA-Geolocation-Security" }
+```
+
+```rust
+use mkt_ksa::core::geo_resolver::GeoResolver;
+use secrecy::SecretVec;
+use std::sync::Arc;
+
+let resolver = GeoResolver::new(
+    SecretVec::new(vec![1; 32]),
+    Arc::new(mkt_ksa::core::geo_resolver::DefaultAiModel),
+    Arc::new(mkt_ksa::core::geo_resolver::DefaultBlockchain),
+    true,
+    false,
+    Arc::new(mkt_ksa::core::geo_resolver::GeoReaderEnum::Mock(
+        mkt_ksa::core::geo_resolver::MockGeoReader::new(),
+    )),
+);
+```
+
+## 🔗 Linking via C-ABI
+
+- Built as `cdylib/staticlib` and consumable from C/C++/Python/.NET/Java/Go.
+- Exported functions:
+  - `generate_adaptive_fingerprint(os: *const c_char, device_info: *const c_char, env_data: *const c_char) -> *mut c_char`
+  - `free_fingerprint_string(ptr: *mut c_char)`
+
+Minimal C usage:
+
+```c
+// header generated via cbindgen
+char* fp = generate_adaptive_fingerprint("Windows", "LaptopX", "Office");
+printf("%s\n", fp);
+free_fingerprint_string(fp);
+```
 #### 💡 Advanced Tips
 
 * All engines are pluggable or replaceable
 * Full customization (session/device/role)
 * All examples, functions, and constants are fully documented in English
 
+---
+
+## 📝 Release Notes v1.0.2
+
+- **Severity**: Low to Medium – code quality and linter cleanups, no public behavior changes.
+- **Key Fixes:**
+  - Full strict Clippy pass with `-D warnings` across all targets; zero warnings remain.
+  - Unified JWT extraction patterns in API and adopted `let-else` where suitable.
+  - Localized `#[allow(...)]` only when changing code would risk public API/behavior.
+  - Added `# Errors`/`# Panics` documentation in critical Result-returning functions.
+  - Addressed floating-point and suboptimal_flops hints via targeted allows without changing logic.
+  - Resolved `unused_async`/`unused_self` for internal/experimental functions.
+  - No public API changes; no logic/files removed.
+- **Tests**: 37/37 passing.
+- **Clippy**: fully clean.
+- **Dependencies**:
+  - No production dependency versions changed in this release.
+  - Note: duplicate transitive versions (e.g., base64/http/lru/windows-sys) retained intentionally to avoid breakage.
+  - cargo audit: allowed warning for `rust-ini` (yanked) via `config`; non-functional impact (transitive only); documented for future review.
+
+#### 🔄 Dependency Changes (this session)
+- **Removed**:
+  - `once_cell`, `lazy_static`: replaced by `std::sync::LazyLock`.
+  - `serde_derive`: redundant since `serde` enables `derive` feature.
+- **Updated**:
+  - `reqwest`: 0.12.22 → 0.12.23 (Rustls; minor patches).
+  - `pqcrypto-mlkem`: 0.1.0 → 0.1.1.
+- **Transitive bumps**:
+  - `async-trait`, `hyper`, `thiserror`, and others auto-updated within constraints.
+
+#### 🆕 New Files Created
+- `src/security/signing.rs`: Central high-security HMAC signing module (no OpenSSL).
+- `src/utils/precision.rs`: Precision utilities for time/numeric/geospatial calculations.
+
+### 🔧 Internal Signature Changes (no behavior/route changes)
+
+- **API layer** (`src/api/*.rs`):
+  - Switched from `HttpRequest` to extractors: `web::Data<AppState>`, `web::Json<...>`, and `BearerToken` to ensure Send-safe futures and cleaner handler signatures.
+- **Geo engine** (`src/core/geo_resolver.rs`):
+  - `resolve` now takes a `ResolveParams` struct instead of many positional args; all call sites updated.
+- **Behavior engine** (`src/core/behavior_bio.rs`):
+  - `get_user_profile_data` is now synchronous (removed `async` as there was no `await`); updated call in `src/api/auth.rs` (removed `.await`).
+- **Device FP / FFI** (`src/core/device_fp.rs`):
+  - C-ABI functions are now `unsafe extern "C"` with `# Safety` docs, preserving implementation logic.
+
+### 🧹 Formatting and Extra Checks
+- Applied `cargo fmt --all` to fix minor formatting diffs reported by `--check`.
+- `cargo tree -d` shows acceptable transitive duplicates at present: `base64 (0.21/0.22)`, `http (0.2/1.x)`, `lru (0.14/0.16)`, `hashbrown (0.14/0.15)`, `socket2 (0.5/0.6)`, `windows-sys (0.52/0.59)`.
+
+#### 📑 Current Signatures (Reference)
+
+- **API Handlers**
+
+```rust
+pub async fn trigger_alert(
+    payload: web::Json<AlertTriggerRequest>,
+    bearer: BearerToken,
+) -> impl Responder;
+
+pub async fn analyze_behavior(
+    app_data: web::Data<AppState>,
+    payload: web::Json<BehaviorAnalyzeRequest>,
+    bearer: BearerToken,
+) -> impl Responder;
+
+pub async fn dashboard_summary(bearer: BearerToken) -> impl Responder;
+
+pub async fn resolve_device(
+    app_data: web::Data<AppState>,
+    payload: web::Json<DeviceResolveRequest>,
+    bearer: BearerToken,
+) -> impl Responder;
+
+pub async fn resolve_geo(
+    app_data: web::Data<AppState>,
+    payload: web::Json<GeoResolveRequest>,
+    bearer: BearerToken,
+) -> impl Responder;
+
+pub async fn analyze_network(
+    app_data: web::Data<AppState>,
+    payload: web::Json<NetworkAnalyzeRequest>,
+    bearer: BearerToken,
+) -> impl Responder;
+
+pub async fn analyze_sensors(
+    app_data: web::Data<AppState>,
+    payload: web::Json<SensorsAnalyzeRequest>,
+    bearer: BearerToken,
+) -> impl Responder;
+
+pub async fn weather_summary(
+    _payload: web::Json<WeatherSummaryRequest>,
+    bearer: BearerToken,
+) -> impl Responder;
+```
+
+- **Core**
+
+```rust
+impl GeoResolver {
+    pub async fn resolve(
+        &self,
+        params: ResolveParams,
+    ) -> Result<GeoLocation, GeoResolverError>;
+}
+
+impl UserService {
+    pub fn get_user_profile_data(
+        &self,
+        _requester_id: Uuid,
+        _target_user_id: Uuid,
+    ) -> Result<User, BehaviorError>;
+}
+```
+
+- **FFI surface (C ABI)**
+
+```rust
+pub unsafe extern "C" fn generate_adaptive_fingerprint(
+    os: *const c_char,
+    device_info: *const c_char,
+    env_data: *const c_char,
+) -> *mut c_char;
+
+pub unsafe extern "C" fn free_fingerprint_string(ptr: *mut c_char);
+```
 ---

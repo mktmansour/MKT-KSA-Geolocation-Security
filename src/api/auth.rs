@@ -54,10 +54,7 @@ pub async fn get_user(
 
     // محاولة جلب بيانات المستخدم مع فحص الصلاحيات
     // Try to fetch the user profile data with permission checks
-    match user_service
-        .get_user_profile_data(requester_id, target_user_id)
-        .await
-    {
+    match user_service.get_user_profile_data(requester_id, target_user_id) {
         Ok(user) => HttpResponse::Ok().json(user), // إعادة البيانات بنجاح
         // Return user data on success
         Err(e) => {

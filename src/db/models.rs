@@ -43,6 +43,7 @@ use serde::{Deserialize, Serialize};
 // ===================== Core Data Models =====================
 
 /// Arabic: يمثل مستخدمًا مسجلاً في النظام. هذا النموذج هو حجر الأساس للمصادقة والصلاحيات.
+///
 /// English: Represents a registered user in the system. This model is the cornerstone of authentication and authorization.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct User {
@@ -71,6 +72,7 @@ pub struct Device {
 
 /// Arabic: يمثل سجلاً لموقع جغرافي تم التحقق منه وتوقيعه.
 /// هذا النموذج هو أساس "البصمة الوراثية للبيانات".
+///
 /// English: Represents a verified and signed geographic location record.
 /// This model is the foundation of the "Data Genetic Fingerprint".
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -98,6 +100,7 @@ pub struct BehavioralEvent {
 
 /// Arabic: يمثل تنبيهًا أمنيًا تم إطلاقه بواسطة النظام وتوقيعه.
 /// التوقيع يثبت أن التنبيه صادر من نظامنا وليس تنبيهًا زائفًا تم حقنه.
+///
 /// English: Represents a security alert triggered and signed by the system.
 /// The signature proves the alert originated from our system and is not a fake injected alert.
 #[derive(Debug, Clone, Serialize, Deserialize)]

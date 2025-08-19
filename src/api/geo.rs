@@ -25,16 +25,17 @@
     It verifies user authorization via JWT before performing the analysis, ensuring every validation operation is secure and reliable.
     The file is designed as a central point for any external system or user interface wishing to validate location or detect geolocation fraud.
 ******************************************************************************************/
+use crate::api::BearerToken;
 use crate::core::behavior_bio::BehaviorInput;
 use crate::core::cross_location::CrossValidationInput;
 use crate::security::jwt::JwtManager;
 use crate::AppState;
-use actix_web::HttpRequest;
 use actix_web::{post, web, HttpResponse, Responder};
 use serde::Deserialize;
 use std::net::IpAddr;
 
 /// نموذج جسم الطلب (Request Body) لنقطة نهاية التحقق.
+///
 /// يجمع كل البيانات اللازمة من العميل لتشغيل عملية التحليل الكاملة.
 /// The request body model for the validation endpoint.
 /// It gathers all necessary data from the client to run the full analysis process.
@@ -58,17 +59,13 @@ pub struct GeoResolveRequest {
 /// The main endpoint for resolving and validating geolocation via POST /geo/resolve
 #[post("/geo/resolve")]
 pub async fn resolve_geo(
-    req: HttpRequest, // الطلب الأصلي (للحصول على الهيدر)
-    // The original request (to extract headers)
+    app_data: web::Data<AppState>,
     payload: web::Json<GeoResolveRequest>, // بيانات الطلب (التحقق الجغرافي)
-                                           // Request payload (geolocation validation data)
+    // Request payload (geolocation validation data)
+    bearer: BearerToken,
 ) -> impl Responder {
-    // --- استخراج التوكن من الهيدر ---
-    // Extract the token from the header
-    let token = match req.headers().get("Authorization") {
-        Some(hv) => hv.to_str().unwrap_or("").replace("Bearer ", ""),
-        None => String::new(),
-    };
+    // --- استخراج التوكن من الهيدر عبر extractor ---
+    let token = bearer.0;
     if token.is_empty() {
         return HttpResponse::Unauthorized().body("Missing Authorization token");
     }
@@ -76,7 +73,7 @@ pub async fn resolve_geo(
     // --- تحقق JWT عبر security فقط ---
     // JWT validation using the security module only
     let jwt_manager = JwtManager::new(
-        secrecy::Secret::new(
+        &secrecy::Secret::new(
             "a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string(),
         ),
         60,
@@ -86,7 +83,7 @@ pub async fn resolve_geo(
     match jwt_manager.decode_token(&token) {
         Ok(_) => {}
         Err(_) => return HttpResponse::Unauthorized().body("Invalid or expired token"),
-    };
+    }
 
     // --- تجميع المدخلات من الطلب ---
     // Collect inputs from the request
@@ -107,7 +104,7 @@ pub async fn resolve_geo(
 
     // --- تنفيذ التحليل وإرجاع النتيجة ---
     // Execute the analysis and return the result
-    let engine = &req.app_data::<web::Data<AppState>>().unwrap().x_engine;
+    let engine = &app_data.x_engine;
     match engine.validate(input).await {
         Ok(result) => HttpResponse::Ok().json(result), // إعادة نتيجة التحقق بنجاح
         // Return validation result on success

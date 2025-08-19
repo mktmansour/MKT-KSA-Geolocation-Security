@@ -34,6 +34,7 @@
     5.  Provide a default, ready-to-use implementation (`OpenMeteoProvider`).
 ******************************************************************************************/
 
+use crate::utils::precision::avg_f32;
 use async_trait::async_trait;
 use futures::future::join_all;
 use serde::{Deserialize, Serialize};
@@ -96,12 +97,17 @@ pub struct WeatherEngine {
 impl WeatherEngine {
     /// إنشاء محرك جديد مع قائمة من مزودي الخدمة.
     /// Creates a new engine with a list of providers.
+    #[must_use]
     pub fn new(providers: Vec<Arc<dyn WeatherProvider>>) -> Self {
         Self { providers }
     }
 
     /// يجلب ويدقق بيانات الطقس من جميع المزودين المتاحين.
     /// Fetches and validates weather data from all available providers.
+    ///
+    /// # Errors
+    /// Returns `WeatherError::NoReliableData` if no provider returns successful data,
+    /// or other `WeatherError` variants if deserialization/fetching fails per provider.
     pub async fn fetch_and_validate(
         &self,
         latitude: f64,
@@ -130,35 +136,37 @@ impl WeatherEngine {
 
         // منطق التدقيق والمقارنة (هنا نستخدم المتوسط)
         // Validation and comparison logic (here we use an average)
-        let count = successful_results.len() as f32;
-        let avg_temp = successful_results
-            .iter()
-            .map(|d| d.temperature_celsius)
-            .sum::<f32>()
-            / count;
-        let avg_humidity = successful_results
-            .iter()
-            .map(|d| d.humidity_percent)
-            .sum::<f32>()
-            / count;
-        let avg_wind = successful_results
-            .iter()
-            .map(|d| d.wind_speed_kmh)
-            .sum::<f32>()
-            / count;
-        let avg_precip = successful_results
-            .iter()
-            .map(|d| d.precipitation_mm)
-            .sum::<f32>()
-            / count;
+        let avg_temp = avg_f32(
+            &successful_results
+                .iter()
+                .map(|d| d.temperature_celsius)
+                .collect::<Vec<_>>(),
+        );
+        let avg_humidity = avg_f32(
+            &successful_results
+                .iter()
+                .map(|d| d.humidity_percent)
+                .collect::<Vec<_>>(),
+        );
+        let avg_wind = avg_f32(
+            &successful_results
+                .iter()
+                .map(|d| d.wind_speed_kmh)
+                .collect::<Vec<_>>(),
+        );
+        let avg_precip = avg_f32(
+            &successful_results
+                .iter()
+                .map(|d| d.precipitation_mm)
+                .collect::<Vec<_>>(),
+        );
 
         // اختيار رمز الطقس الأكثر شيوعًا
         // Choose the most common weather code
         let weather_code = successful_results
             .iter()
             .max_by_key(|d| d.weather_code)
-            .map(|d| d.weather_code)
-            .unwrap_or(0);
+            .map_or(0, |d| d.weather_code);
 
         Ok(WeatherData {
             temperature_celsius: avg_temp,
@@ -181,7 +189,14 @@ pub struct OpenMeteoProvider {
     client: reqwest::Client,
 }
 
+impl Default for OpenMeteoProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl OpenMeteoProvider {
+    #[must_use]
     pub fn new() -> Self {
         Self {
             client: reqwest::Client::new(),
@@ -212,8 +227,7 @@ impl WeatherProvider for OpenMeteoProvider {
         longitude: f64,
     ) -> Result<WeatherData, WeatherError> {
         let url = format!(
-            "https://api.open-meteo.com/v1/forecast?latitude={}&longitude={}&current_weather=true",
-            latitude, longitude
+            "https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}&current_weather=true"
         );
 
         let response = self
@@ -313,7 +327,7 @@ mod tests {
 
         let result = engine.fetch_and_validate(0.0, 0.0).await.unwrap();
 
-        assert_eq!(result.temperature_celsius, 25.0);
+        assert!((result.temperature_celsius - 25.0).abs() < f32::EPSILON);
     }
 
     #[tokio::test]
@@ -325,9 +339,9 @@ mod tests {
         let result = engine.fetch_and_validate(0.0, 0.0).await.unwrap();
 
         // Temperature should be the average of 25.0 and 15.0
-        assert_eq!(result.temperature_celsius, 20.0);
+        assert!((result.temperature_celsius - 20.0).abs() < f32::EPSILON);
         // Humidity should be the average of 40.0 and 80.0
-        assert_eq!(result.humidity_percent, 60.0);
+        assert!((result.humidity_percent - 60.0).abs() < f32::EPSILON);
         // Weather code should be the one from the rainy provider (higher number)
         assert_eq!(result.weather_code, 61);
     }
@@ -343,7 +357,7 @@ mod tests {
         let result = engine.fetch_and_validate(0.0, 0.0).await.unwrap();
 
         // The result should be based only on the successful provider
-        assert_eq!(result.temperature_celsius, 25.0);
+        assert!((result.temperature_celsius - 25.0).abs() < f32::EPSILON);
     }
 
     #[tokio::test]

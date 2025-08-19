@@ -26,9 +26,10 @@
     The file is designed as a central point for any external system or user interface wishing to display or analyze weather data.
     It can be integrated with a real weather engine or external service in the future.
 ******************************************************************************************/
+use crate::api::BearerToken;
 use crate::core::weather_val::WeatherData;
 use crate::security::jwt::JwtManager;
-use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
+use actix_web::{post, web, HttpResponse, Responder};
 use serde::Deserialize;
 
 /// نموذج الطلب لجلب بيانات الطقس.
@@ -45,17 +46,12 @@ pub struct WeatherSummaryRequest {
 /// Endpoint to get weather summary via POST /weather/summary
 #[post("/weather/summary")]
 pub async fn weather_summary(
-    req: HttpRequest, // الطلب الأصلي (للحصول على الهيدر)
-    // The original request (to extract headers)
     _payload: web::Json<WeatherSummaryRequest>, // بيانات الطلب (إحداثيات الموقع)
-                                                // Request payload (location coordinates)
+    // Request payload (location coordinates)
+    bearer: BearerToken,
 ) -> impl Responder {
-    // --- استخراج التوكن من الهيدر ---
-    // Extract the token from the header
-    let token = match req.headers().get("Authorization") {
-        Some(hv) => hv.to_str().unwrap_or("").replace("Bearer ", ""),
-        None => String::new(),
-    };
+    // --- استخراج التوكن من الهيدر عبر extractor ---
+    let token = bearer.0;
     if token.is_empty() {
         return HttpResponse::Unauthorized().body("Missing Authorization token");
     }
@@ -63,17 +59,16 @@ pub async fn weather_summary(
     // --- تحقق JWT عبر security فقط ---
     // JWT validation using the security module only
     let jwt_manager = JwtManager::new(
-        secrecy::Secret::new(
+        &secrecy::Secret::new(
             "a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string(),
         ),
         60,
         "my_app".to_string(),
         "user_service".to_string(),
     );
-    match jwt_manager.decode_token(&token) {
-        Ok(_) => {}
-        Err(_) => return HttpResponse::Unauthorized().body("Invalid or expired token"),
-    };
+    if jwt_manager.decode_token(&token).is_err() {
+        return HttpResponse::Unauthorized().body("Invalid or expired token");
+    }
 
     // --- منطق وهمي/اختباري لجلب بيانات الطقس (يمكن ربطه بمحرك الطقس لاحقًا) ---
     // Dummy/test logic for fetching weather data (can be connected to a real weather engine later)

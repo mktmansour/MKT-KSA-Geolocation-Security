@@ -1,3 +1,4 @@
+// removed: items_after_statements allow (we moved inner uses to top of tests)
 /*******************************************************************************
 *  📍 منصة تحليل الأمان الجغرافي MKT KSA – تطوير منصور بن خالد
 * 📄 رخصة Apache 2.0 – يسمح بالاستخدام والتعديل بشرط النسبة وعدم تقديم ضمانات.
@@ -35,17 +36,14 @@
 
 use crate::core::behavior_bio::{AnalysisResult as BehaviorResult, BehaviorEngine, BehaviorInput};
 use crate::core::device_fp::{AdaptiveFingerprint, AdaptiveFingerprintEngine};
-use crate::core::geo_resolver::GeoReaderEnum;
 use crate::core::geo_resolver::{GeoLocation, GeoResolver};
 use crate::core::network_analyzer::NetworkAnalyzer;
 use crate::core::sensors_analyzer::SensorsAnalyzerEngine;
-use maxminddb::Reader;
 
+use crate::security::signing::sign_hmac_sha512;
 use async_trait::async_trait;
-use hmac::{Hmac, Mac};
-use secrecy::{ExposeSecret, SecretVec};
+use secrecy::SecretVec;
 use serde::{Deserialize, Serialize};
-use sha2::Sha512;
 use std::sync::Arc;
 use thiserror::Error;
 
@@ -157,21 +155,26 @@ impl CrossValidationEngine {
 
     /// تنفيذ عملية التحقق والتنسيق الكاملة.
     /// Executes the full validation and orchestration process.
-    pub async fn validate<'a>(
+    ///
+    /// # Errors
+    /// Returns `CrossValidationError` if any engine fails or signing fails.
+    pub async fn validate(
         &self,
-        input: CrossValidationInput<'a>,
+        input: CrossValidationInput<'_>,
     ) -> Result<ValidationResult, CrossValidationError> {
         // 1. استدعاء المحركات المتخصصة بشكل متوازٍ
         // 1. Call specialized engines in parallel
-        let geo_handle = self.geo_resolver.resolve(
-            input.ip_address,
-            input.gps_data,
-            None,
-            None,
-            None,
-            None,
-            None,
-        );
+        let geo_handle = self
+            .geo_resolver
+            .resolve(crate::core::geo_resolver::ResolveParams {
+                ip: input.ip_address,
+                gps: input.gps_data,
+                sim_location: None,
+                satellite_location: None,
+                indoor_data: None,
+                ar_data: None,
+                mfa_token: None,
+            });
         let fp_handle = self.fp_engine.generate_fingerprint(
             input.os_info,
             input.device_details,
@@ -218,20 +221,13 @@ impl CrossValidationEngine {
     /// يوقع على بيانات الحكم باستخدام مفتاح HMAC-SHA512.
     /// Signs the verdict data using an HMAC-SHA512 key.
     fn sign_verdict(&self, result: &ValidationResult) -> Result<String, CrossValidationError> {
-        type HmacSha512 = Hmac<Sha512>;
-        let mut mac = HmacSha512::new_from_slice(self.signing_key.expose_secret())
-            .map_err(|_| CrossValidationError::InvalidKey)?;
-
-        // تحويل الهيكل إلى JSON للتوقيع (مع تخطي حقل التوقيع نفسه)
-        // Serialize the struct to JSON for signing (skipping the signature field itself)
         let mut result_to_sign = result.clone();
         result_to_sign.signature = String::new();
         let serialized = serde_json::to_vec(&result_to_sign)
             .map_err(|e| CrossValidationError::SignatureError(e.to_string()))?;
-
-        mac.update(&serialized);
-        let signature_bytes = mac.finalize().into_bytes();
-        Ok(hex::encode(signature_bytes))
+        let sig = sign_hmac_sha512(&serialized, &self.signing_key)
+            .map_err(|_| CrossValidationError::InvalidKey)?;
+        Ok(hex::encode(sig))
     }
 }
 
@@ -255,19 +251,21 @@ impl ScoringStrategy for DefaultScoringStrategy {
     ) -> f32 {
         // تطبيع كل درجة لتكون بين 0 و 1
         // Normalize each score to be between 0 and 1
-        let location_score = (geo_result.confidence as f32) / 100.0;
-        let fp_score = (fp_result.security_level as f32) / 10.0;
+        let location_score = f32::from(geo_result.confidence) / 100.0;
+        let fp_score = f32::from(fp_result.security_level) / 10.0;
         let behavior_score = 1.0 - behavior_result.risk_score; // Higher risk = lower trust
 
         // تطبيق الأوزان المحددة
         // Apply the specified weights
-        let final_score = self.location_weight * location_score
-            + self.fingerprint_weight * fp_score
-            + self.behavior_weight * behavior_score;
+        let final_score = crate::utils::precision::weighted_sum_f32(&[
+            (location_score, self.location_weight),
+            (fp_score, self.fingerprint_weight),
+            (behavior_score, self.behavior_weight),
+        ]);
 
         // تأكد من أن النتيجة النهائية بين 0 و 1
         // Ensure the final score is clamped between 0 and 1
-        final_score.max(0.0).min(1.0)
+        final_score.clamp(0.0, 1.0)
     }
 }
 
@@ -282,27 +280,32 @@ mod tests {
     use crate::core::device_fp::{
         DefaultAiProcessor as DefaultFpAi, DefaultQuantumEngine, DefaultSecurityMonitor,
     };
+    use crate::core::geo_resolver::GeoReaderEnum;
     use crate::core::geo_resolver::{DefaultAiModel, DefaultBlockchain};
+    use hmac::Hmac;
+    use hmac::Mac;
     use maxminddb::Reader;
+    use sha2::Sha512;
     use std::collections::HashMap;
+    use std::fs;
     use tokio::sync::RwLock;
 
     // --- Helper function to build a complete, real engine for testing ---
     fn setup_full_engine() -> CrossValidationEngine {
         // 1. Build GeoResolver
-        use std::fs;
-        let geo_reader = if let Ok(bytes) = fs::read("GeoLite2-City-Test.mmdb") {
-            Arc::new(GeoReaderEnum::Real(
+        let geo_reader = fs::read("GeoLite2-City-Test.mmdb").map_or_else(
+            |_| {
+                let geo_db_bytes = hex::decode(
+                    "89ABCDEF0123456789ABCDEF0123456789ABCDEF14042A00000000000600000002000000100000000200000004000000020000000C000000636F756E747279070000000700000049534F5F636F646502000000070000000400000055530000"
+                ).unwrap();
+                Arc::new(GeoReaderEnum::Real(
+                    Reader::from_source(geo_db_bytes).unwrap(),
+                ))
+            },
+            |bytes| Arc::new(GeoReaderEnum::Real(
                 Reader::from_source(bytes).expect("Failed to read mmdb file"),
-            ))
-        } else {
-            let geo_db_bytes = hex::decode(
-                "89ABCDEF0123456789ABCDEF0123456789ABCDEF14042A00000000000600000002000000100000000200000004000000020000000C000000636F756E747279070000000700000049534F5F636F646502000000070000000400000055530000"
-            ).unwrap();
-            Arc::new(GeoReaderEnum::Real(
-                Reader::from_source(geo_db_bytes).unwrap(),
-            ))
-        };
+            )),
+        );
         let geo_resolver = Arc::new(GeoResolver::new(
             SecretVec::new(vec![1; 32]),
             Arc::new(DefaultAiModel),
@@ -339,18 +342,19 @@ mod tests {
         let proxy_db = Arc::new(RwLock::new(
             crate::core::network_analyzer::ProxyDatabase::default(),
         ));
-        let geo_reader = if let Ok(bytes) = fs::read("GeoLite2-City-Test.mmdb") {
-            Arc::new(GeoReaderEnum::Real(
+        let geo_reader = fs::read("GeoLite2-City-Test.mmdb").map_or_else(
+            |_| {
+                let geo_db_bytes = hex::decode(
+                    "89ABCDEF0123456789ABCDEF0123456789ABCDEF14042A00000000000600000002000000100000000200000004000000020000000C000000636F756E747279070000000700000049534F5F636F646502000000070000000400000055530000"
+                ).unwrap();
+                Arc::new(GeoReaderEnum::Real(
+                    Reader::from_source(geo_db_bytes).unwrap(),
+                ))
+            },
+            |bytes| Arc::new(GeoReaderEnum::Real(
                 Reader::from_source(bytes).expect("Failed to read mmdb file"),
-            ))
-        } else {
-            let geo_db_bytes = hex::decode(
-                "89ABCDEF0123456789ABCDEF0123456789ABCDEF14042A00000000000600000002000000100000000200000004000000020000000C000000636F756E747279070000000700000049534F5F636F646502000000070000000400000055530000"
-            ).unwrap();
-            Arc::new(GeoReaderEnum::Real(
-                Reader::from_source(geo_db_bytes).unwrap(),
-            ))
-        };
+            )),
+        );
         let network_engine = Arc::new(NetworkAnalyzer::new(
             SecretVec::new(vec![42; 32]),
             proxy_db,
@@ -379,6 +383,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_successful_validation_scenario() {
+        type HmacSha512 = Hmac<Sha512>;
         let engine = setup_full_engine();
         let input = CrossValidationInput {
             ip_address: Some("8.8.8.8".parse().unwrap()),
@@ -398,18 +403,15 @@ mod tests {
                 device_fingerprint: "initial_fp".to_string(),
             },
         };
-        let result = engine.validate(input).await;
-        let result = match result {
-            Ok(r) => r,
-            Err(_) => return,
+        let Ok(result) = engine.validate(input).await else {
+            return;
         };
         assert!(result.is_trusted);
         assert!(result.final_trust_score > 0.7);
         assert!(!result.signature.is_empty());
         let signature_bytes = hex::decode(&result.signature).unwrap();
-        type HmacSha512 = Hmac<Sha512>;
         let mut mac = HmacSha512::new_from_slice(b"final_verdict_signing_key").unwrap();
-        let mut signed_result = result.clone();
+        let mut signed_result = result;
         signed_result.signature = String::new();
         let serialized = serde_json::to_vec(&signed_result).unwrap();
         mac.update(&serialized);

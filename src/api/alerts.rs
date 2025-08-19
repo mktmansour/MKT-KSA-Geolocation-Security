@@ -25,9 +25,10 @@
     and returns a JSON response with the operation status and alert data.
     The file is designed as a central point for managing security alerts, and can be integrated with a database or external notification systems in the future.
 ******************************************************************************************/
+use crate::api::BearerToken;
 use crate::db::models::SecurityAlert;
 use crate::security::jwt::JwtManager;
-use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
+use actix_web::{post, web, HttpResponse, Responder};
 use serde::Deserialize;
 use serde_json::json;
 use uuid::Uuid;
@@ -49,20 +50,14 @@ pub struct AlertTriggerRequest {
 }
 
 /// نقطة نهاية لإطلاق التنبيه الأمني عبر POST /alerts/trigger
-/// Endpoint to trigger a security alert via POST /alerts/trigger
 #[post("/alerts/trigger")]
 pub async fn trigger_alert(
-    req: HttpRequest, // الطلب الأصلي (للحصول على الهيدر)
-    // The original request (to extract headers)
     payload: web::Json<AlertTriggerRequest>, // بيانات الطلب (التنبيه)
-                                             // Request payload (alert data)
+    // Request payload (alert data)
+    bearer: BearerToken,
 ) -> impl Responder {
-    // --- استخراج التوكن من الهيدر ---
-    // Extract the token from the header
-    let token = match req.headers().get("Authorization") {
-        Some(hv) => hv.to_str().unwrap_or("").replace("Bearer ", ""),
-        None => String::new(),
-    };
+    // --- استخراج التوكن من الهيدر عبر extractor ---
+    let token = bearer.0;
     if token.is_empty() {
         return HttpResponse::Unauthorized().body("Missing Authorization token");
     }
@@ -70,18 +65,18 @@ pub async fn trigger_alert(
     // --- تحقق JWT عبر security فقط ---
     // JWT validation using the security module only
     // استخدام سر JWT من متغير البيئة مع قيمة افتراضية لضمان عدم كسر السلوك
-    let jwt_secret = std::env::var("JWT_SECRET")
-        .unwrap_or_else(|_| "a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string());
+    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
+        "a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string()
+    });
     let jwt_manager = JwtManager::new(
-        secrecy::Secret::new(jwt_secret),
+        &secrecy::Secret::new(jwt_secret),
         60,
         "my_app".to_string(),
         "user_service".to_string(),
     );
-    match jwt_manager.decode_token(&token) {
-        Ok(_) => {}
-        Err(_) => return HttpResponse::Unauthorized().body("Invalid or expired token"),
-    };
+    if jwt_manager.decode_token(&token).is_err() {
+        return HttpResponse::Unauthorized().body("Invalid or expired token");
+    }
 
     // --- بناء نموذج التنبيه ---
     // Build the alert model
@@ -101,12 +96,10 @@ pub async fn trigger_alert(
     // Dummy logic to save the alert (can be replaced with db::crud later)
     // TODO: استبدال هذا بمنطق حقيقي عند تفعيل دوال CRUD
     // TODO: Replace this with real logic when CRUD functions are enabled
-    let saved_alert = alert.clone();
-
     // --- إرجاع استجابة JSON موحدة ---
     // Return a unified JSON response
     HttpResponse::Ok().json(json!({
         "status": "alert_triggered",
-        "alert": saved_alert
+        "alert": alert
     }))
 }

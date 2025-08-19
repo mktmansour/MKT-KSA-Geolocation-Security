@@ -32,6 +32,8 @@
 ******************************************************************************************/
 
 use actix_web::web;
+use actix_web::{dev::Payload, FromRequest, HttpRequest};
+use std::future::{ready, Ready};
 
 // --- وحدات API الفرعية ---
 // --- API Sub-modules ---
@@ -44,6 +46,25 @@ pub mod geo;
 pub mod network;
 pub mod sensors;
 pub mod weather;
+
+/// Extractor موحّد للحصول على Bearer token من هيدر Authorization
+/// Unified extractor to fetch Bearer token from Authorization header
+pub struct BearerToken(pub String);
+
+impl FromRequest for BearerToken {
+    type Error = actix_web::Error;
+    type Future = Ready<Result<Self, Self::Error>>;
+
+    fn from_request(req: &HttpRequest, _payload: &mut Payload) -> Self::Future {
+        let token = req
+            .headers()
+            .get("Authorization")
+            .and_then(|hv| hv.to_str().ok())
+            .map(|s| s.trim_start_matches("Bearer ").to_string())
+            .unwrap_or_default();
+        ready(Ok(Self(token)))
+    }
+}
 
 /// Arabic: تقوم هذه الدالة بتسجيل جميع مسارات API في التطبيق.
 /// English: This function registers all API routes in the application.

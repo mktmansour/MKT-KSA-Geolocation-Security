@@ -24,8 +24,9 @@
     The file is designed as a central point for any external system or dashboard wishing to display system statistics securely and reliably.
     It can be integrated with the database in the future to fetch real statistics instead of static values.
 ******************************************************************************************/
+use crate::api::BearerToken;
 use crate::security::jwt::JwtManager;
-use actix_web::{get, HttpRequest, HttpResponse, Responder};
+use actix_web::{get, HttpResponse, Responder};
 use serde::Serialize;
 
 /// نموذج الاستجابة لملخص لوحة التحكم.
@@ -45,16 +46,9 @@ pub struct DashboardSummary {
 /// نقطة نهاية لعرض ملخص لوحة التحكم عبر GET /dashboard/summary
 /// Endpoint to show dashboard summary via GET /dashboard/summary
 #[get("/dashboard/summary")]
-pub async fn dashboard_summary(
-    req: HttpRequest, // الطلب الأصلي (للحصول على الهيدر)
-                      // The original request (to extract headers)
-) -> impl Responder {
-    // --- استخراج التوكن من الهيدر ---
-    // Extract the token from the header
-    let token = match req.headers().get("Authorization") {
-        Some(hv) => hv.to_str().unwrap_or("").replace("Bearer ", ""),
-        None => String::new(),
-    };
+pub async fn dashboard_summary(bearer: BearerToken) -> impl Responder {
+    // --- استخراج التوكن من الهيدر عبر extractor ---
+    let token = bearer.0;
     if token.is_empty() {
         return HttpResponse::Unauthorized().body("Missing Authorization token");
     }
@@ -62,17 +56,16 @@ pub async fn dashboard_summary(
     // --- تحقق JWT عبر security فقط ---
     // JWT validation using the security module only
     let jwt_manager = JwtManager::new(
-        secrecy::Secret::new(
+        &secrecy::Secret::new(
             "a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string(),
         ),
         60,
         "my_app".to_string(),
         "user_service".to_string(),
     );
-    match jwt_manager.decode_token(&token) {
-        Ok(_) => {}
-        Err(_) => return HttpResponse::Unauthorized().body("Invalid or expired token"),
-    };
+    if jwt_manager.decode_token(&token).is_err() {
+        return HttpResponse::Unauthorized().body("Invalid or expired token");
+    }
 
     // --- منطق وهمي للإحصائيات (يمكن ربطه بقاعدة البيانات لاحقًا) ---
     // Dummy logic for statistics (can be connected to the database later)

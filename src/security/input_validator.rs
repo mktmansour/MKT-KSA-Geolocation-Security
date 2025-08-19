@@ -28,9 +28,11 @@
 ******************************************************************************************/
 
 use ammonia::clean;
-use once_cell::sync::Lazy;
+// once_cell is no longer used for statics after switching to std::sync::LazyLock
 use regex::Regex;
-use unicode_normalization::{is_nfc, UnicodeNormalization};
+#[cfg(test)]
+use unicode_normalization::is_nfc;
+use unicode_normalization::UnicodeNormalization;
 use validator::ValidationError;
 
 // =========================================================================================
@@ -50,12 +52,12 @@ use validator::ValidationError;
 // =========================================================================================
 
 // --- Pre-compiled Regex for Performance ---
-static PHONE_RE: Lazy<Regex> = Lazy::new(|| {
+static PHONE_RE: std::sync::LazyLock<Regex> = std::sync::LazyLock::new(|| {
     // A simple international phone number regex
     Regex::new(r"^\+?[1-9]\d{1,14}$").unwrap()
 });
-static USERNAME_BLACKLIST: Lazy<Vec<&'static str>> =
-    Lazy::new(|| vec!["admin", "root", "administrator", "support", "superuser"]);
+static USERNAME_BLACKLIST: std::sync::LazyLock<Vec<&'static str>> =
+    std::sync::LazyLock::new(|| vec!["admin", "root", "administrator", "support", "superuser"]);
 
 // --- Sanitization Functions ---
 
@@ -66,6 +68,7 @@ static USERNAME_BLACKLIST: Lazy<Vec<&'static str>> =
 /// English: A central function to sanitize string inputs against XSS attacks.
 /// It uses the `ammonia` library to remove any malicious HTML or JS code.
 /// Only plain text is allowed, making it safe for display or storage.
+#[must_use]
 pub fn sanitize_text(input: &str) -> String {
     // A very strict setting: allows no HTML tags at all.
     clean(input)
@@ -76,6 +79,7 @@ pub fn sanitize_text(input: &str) -> String {
 ///
 /// English: An advanced function that normalizes the text encoding (to prevent Homoglyph attacks)
 /// and then sanitizes it. This is the recommended function for sensitive inputs like usernames.
+#[must_use]
 pub fn normalize_and_sanitize(text: &str) -> String {
     let normalized: String = text.nfc().collect();
     sanitize_text(&normalized)
@@ -88,6 +92,12 @@ pub fn normalize_and_sanitize(text: &str) -> String {
 ///
 /// English: A custom validation function for password strength.
 /// Requires: at least 8 characters, a lowercase letter, an uppercase letter, a digit, and a symbol.
+///
+/// # Panics
+/// This function does not intentionally panic. Internally compiled regexes may panic only if the patterns are invalid (compile-time constants here).
+///
+/// # Errors
+/// Returns `ValidationError` describing which policy rule failed.
 pub fn validate_password_strength(password: &str) -> Result<(), ValidationError> {
     // Break down the complex regex into individual checks for compatibility.
     let has_lowercase = Regex::new(r"[a-z]").unwrap().is_match(password);
@@ -109,9 +119,14 @@ pub fn validate_password_strength(password: &str) -> Result<(), ValidationError>
 }
 
 /// Arabic: دالة تحقق مخصصة لاسم المستخدم.
+///
 /// تتحقق من الطول وتحظر الأسماء الموجودة في القائمة السوداء.
 /// English: A custom validation function for usernames.
+///
 /// Checks length and prohibits names from the blacklist.
+///
+/// # Errors
+/// Returns `ValidationError` when length is out of range or username is blacklisted.
 pub fn validate_username(username: &str) -> Result<(), ValidationError> {
     if username.len() < 3 || username.len() > 24 {
         // TODO: Log failed username validation attempt (length).
@@ -129,6 +144,9 @@ pub fn validate_username(username: &str) -> Result<(), ValidationError> {
 
 /// Arabic: دالة تحقق مخصصة لصيغة رقم الهاتف الدولي.
 /// English: A custom validation function for international phone number format.
+///
+/// # Errors
+/// Returns `ValidationError` when the phone number does not match the expected E.164-like pattern.
 pub fn validate_phone_number(phone: &str) -> Result<(), ValidationError> {
     if !PHONE_RE.is_match(phone) {
         // TODO: Log failed phone number validation attempt.

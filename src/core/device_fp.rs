@@ -1,3 +1,4 @@
+// removed: global allow for unused_async; functions already adjusted
 /******************************************************************************************
   📍 منصة تحليل الأمان الجغرافي MKT KSA – تطوير منصور بن خالد
 * 📄 رخصة Apache 2.0 – يسمح بالاستخدام والتعديل بشرط النسبة وعدم تقديم ضمانات.
@@ -50,7 +51,6 @@ use std::time::Instant;
 
 use async_trait::async_trait;
 use blake3::Hasher;
-use once_cell::sync::Lazy;
 use secrecy::{ExposeSecret, SecretVec};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -91,7 +91,7 @@ pub enum FingerprintError {
 // الهياكل الرئيسية (دون تغيير جوهري)
 // Main Structures (No fundamental change)
 // ================================================================
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AdaptiveFingerprint {
     pub base_fp: String,
     pub adaptive_fp: String,
@@ -103,7 +103,7 @@ pub struct AdaptiveFingerprint {
     pub generation_time_us: u64,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct EnvironmentProfile {
     pub os_type: String,
     pub device_category: String,
@@ -111,7 +111,7 @@ pub struct EnvironmentProfile {
     pub resource_constraints: ResourceConstraints,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ResourceConstraints {
     pub max_memory_kb: u64,
     pub max_processing_us: u64,
@@ -175,6 +175,10 @@ impl AdaptiveFingerprintEngine {
 
     /// توليد بصمة متطورة
     /// Generate an advanced fingerprint
+    ///
+    /// # Errors
+    /// يعيد `FingerprintError` عند فشل الفحص الأمني، توليد البصمات، أو التوقيع بالذكاء الاصطناعي.
+    /// Returns `FingerprintError` if security scan, fingerprint generation, or AI signature fails.
     pub async fn generate_fingerprint(
         &self,
         os: &str,
@@ -189,24 +193,22 @@ impl AdaptiveFingerprintEngine {
 
         // 2. تحليل البيئة وتحديد ملف التعريف
         // 2. Analyze environment and determine profile
-        let env_type = self.detect_environment_type(environment_data);
-        let profiles = self.env_profiles.read().await;
-        let env_profile = profiles
+        let env_type = Self::detect_environment_type(environment_data);
+        let env_profile = self
+            .env_profiles
+            .read()
+            .await
             .get(&env_type)
             .cloned()
             .ok_or_else(|| FingerprintError::UnsupportedEnvironment(env_type.clone()))?;
 
         // 3. إنشاء البصمة الأساسية
         // 3. Create the base fingerprint
-        let base_fp = self
-            .create_base_fingerprint(os, device_info, &env_profile)
-            .await?;
+        let base_fp = self.create_base_fingerprint(os, device_info, &env_profile);
 
         // 4. إنشاء البصمة التكيفية
         // 4. Create the adaptive fingerprint
-        let adaptive_fp = self
-            .create_adaptive_fingerprint(&base_fp, &env_profile)
-            .await?;
+        let adaptive_fp = Self::create_adaptive_fingerprint(&base_fp, &env_profile);
 
         // 5. إنشاء توقيع الذكاء الاصطناعي
         // 5. Create the AI signature
@@ -230,12 +232,12 @@ impl AdaptiveFingerprintEngine {
     // --- وظائف مساعدة داخلية ---
     // --- Internal helper functions ---
 
-    async fn create_base_fingerprint(
+    fn create_base_fingerprint(
         &self,
         os: &str,
         device_info: &str,
-        profile: &EnvironmentProfile,
-    ) -> Result<String, FingerprintError> {
+        _profile: &EnvironmentProfile,
+    ) -> String {
         let mut hasher = Hasher::new();
         hasher.update(os.as_bytes());
         hasher.update(device_info.as_bytes());
@@ -245,14 +247,10 @@ impl AdaptiveFingerprintEngine {
         let key = self.quantum.get_secure_key();
         hasher.update(key.expose_secret());
 
-        Ok(hasher.finalize().to_hex().to_string())
+        hasher.finalize().to_hex().to_string()
     }
 
-    async fn create_adaptive_fingerprint(
-        &self,
-        base_fp: &str,
-        profile: &EnvironmentProfile,
-    ) -> Result<String, FingerprintError> {
+    fn create_adaptive_fingerprint(base_fp: &str, profile: &EnvironmentProfile) -> String {
         let mut hasher = Hasher::new();
         hasher.update(base_fp.as_bytes());
         // إضافة عوامل تكيفية من ملف تعريف البيئة
@@ -260,10 +258,10 @@ impl AdaptiveFingerprintEngine {
         hasher.update(&profile.threat_level.to_ne_bytes());
         hasher.update(profile.device_category.as_bytes());
 
-        Ok(hasher.finalize().to_hex().to_string())
+        hasher.finalize().to_hex().to_string()
     }
 
-    fn detect_environment_type(&self, data: &str) -> String {
+    fn detect_environment_type(data: &str) -> String {
         if data.contains("mobile") || data.contains("android") || data.contains("ios") {
             "mobile".to_string()
         } else if data.contains("iot") || data.contains("embedded") {
@@ -287,7 +285,14 @@ pub struct DefaultSecurityMonitor {
     security_level: RwLock<u8>,
 }
 
+impl Default for DefaultSecurityMonitor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DefaultSecurityMonitor {
+    #[must_use]
     pub fn new() -> Self {
         let mut db = HashMap::new();
         db.insert("rootkit".to_string(), 9);
@@ -302,12 +307,10 @@ impl DefaultSecurityMonitor {
 #[async_trait]
 impl SecurityMonitor for DefaultSecurityMonitor {
     async fn scan_environment(&self, os: &str, device_info: &str) -> Result<(), FingerprintError> {
-        let db = self.threat_database.read().await;
-        for (threat, _) in db.iter() {
+        for (threat, _) in self.threat_database.read().await.iter() {
             if os.contains(threat) || device_info.contains(threat) {
                 return Err(FingerprintError::SecurityThreat(format!(
-                    "{} detected",
-                    threat
+                    "{threat} detected"
                 )));
             }
         }
@@ -330,6 +333,9 @@ pub struct DefaultQuantumEngine {
 }
 
 impl DefaultQuantumEngine {
+    ///
+    /// # Errors
+    /// Returns `FingerprintError::QuantumInitFailed` if secure key generation fails.
     pub fn new() -> Result<Self, FingerprintError> {
         let mut key_bytes = [0u8; 64];
         getrandom::getrandom(&mut key_bytes)
@@ -426,13 +432,20 @@ impl FullEngine {
 
 // استخدام once_cell لضمان التهيئة لمرة واحدة فقط
 // Use once_cell to ensure one-time initialization
-static ENGINE: Lazy<Result<FullEngine, FingerprintError>> = Lazy::new(FullEngine::new);
+static ENGINE: std::sync::LazyLock<Result<FullEngine, FingerprintError>> =
+    std::sync::LazyLock::new(FullEngine::new);
 
 /// توليد بصمة (واجهة C) - الآن تستخدم النسخة الوحيدة
 /// Generate fingerprint (C interface) - now uses the singleton instance
-#[allow(clippy::not_unsafe_ptr_arg_deref)]
+///
+/// # Safety
+/// - يجب أن تكون المؤشرات `os`, `device_info`, `env_data` صالحة وغير فارغة وتشير إلى سلاسل C منتهية بـ NUL.
+/// - يجب أن تبقى الذاكرة المشار إليها صالحة طوال مدة النداء.
+/// - السلسلة المعادة يجب تحريرها عبر `free_fingerprint_string` فقط لتفادي تسرب الذاكرة.
+/// - This function expects valid NUL-terminated C strings and returns an owned C string that
+///   must be freed with `free_fingerprint_string`.
 #[no_mangle]
-pub extern "C" fn generate_adaptive_fingerprint(
+pub unsafe extern "C" fn generate_adaptive_fingerprint(
     os: *const std::ffi::c_char,
     device_info: *const std::ffi::c_char,
     env_data: *const std::ffi::c_char,
@@ -464,17 +477,18 @@ pub extern "C" fn generate_adaptive_fingerprint(
         Ok(CString::new(json)?)
     };
 
-    match result() {
-        Ok(cstring) => cstring.into_raw(),
-        Err(_) => std::ptr::null_mut(),
-    }
+    result().map_or(std::ptr::null_mut(), std::ffi::CString::into_raw)
 }
 
 /// تحرير الذاكرة
 /// Free memory
-#[allow(clippy::not_unsafe_ptr_arg_deref)]
+///
+/// # Safety
+/// - يجب تمرير مؤشر تم استلامه سابقاً من `generate_adaptive_fingerprint` فقط.
+/// - لا تستدعِ هذه الدالة بمؤشر تم تحريره مسبقاً أو مؤشر غير صالح.
+/// - The pointer must originate from `generate_adaptive_fingerprint` and be freed exactly once.
 #[no_mangle]
-pub extern "C" fn free_fingerprint_string(ptr: *mut std::ffi::c_char) {
+pub unsafe extern "C" fn free_fingerprint_string(ptr: *mut std::ffi::c_char) {
     if !ptr.is_null() {
         unsafe {
             let _ = CString::from_raw(ptr);
@@ -524,7 +538,8 @@ mod tests {
         fn get_secure_key(&self) -> &SecretVec<u8> {
             // استخدام lazy_static لضمان أن المفتاح الوهمي ثابت
             // Use lazy_static to ensure the mock key is constant
-            static MOCK_KEY: Lazy<SecretVec<u8>> = Lazy::new(|| SecretVec::new(vec![1; 32]));
+            static MOCK_KEY: std::sync::LazyLock<SecretVec<u8>> =
+                std::sync::LazyLock::new(|| SecretVec::new(vec![1; 32]));
             &MOCK_KEY
         }
         fn is_quantum_resistant(&self) -> bool {

@@ -22,7 +22,14 @@
 use anyhow::Error;
 
 /// Arabic: يقوم بتشفير البيانات باستخدام مفتاح مشترك. هذا تنفيذ وهمي.
+///
+/// # Errors
+/// قد يعيد خطأً في حال فشل التشفير (حالياً لا يفشل لأنه وهمي).
+///
 /// English: Encrypts data using a shared key. This is a dummy implementation.
+///
+/// # Errors
+/// Returns an error if encryption fails (currently never fails as it's a stub).
 pub fn aes_encrypt(data: &[u8], _key: &[u8]) -> Result<Vec<u8>, Error> {
     // TODO: Implement actual AES-256-GCM encryption
     Ok(data.to_vec())
@@ -30,9 +37,11 @@ pub fn aes_encrypt(data: &[u8], _key: &[u8]) -> Result<Vec<u8>, Error> {
 
 /// Arabic: يحسب المسافة بالكيلومترات بين نقطتي خط عرض وخط طول (صيغة هافرساين).
 /// هذا تنفيذ وهمي حاليًا.
+///
 /// English: Calculates the distance in kilometers between two lat/lon points (Haversine formula).
 /// This is currently a dummy implementation.
-pub fn calculate_distance(_lat1: f64, _lon1: f64, _lat2: f64, _lon2: f64) -> f64 {
+#[must_use]
+pub const fn calculate_distance(_lat1: f64, _lon1: f64, _lat2: f64, _lon2: f64) -> f64 {
     // TODO: Implement the actual Haversine formula for accurate distance calculation.
     // For now, returning 0.0 for compatibility.
     0.0

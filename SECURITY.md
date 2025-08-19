@@ -8,10 +8,23 @@
 
 | Version | Status      | Notes              |
 | ------- | ----------- | ------------------ |
-| 1.0.x   | 🟢 Supported| First official release |
+| 1.0.2   | 🟢 Current   | Current stable release |
+| 1.0.x   | 🟢 Supported | First official line |
 
 - Only the **latest stable** and **LTS** branches receive security patches.
 - Old versions (< 4.0) are **not maintained** for security fixes.
+
+---
+
+## 📦 Released Versions | الإصدارات المنشورة
+
+| Version | Arabic Highlights (مختصر) | English Highlights |
+| ------- | -------------------------- | ------------------ |
+| v1.0.2  | الإصدار الحالي؛ تنظيف Clippy بالكامل، تدقيق تبعيات، إضافة `security/signing.rs` و`utils/precision.rs`، تحديثات طفيفة؛ بدون OpenSSL | Current release; zero Clippy warnings, dependency audit, new `security/signing.rs` and `utils/precision.rs`, minor bumps; no OpenSSL |
+| v1.0.1  | تحسينات توثيق وCI/Docker واستقرار نقاط النهاية | Docs/CI/Docker improvements; API stabilization |
+| v1.0.0  | أول إصدار عام مستقر | First stable public release |
+
+> للمواعيد الدقيقة والتغييرات التفصيلية، راجع وسوم Git وGitHub Releases و`README`.
 
 ---
 
@@ -39,5 +52,5 @@ If you discover a security vulnerability, please follow these steps:
 ---
 
 **Thank you for helping keep our ecosystem secure!**  
-_MKT KSA Geolocation Security Team_
+_MKT KSA Geolocation Security Team (Current: v1.0.2)_
 

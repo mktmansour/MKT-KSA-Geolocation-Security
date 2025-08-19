@@ -92,16 +92,17 @@ impl FromStr for Role {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "user" => Ok(Role::User),
-            "trusted_user" => Ok(Role::TrustedUser),
-            "moderator" => Ok(Role::Moderator),
-            "admin" => Ok(Role::Admin),
+            "user" => Ok(Self::User),
+            "trusted_user" => Ok(Self::TrustedUser),
+            "moderator" => Ok(Self::Moderator),
+            "admin" => Ok(Self::Admin),
             _ => Err(()),
         }
     }
 }
 
 /// Arabic: "سياق السياسة" - يجمع كل المعلومات اللازمة لاتخاذ قرار أمني.
+///
 /// هذا هو أساس الانتقال من نظام RBAC البسيط إلى نظام ABAC الذكي.
 /// English: "Policy Context" - Gathers all necessary information to make a security decision.
 /// This is the foundation for moving from simple RBAC to smart ABAC.
@@ -122,10 +123,11 @@ pub struct PolicyContext<'a> {
 }
 
 /// Arabic: تعريف الإجراءات المختلفة التي يمكن للمستخدم القيام بها.
+///
 /// هذا يسمح بفحص الصلاحيات بشكل دقيق ومفصل.
 /// English: Defines the different actions a user can perform.
 /// This allows for granular and detailed permission checking.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Action<'a> {
     /// Arabic: قراءة المستخدم لبياناته الخاصة.
     /// English: User reading their own data.
@@ -158,6 +160,9 @@ impl PolicyEngine {
     /// يعيد سبب الرفض الدقيق في حالة الفشل.
     /// English: Checks if a user (based on their full context) can perform a specific action.
     /// Returns the exact reason for denial on failure.
+    ///
+    /// # Errors
+    /// Returns `PolicyError` on any denial reason.
     pub fn can_execute(context: &PolicyContext, action: &Action) -> Result<(), PolicyError> {
         // --- المرحلة الأولى: التحقق من حالة الحساب ---
         // --- Stage 1: Status Check ---
@@ -175,29 +180,27 @@ impl PolicyEngine {
 
         // --- المرحلة الثالثة: التحقق القائم على السياق (ABAC) ---
         // --- Stage 3: Context-Based Checks (ABAC) ---
-        match action {
-            Action::PerformSensitiveTransaction => {
-                let required_score = 0.9;
-                if context.trust_score < required_score {
-                    return Err(PolicyError::LowTrustScore(
-                        context.trust_score,
-                        required_score,
-                    ));
-                }
+        if action == &Action::PerformSensitiveTransaction {
+            let required_score = 0.9;
+            if context.trust_score < required_score {
+                return Err(PolicyError::LowTrustScore(
+                    context.trust_score,
+                    required_score,
+                ));
             }
-            _ => (), // لا توجد فحوصات أخرى لدرجة الثقة حاليًا
         }
 
         // --- المرحلة الرابعة: التحقق القائم على الأدوار (RBAC) ---
         // --- Stage 4: Role-Based Checks (RBAC) ---
         let has_permission = context.roles.iter().any(|role| match action {
             Action::ReadOwnData | Action::UpdateOwnProfile => true,
-            Action::ReadDeviceData { .. } => *role >= Role::Moderator,
+            Action::ReadDeviceData { .. } | Action::GenerateSecurityReport => {
+                *role >= Role::Moderator
+            }
             Action::ReadUserData { target_user_id } => {
                 &context.user_id == *target_user_id || *role >= Role::Moderator
             }
             Action::PerformSensitiveTransaction => *role >= Role::TrustedUser,
-            Action::GenerateSecurityReport => *role >= Role::Moderator,
         });
 
         if has_permission {

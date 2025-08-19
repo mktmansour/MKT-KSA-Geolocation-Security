@@ -33,12 +33,11 @@
     5.  Provide smart default implementations as a starting point for analysis.
 ******************************************************************************************/
 
+use crate::security::signing::sign_hmac_sha384;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use hmac::{Hmac, Mac};
-use secrecy::{ExposeSecret, SecretVec};
+use secrecy::SecretVec;
 use serde::{Deserialize, Serialize};
-use sha2::Sha384;
 use std::collections::HashMap;
 use std::sync::Arc;
 use thiserror::Error;
@@ -120,6 +119,9 @@ impl SensorsAnalyzerEngine {
 
     /// تنفيذ تحليل كامل لقراءة حساس واحدة.
     /// Executes a full analysis for a single sensor reading.
+    ///
+    /// # Errors
+    /// Returns `SensorError` if input is invalid, detector fails, or signature generation fails.
     pub async fn analyze(
         &self,
         reading: SensorReading,
@@ -127,7 +129,7 @@ impl SensorsAnalyzerEngine {
     ) -> Result<SensorAnalysisResult, SensorError> {
         // 1. التحقق من صحة المدخلات
         // 1. Validate the input
-        self.validate_reading(&reading)?;
+        Self::validate_reading(&reading)?;
 
         // 2. تحليل الشذوذ باستخدام الكاشف المحقون
         // 2. Analyze for anomalies using the injected detector
@@ -153,7 +155,7 @@ impl SensorsAnalyzerEngine {
 
     /// يتحقق من منطقية بيانات القراءة.
     /// Validates the logical sanity of the reading data.
-    fn validate_reading(&self, reading: &SensorReading) -> Result<(), SensorError> {
+    fn validate_reading(reading: &SensorReading) -> Result<(), SensorError> {
         if reading.sensor_type.trim().is_empty() {
             return Err(SensorError::InvalidData(
                 "Sensor type cannot be empty.".to_string(),
@@ -170,18 +172,13 @@ impl SensorsAnalyzerEngine {
     /// يوقع على نتيجة التحليل باستخدام مفتاح HMAC-SHA384.
     /// Signs the analysis result using an HMAC-SHA384 key.
     fn sign_result(&self, result: &SensorAnalysisResult) -> Result<String, SensorError> {
-        type HmacSha384 = Hmac<Sha384>;
-        let mut mac = HmacSha384::new_from_slice(self.signing_key.expose_secret())
-            .map_err(|_| SensorError::InvalidKey)?;
-
         let mut result_to_sign = result.clone();
         result_to_sign.signature = String::new();
         let serialized = serde_json::to_vec(&result_to_sign)
             .map_err(|e| SensorError::SignatureError(e.to_string()))?;
-
-        mac.update(&serialized);
-        let signature_bytes = mac.finalize().into_bytes();
-        Ok(hex::encode(signature_bytes))
+        let sig = sign_hmac_sha384(&serialized, &self.signing_key)
+            .map_err(|_| SensorError::InvalidKey)?;
+        Ok(hex::encode(sig))
     }
 }
 
@@ -209,7 +206,8 @@ impl Default for DefaultSensorAnomalyDetector {
 impl DefaultSensorAnomalyDetector {
     /// إنشاء كاشف افتراضي جديد مع عتبات محددة.
     /// Creates a new default detector with specific thresholds.
-    pub fn create(thresholds: HashMap<String, f64>) -> Self {
+    #[must_use]
+    pub const fn create(thresholds: HashMap<String, f64>) -> Self {
         Self {
             rate_change_thresholds: thresholds,
         }
@@ -233,8 +231,10 @@ impl SensorAnomalyDetector for DefaultSensorAnomalyDetector {
         let (mut score, mut reasoning) = (0.05, "Normal fluctuation.".to_string());
 
         if let Some(last) = last_reading {
-            let time_delta =
-                (current.timestamp - last.timestamp).num_milliseconds() as f64 / 1000.0;
+            let duration = (current.timestamp - last.timestamp)
+                .to_std()
+                .unwrap_or_else(|_| std::time::Duration::from_secs(0));
+            let time_delta = duration.as_secs_f64();
             if time_delta > 0.001 {
                 // تجنب القسمة على صفر
                 let value_delta = (current.value - last.value).abs();
@@ -251,8 +251,7 @@ impl SensorAnomalyDetector for DefaultSensorAnomalyDetector {
                 if rate_of_change > threshold {
                     score = 0.9;
                     reasoning = format!(
-                        "Anomaly: Unrealistic rate of change detected ({:.2} units/sec).",
-                        rate_of_change
+                        "Anomaly: Unrealistic rate of change detected ({rate_of_change:.2} units/sec)."
                     );
                 }
             }
@@ -269,6 +268,9 @@ impl SensorAnomalyDetector for DefaultSensorAnomalyDetector {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use hmac::{Hmac, Mac};
+    use secrecy::ExposeSecret;
+    use sha2::Sha384;
     use std::time::Duration;
 
     // --- Mock detector for precise testing ---
@@ -318,7 +320,7 @@ mod tests {
 
         let result = engine.analyze(reading, &[]).await.unwrap();
 
-        assert_eq!(result.anomaly_score, 0.95);
+        assert!((result.anomaly_score - 0.95).abs() < f32::EPSILON);
         assert!(result.is_tampered);
         assert!(result.reasoning.contains("mock"));
     }

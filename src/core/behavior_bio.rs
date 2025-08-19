@@ -36,8 +36,11 @@
     5.  Design for testability and integration with all project systems and AI.
 ******************************************************************************************/
 
+use crate::utils::precision::{speed_kmh, time_delta_secs};
 use async_trait::async_trait;
-use chrono::{DateTime, TimeZone, Timelike, Utc};
+#[cfg(test)]
+use chrono::TimeZone;
+use chrono::{DateTime, Timelike, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 use std::sync::Arc;
@@ -103,7 +106,7 @@ pub struct NetworkInfo {
 
 /// نتيجة تحليل السلوك.
 /// The result of a behavior analysis.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnalysisResult {
     pub risk_score: f32, // 0.0 (low) to 1.0 (high)
     pub risk_level: RiskLevel,
@@ -111,9 +114,18 @@ pub struct AnalysisResult {
     pub reasoning: String,
 }
 
+impl PartialEq for AnalysisResult {
+    fn eq(&self, other: &Self) -> bool {
+        self.risk_score == other.risk_score
+            && self.risk_level == other.risk_level
+            && self.anomaly_detected == other.anomaly_detected
+            && self.reasoning == other.reasoning
+    }
+}
+
 /// مستويات الخطورة الممكنة.
 /// Possible risk levels.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RiskLevel {
     None,
     Low,
@@ -182,6 +194,10 @@ impl BehaviorEngine {
 
     /// تنفيذ تحليل كامل لسلوك واحد.
     /// Executes a full analysis for a single behavior.
+    ///
+    /// # Errors
+    /// يعيد `BehaviorError` إذا فشلت مكونات الكشف أو النموذج أو الوصول إلى التاريخ.
+    /// Returns `BehaviorError` if detector/model fail or history access fails.
     pub async fn process(&self, input: BehaviorInput) -> Result<AnalysisResult, BehaviorError> {
         let history_guard = self.history.read().await;
 
@@ -193,7 +209,7 @@ impl BehaviorEngine {
         // 2. Behavioral model analysis to determine risk score
         let risk_score = self.model.analyze(&input, &history_guard).await?;
 
-        let risk_level = self.score_to_level(risk_score);
+        let risk_level = Self::score_to_level(risk_score);
 
         // 3. بناء النتيجة النهائية
         // 3. Construct the final result
@@ -213,13 +229,14 @@ impl BehaviorEngine {
             history_writer.pop_front();
         }
         history_writer.push_back(input);
+        drop(history_writer);
 
         Ok(result)
     }
 
     /// تحويل درجة الخطورة الرقمية إلى مستوى وصفي.
     /// Converts a numeric risk score to a descriptive level.
-    fn score_to_level(&self, score: f32) -> RiskLevel {
+    fn score_to_level(score: f32) -> RiskLevel {
         match score {
             s if s >= 0.9 => RiskLevel::Critical,
             s if s >= 0.7 => RiskLevel::High,
@@ -248,7 +265,7 @@ impl BehavioralModel for DefaultBehavioralModel {
         // 1. حساب درجة المخاطرة الأولية بناءً على القواعد
         // 1. Calculate initial risk score based on rules
         let mut score: f32 = 0.0;
-        if self.is_suspicious_time(current.timestamp) {
+        if Self::is_suspicious_time(current.timestamp) {
             score += 0.3;
         }
 
@@ -276,7 +293,7 @@ impl BehavioralModel for DefaultBehavioralModel {
 
 impl DefaultBehavioralModel {
     /// Checks if the event occurs at a suspicious time (e.g., late at night).
-    fn is_suspicious_time(&self, timestamp: DateTime<Utc>) -> bool {
+    fn is_suspicious_time(timestamp: DateTime<Utc>) -> bool {
         let hour = timestamp.hour();
         (0..=5).contains(&hour) // Between midnight and 5 AM
     }
@@ -297,26 +314,24 @@ impl AnomalyDetector for DefaultAnomalyDetector {
         current: &BehaviorInput,
         history: &VecDeque<BehaviorInput>,
     ) -> Result<Option<String>, BehaviorError> {
-        let last_behavior = match history.back() {
-            Some(b) => b,
-            None => return Ok(None), // لا يمكن التحليل بدون تاريخ
+        let Some(last_behavior) = history.back() else {
+            return Ok(None);
         };
 
         // فحص "الانتقال الآني" (Teleportation)
         // Check for "Teleportation"
         let distance_km = haversine_distance(current.location, last_behavior.location);
 
-        let time_diff_secs = current.timestamp.timestamp() - last_behavior.timestamp.timestamp();
-        if time_diff_secs <= 0 {
+        let secs = time_delta_secs(last_behavior.timestamp, current.timestamp);
+        if secs <= 0.0 {
             return Ok(None);
         }
 
-        let speed_kmh = distance_km / (time_diff_secs as f64 / 3600.0);
+        let speed_kmh = speed_kmh(distance_km, secs);
 
         if speed_kmh > self.max_speed_kmh {
             return Ok(Some(format!(
-                "Anomaly detected: Impossible travel speed of {:.2} km/h.",
-                speed_kmh
+                "Anomaly detected: Impossible travel speed of {speed_kmh:.2} km/h."
             )));
         }
 
@@ -327,17 +342,7 @@ impl AnomalyDetector for DefaultAnomalyDetector {
 /// دالة حساب المسافة بين نقطتين على الكرة الأرضية.
 /// Calculates the distance between two points on Earth.
 fn haversine_distance(p1: (f64, f64), p2: (f64, f64)) -> f64 {
-    const EARTH_RADIUS_KM: f64 = 6371.0;
-    let (lat1, lon1) = (p1.0.to_radians(), p1.1.to_radians());
-    let (lat2, lon2) = (p2.0.to_radians(), p2.1.to_radians());
-
-    let dlat = lat2 - lat1;
-    let dlon = lon2 - lon1;
-
-    let a = (dlat / 2.0).sin().powi(2) + lat1.cos() * lat2.cos() * (dlon / 2.0).sin().powi(2);
-    let c = 2.0 * a.sqrt().asin();
-
-    EARTH_RADIUS_KM * c
+    crate::utils::precision::haversine_km(p1.0, p1.1, p2.0, p2.1)
 }
 
 // ================================================================
@@ -351,10 +356,17 @@ pub struct UserService {
     // pool: Arc<PgPool>, // تم التعليق بعد التحويل إلى sea-orm
 }
 
+impl Default for UserService {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl UserService {
     /// Arabic: إنشاء نسخة جديدة من خدمة المستخدم.
     /// English: Creates a new instance of the user service.
-    pub fn new(// pool: Arc<PgPool>, // تم التعليق بعد التحويل إلى sea-orm
+    #[must_use]
+    pub const fn new(// pool: Arc<PgPool>, // تم التعليق بعد التحويل إلى sea-orm
     ) -> Self {
         Self {
             // pool, // تم التعليق بعد التحويل إلى sea-orm
@@ -363,7 +375,10 @@ impl UserService {
 
     /// Arabic: جلب بيانات ملف شخصي لمستخدم مع التحقق من الصلاحيات.
     /// English: Fetches a user's profile data, with permission checking.
-    pub async fn get_user_profile_data(
+    ///
+    /// # Errors
+    /// Returns `BehaviorError` when DB access or policy check fails (once implemented).
+    pub fn get_user_profile_data(
         &self,
         _requester_id: Uuid,
         _target_user_id: Uuid,
@@ -485,7 +500,7 @@ mod tests {
         let input = create_sample_input("user2");
         let result = engine.process(input).await.unwrap();
 
-        assert_eq!(result.risk_score, 0.95);
+        assert!((result.risk_score - 0.95).abs() < 1e-6);
         assert_eq!(result.risk_level, RiskLevel::Critical);
     }
 

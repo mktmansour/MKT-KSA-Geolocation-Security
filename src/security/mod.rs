@@ -35,3 +35,7 @@ pub mod jwt;
 pub mod policy;
 
 // تم حذف pub mod ratelimit; لأن الملف لم يعد موجودًا
+
+// Arabic: وحدة التواقيع عالية الأمان بدون OpenSSL
+// English: High-security signing utilities (no OpenSSL)
+pub mod signing;

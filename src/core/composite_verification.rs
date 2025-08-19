@@ -52,7 +52,18 @@ impl CompositeVerifier {
         // 1. تحقق جغرافي
         let geo_location = match &geo_input {
             Some((ip, gps)) => {
-                self.geo.resolve(Some(*ip), Some(*gps), None, None, None, None, None).await.map_err(|e| format!("Geo error: {e}"))?
+                self.geo
+                    .resolve(crate::core::geo_resolver::GeoResolver::ResolveParams {
+                        ip: Some(*ip),
+                        gps: Some(*gps),
+                        sim_location: None,
+                        satellite_location: None,
+                        indoor_data: None,
+                        ar_data: None,
+                        mfa_token: None,
+                    })
+                    .await
+                    .map_err(|e| format!("Geo error: {e}"))?
             },
             None => return Err("Geo input missing".to_string()),
         };

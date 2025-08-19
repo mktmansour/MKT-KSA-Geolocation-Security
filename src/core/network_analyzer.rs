@@ -38,7 +38,6 @@ use aes_gcm::aead::{Aead, KeyInit};
 use aes_gcm::AeadCore;
 use aes_gcm::{Aes256Gcm, Key};
 use async_trait::async_trait;
-use maxminddb::Reader;
 use secrecy::{ExposeSecret, SecretVec};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -116,12 +115,15 @@ pub struct ProxyDatabase {
 }
 
 impl ProxyDatabase {
+    #[must_use]
     pub fn is_vpn(&self, ip: &IpAddr) -> bool {
         self.vpn_ips.contains(ip)
     }
+    #[must_use]
     pub fn is_proxy(&self, ip: &IpAddr) -> bool {
         self.proxy_ips.contains(ip)
     }
+    #[must_use]
     pub fn is_tor(&self, ip: &IpAddr) -> bool {
         self.tor_nodes.contains(ip)
     }
@@ -180,6 +182,9 @@ impl NetworkAnalyzer {
 
     /// تنفيذ تحليل كامل للشبكة.
     /// Executes a full network analysis.
+    ///
+    /// # Errors
+    /// Returns `NetworkError` if the provider input is invalid or encryption fails.
     pub async fn analyze(
         &self,
         provider: &dyn NetworkInfoProvider,
@@ -204,7 +209,7 @@ impl NetworkAnalyzer {
 
         // 3. حساب درجة الأمان الأولية (مبدأ المنع)
         // 3. Calculate initial security score (Prevention principle)
-        let security_score = self.calculate_base_score(&concealment, &geo_location);
+        let security_score = Self::calculate_base_score(&concealment, geo_location.as_ref());
 
         // 4. تشفير الـ IP
         // 4. Encrypt the IP
@@ -225,25 +230,21 @@ impl NetworkAnalyzer {
         Ok(result)
     }
 
-    /// يحدد الموقع الجغرافي للـ IP باستخدام قاعدة بيانات MaxMind.
-    /// Geolocates an IP using the MaxMind database.
+    /// يحدد الموقع الجغرافي للـ IP باستخدام قاعدة بيانات `MaxMind`.
+    /// Geolocates an IP using the `MaxMind` database.
     fn geolocate_ip(&self, ip: &IpAddr) -> Option<GeoLocation> {
         let city_opt = self.geo_reader.lookup_city(*ip).ok()?;
-        let city_data = match city_opt { Some(c) => c, None => return None };
+        let city_data = city_opt?;
         Some(GeoLocation {
             country_iso: city_data.country?.iso_code?.to_string(),
-            city: city_data.city?.names?.get("en")?.to_string(),
+            city: (*city_data.city?.names?.get("en")?).to_string(),
             accuracy_radius_km: city_data.location?.accuracy_radius?,
         })
     }
 
     /// يحسب درجة الأمان بناءً على وجود أدوات تخفي.
     /// Calculates the security score based on the presence of concealment tools.
-    fn calculate_base_score(
-        &self,
-        concealment: &ConcealmentReport,
-        geo: &Option<GeoLocation>,
-    ) -> f32 {
+    fn calculate_base_score(concealment: &ConcealmentReport, geo: Option<&GeoLocation>) -> f32 {
         let mut score: f32 = 1.0;
         if concealment.is_vpn {
             score -= 0.4;
@@ -331,6 +332,8 @@ impl NetworkInfoProvider for MockNetworkProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use maxminddb::Reader;
+    use std::fs;
     use std::str::FromStr;
 
     // --- Helper function to build a test engine ---
@@ -342,19 +345,19 @@ mod tests {
         let proxy_db = Arc::new(RwLock::new(db));
 
         // 2. Load geo database: try file, fallback to hex
-        use std::fs;
-        let geo_reader = if let Ok(bytes) = fs::read("GeoLite2-City-Test.mmdb") {
-            Arc::new(crate::core::geo_resolver::GeoReaderEnum::Real(
+        let geo_reader = fs::read("GeoLite2-City-Test.mmdb").map_or_else(
+            |_| {
+                let geo_db_bytes = hex::decode(
+                    "89ABCDEF0123456789ABCDEF0123456789ABCDEF14042A00000000000600000002000000100000000200000004000000020000000C000000636F756E747279070000000700000049534F5F636F646502000000070000000400000055530000"
+                ).unwrap();
+                Arc::new(crate::core::geo_resolver::GeoReaderEnum::Real(
+                    Reader::from_source(geo_db_bytes).unwrap(),
+                ))
+            },
+            |bytes| Arc::new(crate::core::geo_resolver::GeoReaderEnum::Real(
                 Reader::from_source(bytes).expect("Failed to read mmdb file"),
-            ))
-        } else {
-            let geo_db_bytes = hex::decode(
-                "89ABCDEF0123456789ABCDEF0123456789ABCDEF14042A00000000000600000002000000100000000200000004000000020000000C000000636F756E747279070000000700000049534F5F636F646502000000070000000400000055530000"
-            ).unwrap();
-            Arc::new(crate::core::geo_resolver::GeoReaderEnum::Real(
-                Reader::from_source(geo_db_bytes).unwrap(),
-            ))
-        };
+            )),
+        );
 
         // 3. Setup other components
         let encryption_key = SecretVec::new(vec![42; 32]);
@@ -370,10 +373,8 @@ mod tests {
             ip: "8.8.8.8".parse().unwrap(),
             conn_type: ConnectionType::WiFi,
         };
-        let result = engine.analyze(&provider).await;
-        let result = match result {
-            Ok(r) => r,
-            Err(_) => return,
+        let Ok(result) = engine.analyze(&provider).await else {
+            return;
         };
         assert!(!result.concealment.is_vpn);
         assert!(!result.concealment.is_tor);

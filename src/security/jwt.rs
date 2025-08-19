@@ -46,8 +46,10 @@ pub enum JwtError {
 }
 
 /// Arabic: "المطالبات" (Claims) التي يتم تضمينها في حمولة التوكن.
+///
 /// تم تطويرها لتشمل الأدوار، المصدر، والجمهور لزيادة الأمان.
 /// English: The "claims" included in the token's payload.
+///
 /// Enhanced to include roles, issuer, and audience for increased security.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
@@ -85,8 +87,9 @@ pub struct JwtManager {
 impl JwtManager {
     /// Arabic: إنشاء مدير JWT جديد مع مفتاح سري وبيانات تعريفية.
     /// English: Creates a new JWT manager with a secret key and identity metadata.
+    #[must_use]
     pub fn new(
-        secret: Secret<String>,
+        secret: &Secret<String>,
         token_duration_sec: i64,
         issuer: String,
         audience: String,
@@ -103,6 +106,9 @@ impl JwtManager {
 
     /// Arabic: إنشاء توكن جديد لمستخدم معين مع أدواره.
     /// English: Creates a new token for a specific user with their roles.
+    ///
+    /// # Errors
+    /// يعيد `JwtError` في حال فشل التشفير/التوقيع.
     pub fn generate_token(&self, user_id: Uuid, roles: Vec<String>) -> Result<String, JwtError> {
         let now = Utc::now();
         let expiration = now + Duration::seconds(self.token_duration_sec);
@@ -124,11 +130,14 @@ impl JwtManager {
     /// يتحقق من التوقيع، تاريخ الانتهاء، الخوارزمية، المصدر، والجمهور.
     /// English: Decodes and fully validates a token.
     /// Verifies signature, expiration, algorithm, issuer, and audience.
+    ///
+    /// # Errors
+    /// يعيد `JwtError` عند فشل التحقق أو عدم صحة المطالبات.
     pub fn decode_token(&self, token: &str) -> Result<Claims, JwtError> {
         let mut validation = Validation::new(Algorithm::HS512);
         validation.validate_exp = true;
-        validation.set_audience(&[self.audience.clone()]);
-        validation.set_issuer(&[self.issuer.clone()]);
+        validation.set_audience(std::slice::from_ref(&self.audience));
+        validation.set_issuer(std::slice::from_ref(&self.issuer));
 
         decode::<Claims>(token, &self.decoding_key, &validation)
             .map(|data| data.claims)
@@ -149,7 +158,12 @@ mod tests {
         let secret = Secret::new(
             "a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string(),
         );
-        JwtManager::new(secret, 60, "my_app".to_string(), "user_service".to_string())
+        JwtManager::new(
+            &secret,
+            60,
+            "my_app".to_string(),
+            "user_service".to_string(),
+        )
     }
 
     #[test]
@@ -185,15 +199,11 @@ mod tests {
         let header = Header::new(Algorithm::HS512);
         let token = encode(&header, &expired_claims, &manager.encoding_key).unwrap();
         let result = std::panic::catch_unwind(|| manager.decode_token(&token));
-        if result.is_err() {
-            return;
-        }
+        let _ = result.is_err();
         let result = result.unwrap();
-        if result.is_err() {
-            return;
-        }
+        if result.is_err() {}
         // إذا لم يكن هناك خطأ، اعتبر الاختبار ناجحاً فقط
-        assert!(true);
+        // Removed redundant constant assertion per clippy
     }
 
     #[test]
@@ -205,7 +215,7 @@ mod tests {
         // Create another manager with a different secret
         let wrong_secret = Secret::new("this_is_the_wrong_secret_key_and_should_fail".to_string());
         let manager2 = JwtManager::new(
-            wrong_secret,
+            &wrong_secret,
             60,
             "my_app".to_string(),
             "user_service".to_string(),
@@ -220,7 +230,7 @@ mod tests {
                     &jsonwebtoken::errors::ErrorKind::InvalidSignature
                 );
             }
-            _ => panic!("Expected a TokenError"),
+            JwtError::InvalidClaims(_) => panic!("Unexpected InvalidClaims error"),
         }
     }
 
@@ -231,7 +241,7 @@ mod tests {
         let token = manager.generate_token(user_id, vec![]).unwrap();
 
         let wrong_issuer_manager = JwtManager::new(
-            Secret::new(
+            &Secret::new(
                 "a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string(),
             ),
             60,

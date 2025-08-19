@@ -34,3 +34,7 @@ pub mod helpers;
 // Arabic: وحدة التسجيل (Logging)
 // English: Logger module
 pub mod logger;
+
+// Arabic: وحدة الدقة والحسابات الرقمية والجغرافية
+// English: Precision and numeric/geo utilities module
+pub mod precision;
