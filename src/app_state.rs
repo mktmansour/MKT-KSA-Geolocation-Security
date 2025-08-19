@@ -8,5 +8,3 @@ pub struct AppState {
     pub x_engine: Arc<CrossValidationEngine>,
     pub db_pool: Option<Pool>,
 }
-
-

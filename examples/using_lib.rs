@@ -29,5 +29,3 @@ fn main() {
     let sig_hex = resolver.sign_location(&location).expect("sign");
     println!("Signed sample location, signature (hex): {sig_hex}");
 }
-
-

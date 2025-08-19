@@ -1,4 +1,4 @@
-/*! 
+/*!
 Arabic: الواجهة العامة لمكتبة MKT_KSA_Geolocation_Security
 
 توفر هذه المكتبة واجهات معيارية لاستخدام المحركات الأساسية (Core)، ووحدات الأمان (Security)،
@@ -20,11 +20,11 @@ Supported crate types:
 
 #![forbid(unsafe_op_in_unsafe_fn)]
 
+pub mod api;
 pub mod core;
+pub mod db;
 pub mod security;
 pub mod utils;
-pub mod db;
-pub mod api;
 
 // Re-export AppState to make API handlers importable from the lib root when needed
 pub mod app_state;
@@ -34,5 +34,3 @@ pub use app_state::AppState;
 pub use crate::core::geo_resolver::{GeoLocation, GeoResolver};
 pub use crate::security::signing;
 pub use crate::utils::precision;
-
-

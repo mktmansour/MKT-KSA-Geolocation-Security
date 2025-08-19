@@ -37,8 +37,7 @@
 
 // Arabic: استخدام وحدات المكتبة العامة بدل تضمينها في الثنائي
 // English: Use library modules instead of re-declaring them in the bin target
-use mkt_ksa_geo_sec as lib;
-use mkt_ksa_geo_sec::{api, core, db, security, utils};
+use mkt_ksa_geo_sec::api;
 
 use actix_web::{web, App, HttpServer};
 use config::Config;
@@ -52,13 +51,17 @@ use tokio::sync::RwLock;
 
 // --- استيراد شامل لجميع المحركات وتبعياتها ---
 // --- Comprehensive import of all engines and their dependencies ---
-use mkt_ksa_geo_sec::core::behavior_bio::{BehaviorEngine, DefaultAnomalyDetector, DefaultBehavioralModel};
+use mkt_ksa_geo_sec::core::behavior_bio::{
+    BehaviorEngine, DefaultAnomalyDetector, DefaultBehavioralModel,
+};
 use mkt_ksa_geo_sec::core::cross_location::{CrossValidationEngine, DefaultScoringStrategy};
 use mkt_ksa_geo_sec::core::device_fp::{
     AdaptiveFingerprintEngine, DefaultAiProcessor as FpAiProcessor, DefaultQuantumEngine,
     DefaultSecurityMonitor,
 };
-use mkt_ksa_geo_sec::core::geo_resolver::{DefaultAiModel as GeoAiModel, DefaultBlockchain, GeoResolver};
+use mkt_ksa_geo_sec::core::geo_resolver::{
+    DefaultAiModel as GeoAiModel, DefaultBlockchain, GeoResolver,
+};
 use mkt_ksa_geo_sec::core::network_analyzer::NetworkAnalyzer;
 use mkt_ksa_geo_sec::core::sensors_analyzer::SensorsAnalyzerEngine;
 // إذا فعّلت النسخة من GitHub استخدم:

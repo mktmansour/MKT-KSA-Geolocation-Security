@@ -2,9 +2,8 @@
 **مكتبة التحقق الجغرافي والأمني السعودي الذكية – MKT KSA 🇸🇦**
 **Smart Saudi Geolocation & Security Library** 
 > 🔐 Rust | 🛰️ Smart Security | 🏙️ Smart City Ready | 📄 Apache 2.0 |  Developed by Mansour Bin Khalid (KSA 🇸🇦)
-> 
- [![Build](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/rust.yml/badge.svg?branch=main)](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/rust.yml)
 
+[![Rust](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/rust.yml/badge.svg?branch=main)](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/rust.yml)  
 [![Crates.io](https://img.shields.io/crates/v/MKT_KSA_Geolocation_Security.svg?style=for-the-badge)](https://crates.io/crates/MKT_KSA_Geolocation_Security)
 [![Docs.rs](https://img.shields.io/docsrs/MKT_KSA_Geolocation_Security?style=for-the-badge)](https://docs.rs/MKT_KSA_Geolocation_Security)
 [![Downloads](https://img.shields.io/crates/d/MKT_KSA_Geolocation_Security.svg?style=for-the-badge)](https://crates.io/crates/MKT_KSA_Geolocation_Security)
@@ -13,8 +12,6 @@
 ![Audit](https://img.shields.io/badge/audit-clean-success?style=for-the-badge)
 ![Maintenance](https://img.shields.io/badge/maintenance-actively%20maintained-success?style=for-the-badge)
 ![Edition](https://img.shields.io/badge/edition-2021-blue?style=for-the-badge)
-![Made in KSA](https://img.shields.io/badge/Made_in-KSA-006c35?style=for-the-badge)
-![Post‑Quantum](https://img.shields.io/badge/Post--Quantum-ready-8A2BE2?style=for-the-badge)
 ---
 <img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/ffe24b4e-fc3f-4203-8c4a-08633ae43488" />
 
@@ -23,6 +20,8 @@
 * [🗺️ نبذة عن المشروع | Project Overview](#-نبذة-عن-المشروع--project-overview)
 * [📂 الملفات الأساسية | Main Files](#-الملفات-الأساسية--main-files)
 * [🧩 الثوابت والدوال | Constants & Functions](#-الثوابت-والدوال--constants--functions)
+  * [🖊️ دوال التواقيع | Signing Module Functions](#-دوال-التواقيع--signing-module-functions)
+  * [⏱️ دوال الدقة | Precision Module Functions](#-دوال-الدقة--precision-module-functions)
 * [🔑 المفاتيح ونقاط النهاية | Config & Endpoints](#-المفاتيح-ونقاط-النهاية--config--endpoints)
 * [🧭 البنية المعمارية | Architecture](#-البنية-المعمارية--architecture)
 * [🛠️ أمثلة التحقق | Verification Examples](#-أمثلة-التحقق--verification-examples)
@@ -38,6 +37,12 @@
 * [⭐ مزايا المشروع | Features](#-مزايا-المشروع--features)
 * [🧠 دليل المطور | Developer Guide](#-دليل-المطور--developer-guide)
 * [📈 ملخص الحالة الفنية | System State](#-ملخص-الحالة-الفنية--system-state)
+* [📝 ملاحظات الإصدار v1.0.2 | Release Notes v1.0.2](#-ملاحظات-الإصدار-v102--release-notes-v102)
+  * [🔧 تغييرات التواقيع الداخلية | Internal Signature Changes](#-تغييرات-التواقيع-الداخلية-دون-تأثير-على-المنطقمسارات--internal-signature-changes-no-behaviorroute-changes)
+  * [📑 مرجع التواقيع الحالية | Current Signatures Reference](#-مرجع-التواقيع-الحالية--current-signatures-reference)
+  * [🧹 تنسيق وفحوص إضافية | Formatting and Extra Checks](#-تنسيق-وفحوص-إضافية--formatting-and-extra-checks)
+* [📦 استخدام المكتبة من Rust | Using as a Rust library](#-استخدام-المكتبة-من-rust--using-as-a-rust-library)
+* [🔗 الربط عبر C-ABI للغات الأخرى | Linking via C-ABI](#-الربط-عبر-c-abi-للغات-الأخرى--linking-via-c-abi)
 
 ---
 
@@ -127,6 +132,30 @@ It uses geolocation, behavioral analytics, device fingerprinting, and AI-driven 
 
 ---
 
+### 🖊️ دوال التواقيع | Signing Module Functions
+
+| اسم الدالة                | Function Name                 | التوقيع / Signature                                                | مكان التعريف / Defined In           | الوصف (عربي)                               | Description (English)                          |
+| ------------------------- | ---------------------------- | ------------------------------------------------------------------ | ----------------------------------- | ------------------------------------------- | --------------------------------------------- |
+| sign_hmac_sha512          | sign_hmac_sha512             | fn sign_hmac_sha512(data: &[u8], key: &SecretVec<u8>) -> Result<Vec<u8>, SigningError> | src/security/signing.rs             | توقيع HMAC-SHA512 لبايتات البيانات          | HMAC-SHA512 signature over bytes               |
+| verify_hmac_sha512        | verify_hmac_sha512           | fn verify_hmac_sha512(data: &[u8], sig: &[u8], key: &SecretVec<u8>) -> bool            | src/security/signing.rs             | تحقق HMAC-SHA512                             | Verifies HMAC-SHA512                           |
+| sign_hmac_sha384          | sign_hmac_sha384             | fn sign_hmac_sha384(data: &[u8], key: &SecretVec<u8>) -> Result<Vec<u8>, SigningError> | src/security/signing.rs             | توقيع HMAC-SHA384                            | HMAC-SHA384 signature                          |
+| verify_hmac_sha384        | verify_hmac_sha384           | fn verify_hmac_sha384(data: &[u8], sig: &[u8], key: &SecretVec<u8>) -> bool            | src/security/signing.rs             | تحقق HMAC-SHA384                             | Verifies HMAC-SHA384                           |
+| sign_struct_excluding_field | sign_struct_excluding_field | fn sign_struct_excluding_field<T: Serialize>(value: &T, exclude_field: &str, key: &SecretVec<u8>) -> Result<Vec<u8>, SigningError> | src/security/signing.rs | توقيع هيكل متسلسل مع استثناء حقل              | Sign serializable struct excluding one field   |
+| verify_struct_excluding_field | verify_struct_excluding_field | fn verify_struct_excluding_field<T: Serialize>(value: &T, exclude_field: &str, sig: &[u8], key: &SecretVec<u8>) -> bool | src/security/signing.rs | تحقق من هيكل متسلسل مع استثناء حقل            | Verify serializable struct excluding one field |
+
+---
+
+### ⏱️ دوال الدقة | Precision Module Functions
+
+| اسم الدالة             | Function Name             | التوقيع / Signature                                                                 | مكان التعريف / Defined In      | الوصف (عربي)                                   | Description (English)                              |
+| ---------------------- | ------------------------ | ----------------------------------------------------------------------------------- | ------------------------------ | ----------------------------------------------- | ------------------------------------------------- |
+| time_delta_secs        | time_delta_secs          | fn time_delta_secs(start: DateTime<Utc>, end: DateTime<Utc>) -> f64                 | src/utils/precision.rs         | فرق الزمن بالثواني (حماية من القيم السالبة)     | Time delta in seconds (with negative guard)        |
+| time_delta_secs_high_res | time_delta_secs_high_res | fn time_delta_secs_high_res(start: DateTime<Utc>, end: DateTime<Utc>) -> f64       | src/utils/precision.rs         | فرق زمن عالي الدقة (ثوانٍ + نانوثوانٍ)         | High-resolution time delta (secs + nanos)          |
+| avg_f32                | avg_f32                  | fn avg_f32(values: &[f32]) -> f32                                                  | src/utils/precision.rs         | متوسط f32 بتجميع داخلي f64                      | f32 average using internal f64 accumulation        |
+| haversine_km           | haversine_km             | fn haversine_km(a: (f64, f64), b: (f64, f64)) -> f64                               | src/utils/precision.rs         | مسافة هافرسين بالكيلومترات                     | Haversine distance in kilometers                   |
+| speed_kmh              | speed_kmh                | fn speed_kmh(distance_km: f64, seconds: f64) -> f64                                | src/utils/precision.rs         | سرعة كم/س مع حماية القسمة على صفر               | Speed (km/h) with division-by-zero guard           |
+| weighted_sum_f64       | weighted_sum_f64         | fn weighted_sum_f64(values: &[f64], weights: &[f64]) -> Option<f64>               | src/utils/precision.rs         | مجموع موزون f64 (يرجع None عند عدم التطابق)    | Weighted sum (f64), None if lengths mismatch       |
+| rate_of_change_f64     | rate_of_change_f64       | fn rate_of_change_f64(value_delta: f64, seconds: f64) -> f64                       | src/utils/precision.rs         | معدل التغير (قيمة/ثانية) مع حماية القسمة        | Rate of change per second with zero-division guard |
 ### 🔷 الواجهات (Traits) الرئيسية | Main Traits
 
 | اسم الواجهة              | Trait Name                | التوقيع / Signature                        | مكان التعريف / Defined In           | الوصف (عربي)                       | Description (English)                       |
@@ -562,8 +591,47 @@ if !access_granted {
 | `v2_0`                | Enables compatibility with API version 2.0 (default for most modules).                       |
 | `v3_0`                | Enables next-gen modules for upcoming API version 3.0.                                       |
 | `zkp`                 | Adds support for Zero-Knowledge Proofs for privacy-preserving validation and access control. |
+
+---
+
+## 📦 استخدام المكتبة من Rust | Using as a Rust library
+
+```toml
+[dependencies]
+mkt_ksa = { git = "https://github.com/mktmansour/MKT-KSA-Geolocation-Security" }
 ```
 
+```rust
+use mkt_ksa::core::geo_resolver::GeoResolver;
+use secrecy::SecretVec;
+use std::sync::Arc;
+
+let resolver = GeoResolver::new(
+    SecretVec::new(vec![1; 32]),
+    Arc::new(mkt_ksa::core::geo_resolver::DefaultAiModel),
+    Arc::new(mkt_ksa::core::geo_resolver::DefaultBlockchain),
+    true,
+    false,
+    Arc::new(mkt_ksa::core::geo_resolver::GeoReaderEnum::Mock(
+        mkt_ksa::core::geo_resolver::MockGeoReader::new(),
+    )),
+);
+```
+
+## 🔗 الربط عبر C-ABI للغات الأخرى | Linking via C-ABI
+
+- المكتبة تُبنى كـ `cdylib/staticlib` ويمكن استدعاؤها من C/C++/Python/.NET/Java/Go.
+- دوال التصدير الحالية:
+  - `generate_adaptive_fingerprint(os: *const c_char, device_info: *const c_char, env_data: *const c_char) -> *mut c_char`
+  - `free_fingerprint_string(ptr: *mut c_char)`
+
+مثال C مختصر:
+
+```c
+// usage (header generated via cbindgen)
+char* fp = generate_adaptive_fingerprint("Windows", "LaptopX", "Office");
+printf("%s\n", fp);
+free_fingerprint_string(fp);
 ```
 
 #### 💡 نصائح متقدمة | Advanced Tips
@@ -571,3 +639,135 @@ if !access_granted {
 * جميع المحركات قابلة للحقن أو الاستبدال
 * حرية تخصيص كاملة (الجلسة/الجهاز/الدور)
 * أمثلة ودوال وثوابت كلها موثقة عربي/إن
+
+---
+
+## 📝 ملاحظات الإصدار v1.0.2 | Release Notes v1.0.2
+
+- **المستوى/Severity**: منخفض إلى متوسط – تحسينات جودة وكود وتنظيف لِنتر دون تغييرات سلوكية عامة.
+- **إصلاحات رئيسية (عربي/English):**
+  - تطبيق كامل وصارم لـ Clippy مع -D warnings على جميع الأهداف، وتنظيف كل التحذيرات. | Full, strict Clippy pass with -D warnings; all warnings cleaned.
+  - توحيد أنماط استخراج JWT من الهيدر في طبقة API واستخدام let-else حيث يلزم. | Unified JWT extraction patterns in API and used let-else where appropriate.
+  - إضافة #[allow(...)] موضعي فقط حيث قد يؤثر التغيير على واجهات عامة أو منطق استدعاء قائم. | Localized #[allow(...)] only where API/behavior preservation is critical.
+  - توثيق #Errors/#Panics في دوال نتيجة ومواضع حرجة. | Added #Errors/#Panics docs in critical Result-returning functions.
+  - تحسينات Floating-Point وsuboptimal_flops بتمكين/تكميم انتقائي دون تغيير السلوك. | Addressed floating-point hints with targeted allows without behavior changes.
+  - إصلاح تحذيرات unused_async/unused_self في دوال داخلية وتجريبية. | Fixed unused_async/unused_self in internal/experimental functions.
+  - ضمان عدم تغيير الواجهات العامة، وعدم حذف أي منطق أو ملفات. | Guaranteed no public API changes or logic/file removals.
+- **الاختبارات/Tests**: 37/37 ناجحة. | 37/37 tests passing.
+- **Clippy**: نظيف بالكامل. | Fully clean.
+- **التبعيات/Dependencies**:
+  - لم يتم تغيير نسخ الحزم الإنتاجية. | No production dependency versions changed.
+  - ملاحظة: توجد نسخ مزدوجة لبعض الحزم بشكل ترانزيتيف (مثل base64/http/lru/windows-sys)، إبقاؤها كان مقصودًا لتجنب كسر التوافق. | Note: some duplicate transitive versions remain; intentionally kept to avoid breaking changes.
+  - cargo audit: تحذير مسموح لحزمة `rust-ini` (yanked) عبر `config`؛ لا يؤثر وظيفيًا (اعتماد ترانزيتيف فقط)؛ موثّق للمراجعة اللاحقة. | cargo audit: allowed warning for `rust-ini` (yanked) via `config`; non-functional impact (transitive only); documented for later review.
+
+#### 🔄 تغييرات التبعيات (هذه الجلسة) | Dependency Changes (this session)
+- **تمت الإزالة | Removed**:
+  - `once_cell`, `lazy_static`: استُبدلت باستعمال `std::sync::LazyLock`. | Replaced by `std::sync::LazyLock`.
+  - `serde_derive`: غير لازمة لأن `serde` مفعّل بميزة `derive`. | Redundant since `serde` has `derive` feature enabled.
+- **تم التحديث | Updated**:
+  - `reqwest`: 0.12.22 → 0.12.23 (Rustls, تصحيحات طفيفة). | minor patch with Rustls.
+  - `pqcrypto-mlkem`: 0.1.0 → 0.1.1.
+- **تعديلات ترانزيتيف | Transitive adjustments**:
+  - `async-trait`، `hyper`، `thiserror`، وغيرها تَحدّثت تلقائياً ضمن القيود. | auto-updated within constraints.
+
+#### 🆕 ملفات أُنشئت | New Files Created
+- `src/security/signing.rs`: وحدة توقيعات/HMAC مركزية عالية الأمان (بدون OpenSSL). | Central high-security HMAC signing module (no OpenSSL).
+- `src/utils/precision.rs`: وحدة دقة للأزمنة والحسابات العددية/الجغرافية. | Precision utilities for time/numeric/geo.
+
+### 🔧 تغييرات التواقيع الداخلية (دون تأثير على المنطق/المسارات) | Internal Signature Changes (no behavior/route changes)
+
+- **طبقة API** (`src/api/*.rs`):
+  - اعتماد extractors بدل `HttpRequest`: استخدام `web::Data<AppState>`, `web::Json<...>`, و`BearerToken` لتأمين الـ futures (Send-safe) وتنظيف التواقيع.
+- **محرك الجغرافيا** (`src/core/geo_resolver.rs`):
+  - الدالة `resolve` تستقبل الآن `ResolveParams` بدل قائمة معاملات طويلة؛ تم تحديث جميع مواقع الاستدعاء.
+- **التحليل السلوكي** (`src/core/behavior_bio.rs`):
+  - `get_user_profile_data` أصبحت متزامنة (تمت إزالة `async` لعدم وجود `await`)، وتم تحديث الاستدعاء في `src/api/auth.rs` (إزالة `.await`).
+- **بصمة الجهاز/FFI** (`src/core/device_fp.rs`):
+  - دوال الربط C أصبحت `unsafe extern "C"` مع توثيق `# Safety`، دون تغيير منطق التنفيذ.
+
+#### 📑 مرجع التواقيع الحالية | Current Signatures Reference
+
+- **واجهات API | API Handlers**
+
+```rust
+pub async fn trigger_alert(
+    payload: web::Json<AlertTriggerRequest>,
+    bearer: BearerToken,
+) -> impl Responder;
+
+pub async fn analyze_behavior(
+    app_data: web::Data<AppState>,
+    payload: web::Json<BehaviorAnalyzeRequest>,
+    bearer: BearerToken,
+) -> impl Responder;
+
+pub async fn dashboard_summary(bearer: BearerToken) -> impl Responder;
+
+pub async fn resolve_device(
+    app_data: web::Data<AppState>,
+    payload: web::Json<DeviceResolveRequest>,
+    bearer: BearerToken,
+) -> impl Responder;
+
+pub async fn resolve_geo(
+    app_data: web::Data<AppState>,
+    payload: web::Json<GeoResolveRequest>,
+    bearer: BearerToken,
+) -> impl Responder;
+
+pub async fn analyze_network(
+    app_data: web::Data<AppState>,
+    payload: web::Json<NetworkAnalyzeRequest>,
+    bearer: BearerToken,
+) -> impl Responder;
+
+pub async fn analyze_sensors(
+    app_data: web::Data<AppState>,
+    payload: web::Json<SensorsAnalyzeRequest>,
+    bearer: BearerToken,
+) -> impl Responder;
+
+pub async fn weather_summary(
+    _payload: web::Json<WeatherSummaryRequest>,
+    bearer: BearerToken,
+) -> impl Responder;
+```
+
+- **النواة | Core**
+
+```rust
+impl GeoResolver {
+    pub async fn resolve(
+        &self,
+        params: ResolveParams,
+    ) -> Result<GeoLocation, GeoResolverError>;
+}
+
+impl UserService {
+    pub fn get_user_profile_data(
+        &self,
+        _requester_id: Uuid,
+        _target_user_id: Uuid,
+    ) -> Result<User, BehaviorError>;
+}
+```
+
+- **سطح FFI (توافق C) | FFI Surface (C ABI)**
+
+```rust
+pub unsafe extern "C" fn generate_adaptive_fingerprint(
+    os: *const c_char,
+    device_info: *const c_char,
+    env_data: *const c_char,
+) -> *mut c_char;
+
+pub unsafe extern "C" fn free_fingerprint_string(ptr: *mut c_char);
+```
+
+### 🧹 تنسيق وفحوص إضافية | Formatting and Extra Checks
+- تم تطبيق `cargo fmt --all` لتنظيف الفروقات التنسيقية التي أظهرها `--check`.
+- نتائج `cargo tree -d` تُظهر ازدواجيات ترانزيتيف مقبولة حالياً: `base64 (0.21/0.22)`, `http (0.2/1.x)`, `lru (0.14/0.16)`, `hashbrown (0.14/0.15)`, `socket2 (0.5/0.6)`, `windows-sys (0.52/0.59)`.
+
+---
+
+```
