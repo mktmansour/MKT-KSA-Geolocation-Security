@@ -620,6 +620,51 @@ char* fp = generate_adaptive_fingerprint("Windows", "LaptopX", "Office");
 printf("%s\n", fp);
 free_fingerprint_string(fp);
 ```
+---
+
+## 🌐 Multi-language Support
+
+- The library is language-agnostic and fits all projects through three parallel paths:
+  - **C-ABI**: Direct binding via `mkt_ksa_geo_sec.h` and `cdylib/staticlib` (recommended for performance).
+  - **REST API**: When network-based integration is preferred.
+  - **Official wrappers (planned)**: Python/Java/.NET/Node/Go. Meanwhile, use C-ABI directly as below.
+
+### Python (ctypes)
+```python
+import ctypes
+lib = ctypes.cdll.LoadLibrary("./libmkt_ksa_geo_sec.so")  # or mkt_ksa_geo_sec.dll / dylib
+lib.generate_adaptive_fingerprint.restype = ctypes.c_void_p
+fp_ptr = lib.generate_adaptive_fingerprint(b"Windows", b"LaptopX", b"Office")
+print(ctypes.cast(fp_ptr, ctypes.c_char_p).value.decode())
+lib.free_fingerprint_string(fp_ptr)
+```
+
+### Java (JNA)
+```java
+public interface GeoSec extends com.sun.jna.Library {
+  GeoSec INSTANCE = com.sun.jna.Native.load("mkt_ksa_geo_sec", GeoSec.class);
+  com.sun.jna.Pointer generate_adaptive_fingerprint(String os, String dev, String env);
+  void free_fingerprint_string(com.sun.jna.Pointer p);
+}
+```
+
+### .NET (P/Invoke)
+```csharp
+[DllImport("mkt_ksa_geo_sec")]
+static extern IntPtr generate_adaptive_fingerprint(string os, string dev, string env);
+[DllImport("mkt_ksa_geo_sec")] static extern void free_fingerprint_string(IntPtr p);
+```
+
+### Node.js (ffi-napi)
+```js
+const ffi = require('ffi-napi');
+const lib = ffi.Library('mkt_ksa_geo_sec', { 'generate_adaptive_fingerprint': ['pointer',['string','string','string']], 'free_fingerprint_string': ['void',['pointer']] });
+```
+
+> Note: Filenames and symbol names may vary by OS and library extension. Use `mkt_ksa_geo_sec.h` as the authoritative reference for FFI signatures.
+
+
+
 #### 💡 Advanced Tips
 
 * All engines are pluggable or replaceable
