@@ -372,7 +372,7 @@ if role_row.is_some() {
 | unicode-normalization| External  | Yes     | No        | Unicode normalization  |
 | validator         | External     | Yes     | No        | Input validation       |
 | regex             | External     | Yes     | No        | Regex                  |
-| getrandom         | External     | Yes     | No        | Random number generation|
+| getrandom         | External     | No      | Yes       | Random number generation (via rand::OsRng) |
 | lru               | External     | Yes     | No        | LRU cache              |
 | rayon             | External     | Yes     | No        | Parallel processing    |
 | once_cell         | External     | Yes     | No        | One-time initialization |
@@ -644,6 +644,7 @@ free_fingerprint_string(fp);
 - **Removed**:
   - `once_cell`, `lazy_static`: replaced by `std::sync::LazyLock`.
   - `serde_derive`: redundant since `serde` enables `derive` feature.
+  - `getrandom` (direct): removed as a direct dependency; switched to `rand::rngs::OsRng::try_fill_bytes` for secure randomness.
 - **Updated**:
   - `reqwest`: 0.12.22 → 0.12.23 (Rustls; minor patches).
   - `pqcrypto-mlkem`: 0.1.0 → 0.1.1.

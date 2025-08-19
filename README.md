@@ -380,7 +380,7 @@ if role_row.is_some() {
 | unicode-normalization| unicode-normalization| خارجي| External    | نعم    | Yes     | لا         | No        | تطبيع يونيكود        | Unicode normalization  |
 | validator            | validator         | خارجي | External     | نعم    | Yes     | لا         | No        | تحقق من المدخلات      | Input validation       |
 | regex                | regex             | خارجي | External     | نعم    | Yes     | لا         | No        | تعبيرات منتظمة        | Regex                  |
-| getrandom            | getrandom         | خارجي | External     | نعم    | Yes     | لا         | No        | توليد أرقام عشوائية   | Random number generation|
+| getrandom            | getrandom         | خارجي | External     | لا     | No      | نعم        | Yes       | توليد أرقام عشوائية (عبر rand::OsRng) | Random number generation (via rand::OsRng) |
 | lru                  | lru               | خارجي | External     | نعم    | Yes     | لا         | No        | كاش LRU              | LRU cache              |
 | rayon                | rayon             | خارجي | External     | نعم    | Yes     | لا         | No        | معالجة متوازية        | Parallel processing    |
 | once_cell            | once_cell         | خارجي | External     | نعم    | Yes     | لا         | No        | تهيئة لمرة واحدة      | One-time initialization |
@@ -664,6 +664,7 @@ free_fingerprint_string(fp);
 - **تمت الإزالة | Removed**:
   - `once_cell`, `lazy_static`: استُبدلت باستعمال `std::sync::LazyLock`. | Replaced by `std::sync::LazyLock`.
   - `serde_derive`: غير لازمة لأن `serde` مفعّل بميزة `derive`. | Redundant since `serde` has `derive` feature enabled.
+  - `getrandom` (مباشر): أزيلت كتبعّية مباشرة، والآن نستخدم `rand::rngs::OsRng::try_fill_bytes` لتوليد البايتات العشوائية بشكل قياسي وآمن. | Removed direct `getrandom` dep; switched to `rand::rngs::OsRng::try_fill_bytes`.
 - **تم التحديث | Updated**:
   - `reqwest`: 0.12.22 → 0.12.23 (Rustls, تصحيحات طفيفة). | minor patch with Rustls.
   - `pqcrypto-mlkem`: 0.1.0 → 0.1.1.

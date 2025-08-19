@@ -46,6 +46,10 @@ Arabic/English – Comprehensive Clippy, Tests, and Dependencies Review
   - wasi: تعدد إصدارات (wasi@0.11.1+wasi-snapshot-preview1 و wasi@0.14.2+wasi-0.2.4) – Transitive عبر مكتبات مثل ring/rustls/zstd وغيرها.
 - المبرر: توحيد هذه الإصدارات قد يتطلب ترقيات متسلسلة risk cascade في السلسلة الترابطية، ما قد يغيّر سلوكاً داخلياً. التزمنا بعدم كسر المنطق العام والاكتفاء بتكميم التحذير عبر Clippy (عند الحاجة) لضمان الاستقرار.
 
+5.1) تعديل لاحق (تنظيف تبعية مباشرة)
+- تم إزالة `getrandom` كتبعّية مباشرة من `Cargo.toml` والاعتماد على `rand::rngs::OsRng::try_fill_bytes` لتوليد العشوائية.
+- الأثر: لا تغيير على المنطق؛ البناء والاختبارات ما زالت خضراء (37/37). يقلل هذا التغيير تكرار الاستدعاءات ويُبقي العشوائية عبر مسار موّحد.
+
 6) توصيات اختيارية – Optional Recommendations
 - توحيد نسخ الحزم (إذا رُغِب):
   - اعتماد توحيد تدريجي لكل حزمة على حدة عبر Cargo.toml مع [patch.crates-io] أو عبر cargo update -p <crate> --precise <version>، ثم تشغيل الاختبارات/Clippy بعد كل خطوة.
