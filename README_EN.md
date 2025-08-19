@@ -135,12 +135,12 @@
 
 | Function Name                   | Signature                                                                 | Defined In                | Description                                  |
 | --------------------------------| ------------------------------------------------------------------------- | ------------------------- | -------------------------------------------- |
-| sign_hmac_sha512                | fn sign_hmac_sha512(data: &[u8], key: &SecretVec<u8>) -> Result<Vec<u8>, SigningError> | src/security/signing.rs   | HMAC-SHA512 signature over bytes             |
-| verify_hmac_sha512              | fn verify_hmac_sha512(data: &[u8], sig: &[u8], key: &SecretVec<u8>) -> bool            | src/security/signing.rs   | Verifies HMAC-SHA512                         |
-| sign_hmac_sha384                | fn sign_hmac_sha384(data: &[u8], key: &SecretVec<u8>) -> Result<Vec<u8>, SigningError> | src/security/signing.rs   | HMAC-SHA384 signature                        |
-| verify_hmac_sha384              | fn verify_hmac_sha384(data: &[u8], sig: &[u8], key: &SecretVec<u8>) -> bool            | src/security/signing.rs   | Verifies HMAC-SHA384                         |
-| sign_struct_excluding_field     | fn sign_struct_excluding_field<T: Serialize>(value: &T, exclude_field: &str, key: &SecretVec<u8>) -> Result<Vec<u8>, SigningError> | src/security/signing.rs | Sign serializable struct excluding one field |
-| verify_struct_excluding_field   | fn verify_struct_excluding_field<T: Serialize>(value: &T, exclude_field: &str, sig: &[u8], key: &SecretVec<u8>) -> bool | src/security/signing.rs | Verify serializable struct excluding field   |
+| sign_hmac_sha512                | fn sign_hmac_sha512(data: &[u8], key: &SecureBytes) -> Result<Vec<u8>, SigningError> | src/security/signing.rs   | HMAC-SHA512 signature over bytes             |
+| verify_hmac_sha512              | fn verify_hmac_sha512(data: &[u8], sig: &[u8], key: &SecureBytes) -> bool            | src/security/signing.rs   | Verifies HMAC-SHA512                         |
+| sign_hmac_sha384                | fn sign_hmac_sha384(data: &[u8], key: &SecureBytes) -> Result<Vec<u8>, SigningError> | src/security/signing.rs   | HMAC-SHA384 signature                        |
+| verify_hmac_sha384              | fn verify_hmac_sha384(data: &[u8], sig: &[u8], key: &SecureBytes) -> bool            | src/security/signing.rs   | Verifies HMAC-SHA384                         |
+| sign_struct_excluding_field     | fn sign_struct_excluding_field<T: Serialize>(value: &T, exclude_field: &str, key: &SecureBytes) -> Result<Vec<u8>, SigningError> | src/security/signing.rs | Sign serializable struct excluding one field |
+| verify_struct_excluding_field   | fn verify_struct_excluding_field<T: Serialize>(value: &T, exclude_field: &str, sig: &[u8], key: &SecureBytes) -> bool | src/security/signing.rs | Verify serializable struct excluding field   |
 
 ---
 
@@ -579,25 +579,29 @@ toml
 
 ```toml
 [dependencies]
-mkt_ksa = { git = "https://github.com/mktmansour/MKT-KSA-Geolocation-Security" }
+MKT_KSA_Geolocation_Security = "1.0.2" # import path in Rust: mkt_ksa_geo_sec
+# Or from Git:
+# MKT_KSA_Geolocation_Security = { git = "https://github.com/mktmansour/MKT-KSA-Geolocation-Security" }
 ```
 
 ```rust
-use mkt_ksa::core::geo_resolver::GeoResolver;
-use secrecy::SecretVec;
+use mkt_ksa_geo_sec::core::geo_resolver::{
+    GeoResolver, DefaultAiModel, DefaultBlockchain, GeoReaderEnum, MockGeoReader,
+};
+use mkt_ksa_geo_sec::security::secret::SecureBytes;
 use std::sync::Arc;
 
 let resolver = GeoResolver::new(
-    SecretVec::new(vec![1; 32]),
-    Arc::new(mkt_ksa::core::geo_resolver::DefaultAiModel),
-    Arc::new(mkt_ksa::core::geo_resolver::DefaultBlockchain),
+    SecureBytes::new(vec![1; 32]),
+    Arc::new(DefaultAiModel),
+    Arc::new(DefaultBlockchain),
     true,
     false,
-    Arc::new(mkt_ksa::core::geo_resolver::GeoReaderEnum::Mock(
-        mkt_ksa::core::geo_resolver::MockGeoReader::new(),
-    )),
+    Arc::new(GeoReaderEnum::Mock(MockGeoReader::new())),
 );
 ```
+
+Note: The Rust import path is `mkt_ksa_geo_sec`.
 
 ## 🔗 Linking via C-ABI
 
@@ -605,6 +609,8 @@ let resolver = GeoResolver::new(
 - Exported functions:
   - `generate_adaptive_fingerprint(os: *const c_char, device_info: *const c_char, env_data: *const c_char) -> *mut c_char`
   - `free_fingerprint_string(ptr: *mut c_char)`
+
+Generated header filename: `mkt_ksa_geo_sec.h`.
 
 Minimal C usage:
 
@@ -648,6 +654,7 @@ free_fingerprint_string(fp);
 - **Updated**:
   - `reqwest`: 0.12.22 → 0.12.23 (Rustls; minor patches).
   - `pqcrypto-mlkem`: 0.1.0 → 0.1.1.
+  - `secrecy`: 0.8.x → 0.10.3. Introduced internal wrappers `security::secret::{SecureString, SecureBytes}` to abstract breaking API changes. All call sites updated with no behavior/security change.
 - **Transitive bumps**:
   - `async-trait`, `hyper`, `thiserror`, and others auto-updated within constraints.
 
@@ -665,6 +672,7 @@ free_fingerprint_string(fp);
   - `get_user_profile_data` is now synchronous (removed `async` as there was no `await`); updated call in `src/api/auth.rs` (removed `.await`).
 - **Device FP / FFI** (`src/core/device_fp.rs`):
   - C-ABI functions are now `unsafe extern "C"` with `# Safety` docs, preserving implementation logic.
+  - All `secrecy::Secret`/`SecretVec` usages migrated to `security::secret::{SecureString, SecureBytes}`.
 
 ### 🧹 Formatting and Extra Checks
 - Applied `cargo fmt --all` to fix minor formatting diffs reported by `--check`.

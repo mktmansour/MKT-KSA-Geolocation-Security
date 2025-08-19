@@ -136,12 +136,12 @@ It uses geolocation, behavioral analytics, device fingerprinting, and AI-driven 
 
 | اسم الدالة                | Function Name                 | التوقيع / Signature                                                | مكان التعريف / Defined In           | الوصف (عربي)                               | Description (English)                          |
 | ------------------------- | ---------------------------- | ------------------------------------------------------------------ | ----------------------------------- | ------------------------------------------- | --------------------------------------------- |
-| sign_hmac_sha512          | sign_hmac_sha512             | fn sign_hmac_sha512(data: &[u8], key: &SecretVec<u8>) -> Result<Vec<u8>, SigningError> | src/security/signing.rs             | توقيع HMAC-SHA512 لبايتات البيانات          | HMAC-SHA512 signature over bytes               |
-| verify_hmac_sha512        | verify_hmac_sha512           | fn verify_hmac_sha512(data: &[u8], sig: &[u8], key: &SecretVec<u8>) -> bool            | src/security/signing.rs             | تحقق HMAC-SHA512                             | Verifies HMAC-SHA512                           |
-| sign_hmac_sha384          | sign_hmac_sha384             | fn sign_hmac_sha384(data: &[u8], key: &SecretVec<u8>) -> Result<Vec<u8>, SigningError> | src/security/signing.rs             | توقيع HMAC-SHA384                            | HMAC-SHA384 signature                          |
-| verify_hmac_sha384        | verify_hmac_sha384           | fn verify_hmac_sha384(data: &[u8], sig: &[u8], key: &SecretVec<u8>) -> bool            | src/security/signing.rs             | تحقق HMAC-SHA384                             | Verifies HMAC-SHA384                           |
-| sign_struct_excluding_field | sign_struct_excluding_field | fn sign_struct_excluding_field<T: Serialize>(value: &T, exclude_field: &str, key: &SecretVec<u8>) -> Result<Vec<u8>, SigningError> | src/security/signing.rs | توقيع هيكل متسلسل مع استثناء حقل              | Sign serializable struct excluding one field   |
-| verify_struct_excluding_field | verify_struct_excluding_field | fn verify_struct_excluding_field<T: Serialize>(value: &T, exclude_field: &str, sig: &[u8], key: &SecretVec<u8>) -> bool | src/security/signing.rs | تحقق من هيكل متسلسل مع استثناء حقل            | Verify serializable struct excluding one field |
+| sign_hmac_sha512          | sign_hmac_sha512             | fn sign_hmac_sha512(data: &[u8], key: &SecureBytes) -> Result<Vec<u8>, SigningError> | src/security/signing.rs             | توقيع HMAC-SHA512 لبايتات البيانات          | HMAC-SHA512 signature over bytes               |
+| verify_hmac_sha512        | verify_hmac_sha512           | fn verify_hmac_sha512(data: &[u8], sig: &[u8], key: &SecureBytes) -> bool            | src/security/signing.rs             | تحقق HMAC-SHA512                             | Verifies HMAC-SHA512                           |
+| sign_hmac_sha384          | sign_hmac_sha384             | fn sign_hmac_sha384(data: &[u8], key: &SecureBytes) -> Result<Vec<u8>, SigningError> | src/security/signing.rs             | توقيع HMAC-SHA384                            | HMAC-SHA384 signature                          |
+| verify_hmac_sha384        | verify_hmac_sha384           | fn verify_hmac_sha384(data: &[u8], sig: &[u8], key: &SecureBytes) -> bool            | src/security/signing.rs             | تحقق HMAC-SHA384                             | Verifies HMAC-SHA384                           |
+| sign_struct_excluding_field | sign_struct_excluding_field | fn sign_struct_excluding_field<T: Serialize>(value: &T, exclude_field: &str, key: &SecureBytes) -> Result<Vec<u8>, SigningError> | src/security/signing.rs | توقيع هيكل متسلسل مع استثناء حقل              | Sign serializable struct excluding one field   |
+| verify_struct_excluding_field | verify_struct_excluding_field | fn verify_struct_excluding_field<T: Serialize>(value: &T, exclude_field: &str, sig: &[u8], key: &SecureBytes) -> bool | src/security/signing.rs | تحقق من هيكل متسلسل مع استثناء حقل            | Verify serializable struct excluding one field |
 
 ---
 
@@ -598,29 +598,34 @@ if !access_granted {
 
 ```toml
 [dependencies]
-mkt_ksa = { git = "https://github.com/mktmansour/MKT-KSA-Geolocation-Security" }
+MKT_KSA_Geolocation_Security = "1.0.2" # اسم الاستدعاء داخل الشيفرة: mkt_ksa_geo_sec
+# أو من Git:
+# MKT_KSA_Geolocation_Security = { git = "https://github.com/mktmansour/MKT-KSA-Geolocation-Security" }
 ```
 
 ```rust
-use mkt_ksa::core::geo_resolver::GeoResolver;
-use secrecy::SecretVec;
+use mkt_ksa_geo_sec::core::geo_resolver::{
+    GeoResolver, DefaultAiModel, DefaultBlockchain, GeoReaderEnum, MockGeoReader,
+};
+use mkt_ksa_geo_sec::security::secret::SecureBytes;
 use std::sync::Arc;
 
 let resolver = GeoResolver::new(
-    SecretVec::new(vec![1; 32]),
-    Arc::new(mkt_ksa::core::geo_resolver::DefaultAiModel),
-    Arc::new(mkt_ksa::core::geo_resolver::DefaultBlockchain),
+    SecureBytes::new(vec![1; 32]),
+    Arc::new(DefaultAiModel),
+    Arc::new(DefaultBlockchain),
     true,
     false,
-    Arc::new(mkt_ksa::core::geo_resolver::GeoReaderEnum::Mock(
-        mkt_ksa::core::geo_resolver::MockGeoReader::new(),
-    )),
+    Arc::new(GeoReaderEnum::Mock(MockGeoReader::new())),
 );
 ```
+
+- ملاحظة مهمة: مسار الاستدعاء (import path) في Rust هو `mkt_ksa_geo_sec`.
 
 ## 🔗 الربط عبر C-ABI للغات الأخرى | Linking via C-ABI
 
 - المكتبة تُبنى كـ `cdylib/staticlib` ويمكن استدعاؤها من C/C++/Python/.NET/Java/Go.
+- اسم ملف الترويسة (Header) المُولّد: `mkt_ksa_geo_sec.h`.
 - دوال التصدير الحالية:
   - `generate_adaptive_fingerprint(os: *const c_char, device_info: *const c_char, env_data: *const c_char) -> *mut c_char`
   - `free_fingerprint_string(ptr: *mut c_char)`
@@ -668,6 +673,7 @@ free_fingerprint_string(fp);
 - **تم التحديث | Updated**:
   - `reqwest`: 0.12.22 → 0.12.23 (Rustls, تصحيحات طفيفة). | minor patch with Rustls.
   - `pqcrypto-mlkem`: 0.1.0 → 0.1.1.
+  - `secrecy`: 0.8.x → 0.10.3. تم إدخال أغلفة داخلية `security::secret::{SecureString, SecureBytes}` لعزل تغييرات API. تم تحديث جميع مواقع الاستدعاء دون تغيير المنطق أو مستوى الأمان.
 - **تعديلات ترانزيتيف | Transitive adjustments**:
   - `async-trait`، `hyper`، `thiserror`، وغيرها تَحدّثت تلقائياً ضمن القيود. | auto-updated within constraints.
 

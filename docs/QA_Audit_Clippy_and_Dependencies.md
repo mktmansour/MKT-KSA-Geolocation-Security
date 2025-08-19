@@ -50,6 +50,12 @@ Arabic/English – Comprehensive Clippy, Tests, and Dependencies Review
 - تم إزالة `getrandom` كتبعّية مباشرة من `Cargo.toml` والاعتماد على `rand::rngs::OsRng::try_fill_bytes` لتوليد العشوائية.
 - الأثر: لا تغيير على المنطق؛ البناء والاختبارات ما زالت خضراء (37/37). يقلل هذا التغيير تكرار الاستدعاءات ويُبقي العشوائية عبر مسار موّحد.
 
+5.2) ترقية `secrecy` وإدخال طبقة تغليف داخلية
+- تم ترقية `secrecy` إلى `0.10.3`.
+- أُنشئت طبقة تغليف داخلية في `src/security/secret.rs` مع نوعين: `SecureString` و`SecureBytes` لتعزيز الثبات أمام تغييرات API في الإصدارات القادمة.
+- تم تحديث جميع الاستدعاءات السابقة لـ `secrecy::Secret` و `secrecy::SecretVec` لاستخدام الأغلفة الجديدة.
+- الأثر: لا تغيير على المنطق العام أو مستوى الأمان. جميع الاختبارات ما زالت تمر (37/37) وClippy نظيف. تم توثيق التغييرات في ملفات README.
+
 6) توصيات اختيارية – Optional Recommendations
 - توحيد نسخ الحزم (إذا رُغِب):
   - اعتماد توحيد تدريجي لكل حزمة على حدة عبر Cargo.toml مع [patch.crates-io] أو عبر cargo update -p <crate> --precise <version>، ثم تشغيل الاختبارات/Clippy بعد كل خطوة.
