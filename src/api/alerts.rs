@@ -69,7 +69,7 @@ pub async fn trigger_alert(
         "a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string()
     });
     let jwt_manager = JwtManager::new(
-        &secrecy::Secret::new(jwt_secret),
+        &crate::security::secret::SecureString::new(jwt_secret),
         60,
         "my_app".to_string(),
         "user_service".to_string(),

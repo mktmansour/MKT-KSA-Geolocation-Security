@@ -1,5 +1,5 @@
 /*!
-Arabic: الواجهة العامة لمكتبة MKT_KSA_Geolocation_Security
+Arabic: الواجهة العامة لمكتبة `MKT_KSA_Geolocation_Security`
 
 توفر هذه المكتبة واجهات معيارية لاستخدام المحركات الأساسية (Core)، ووحدات الأمان (Security)،
 ووحدات الأدوات (Utils)، وقاعدة البيانات (DB)، وطبقة الـ API (اختياري).
@@ -8,7 +8,7 @@ Arabic: الواجهة العامة لمكتبة MKT_KSA_Geolocation_Security
 - rlib: للاستخدام من صناديق Rust الأخرى.
 - cdylib/staticlib: للربط عبر C-ABI من لغات أخرى (C/C++/Python/.NET/Java...)
 
-English: Public library surface for MKT_KSA_Geolocation_Security
+English: Public library surface for `MKT_KSA_Geolocation_Security`
 
 This crate exposes modular interfaces for the core engines, security modules,
 utilities, database layer, and (optionally) the API layer.

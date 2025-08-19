@@ -43,6 +43,7 @@
 //     clippy::pedantic,
 // )]
 
+use crate::security::secret::SecureBytes;
 use crate::security::signing::{sign_struct_excluding_field, verify_struct_excluding_field};
 use crate::utils::helpers::{aes_encrypt, calculate_distance};
 use anyhow::anyhow;
@@ -55,7 +56,6 @@ use maxminddb::Reader;
 use pqcrypto_mlkem::mlkem1024;
 use pqcrypto_traits::kem::{Ciphertext, SharedSecret};
 use rayon::prelude::*;
-use secrecy::SecretVec;
 use serde::{Deserialize, Serialize};
 use sha2::Sha512; // Using SHA512 for HMAC as it's a common strong choice
 use std::collections::VecDeque;
@@ -281,7 +281,7 @@ impl LocationHistory {
 pub struct GeoResolver {
     ai_model: Arc<dyn AiModel>,
     blockchain: Arc<dyn Blockchain>,
-    secret_key: SecretVec<u8>,
+    secret_key: SecureBytes,
     location_history: LocationHistory,
     quantum_enabled: bool,
     mfa_required: bool,
@@ -308,7 +308,7 @@ impl GeoResolver {
     /// إنشاء محلل جديد مع حقن التبعيات
     /// Creates a new resolver with dependency injection
     pub fn new(
-        secret_key: SecretVec<u8>,
+        secret_key: SecureBytes,
         ai_model: Arc<dyn AiModel>,
         blockchain: Arc<dyn Blockchain>,
         quantum_enabled: bool,
@@ -833,12 +833,14 @@ impl MockGeoReader {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use secrecy::SecretVec;
+    // use crate::security::secret::SecureBytes; // already used above
 
     // إعداد بيئة اختبار مع نماذج وهمية
     // Setup test environment with mock models
     fn setup_test_resolver() -> Option<GeoResolver> {
-        let secret = SecretVec::new(b"a_very_secret_and_long_key_for_hmac_sha512".to_vec());
+        let secret = crate::security::secret::SecureBytes::new(
+            b"a_very_secret_and_long_key_for_hmac_sha512".to_vec(),
+        );
         let ai_model = Arc::new(DefaultAiModel);
         let blockchain = Arc::new(DefaultBlockchain);
         let Ok(geo_db_bytes) = hex::decode(
@@ -905,7 +907,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_resolve_with_fraud_detection() {
-        let secret = SecretVec::new(vec![0; 64]);
+        let secret = crate::security::secret::SecureBytes::new(vec![0; 64]);
         let ai_model = Arc::new(MockFraudulentAiModel);
         let blockchain = Arc::new(DefaultBlockchain);
         let Ok(geo_db_bytes) = hex::decode(

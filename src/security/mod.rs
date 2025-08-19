@@ -39,3 +39,7 @@ pub mod policy;
 // Arabic: وحدة التواقيع عالية الأمان بدون OpenSSL
 // English: High-security signing utilities (no OpenSSL)
 pub mod signing;
+
+// Arabic: طبقة تغليف لوحدة الأسرار لتوحيد الاستدعاءات وعزل تغييرات الإصدارات
+// English: Secret wrapper layer to unify calls and isolate version changes
+pub mod secret;

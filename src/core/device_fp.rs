@@ -49,11 +49,11 @@ use std::ffi::{CStr, CString};
 use std::sync::Arc;
 use std::time::Instant;
 
+use crate::security::secret::SecureBytes;
 use async_trait::async_trait;
 use blake3::Hasher;
 use rand::rngs::OsRng;
 use rand::RngCore;
-use secrecy::{ExposeSecret, SecretVec};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tokio::sync::RwLock;
@@ -133,7 +133,7 @@ pub trait SecurityMonitor: Send + Sync {
 
 #[async_trait]
 pub trait QuantumEngine: Send + Sync {
-    fn get_secure_key(&self) -> &SecretVec<u8>;
+    fn get_secure_key(&self) -> &SecureBytes;
     fn is_quantum_resistant(&self) -> bool;
 }
 
@@ -247,7 +247,7 @@ impl AdaptiveFingerprintEngine {
         // استخدام مفتاح سري لتكون البصمة فريدة لكل نظام
         // Use a secret key to make the fingerprint unique per system
         let key = self.quantum.get_secure_key();
-        hasher.update(key.expose_secret());
+        hasher.update(key.expose());
 
         hasher.finalize().to_hex().to_string()
     }
@@ -331,7 +331,7 @@ impl SecurityMonitor for DefaultSecurityMonitor {
 
 // --- QuantumEngine ---
 pub struct DefaultQuantumEngine {
-    secure_key: SecretVec<u8>,
+    secure_key: SecureBytes,
 }
 
 impl DefaultQuantumEngine {
@@ -344,14 +344,14 @@ impl DefaultQuantumEngine {
             .try_fill_bytes(&mut key_bytes)
             .map_err(|e| FingerprintError::QuantumInitFailed(e.to_string()))?;
         Ok(Self {
-            secure_key: SecretVec::new(key_bytes.to_vec()),
+            secure_key: SecureBytes::new(key_bytes.to_vec()),
         })
     }
 }
 
 #[async_trait]
 impl QuantumEngine for DefaultQuantumEngine {
-    fn get_secure_key(&self) -> &SecretVec<u8> {
+    fn get_secure_key(&self) -> &SecureBytes {
         &self.secure_key
     }
     fn is_quantum_resistant(&self) -> bool {
@@ -538,11 +538,11 @@ mod tests {
     struct MockQuantumEngine;
     #[async_trait]
     impl QuantumEngine for MockQuantumEngine {
-        fn get_secure_key(&self) -> &SecretVec<u8> {
+        fn get_secure_key(&self) -> &crate::security::secret::SecureBytes {
             // استخدام lazy_static لضمان أن المفتاح الوهمي ثابت
             // Use lazy_static to ensure the mock key is constant
-            static MOCK_KEY: std::sync::LazyLock<SecretVec<u8>> =
-                std::sync::LazyLock::new(|| SecretVec::new(vec![1; 32]));
+            static MOCK_KEY: std::sync::LazyLock<crate::security::secret::SecureBytes> =
+                std::sync::LazyLock::new(|| crate::security::secret::SecureBytes::new(vec![1; 32]));
             &MOCK_KEY
         }
         fn is_quantum_resistant(&self) -> bool {

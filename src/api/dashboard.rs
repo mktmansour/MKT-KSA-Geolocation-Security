@@ -56,7 +56,7 @@ pub async fn dashboard_summary(bearer: BearerToken) -> impl Responder {
     // --- تحقق JWT عبر security فقط ---
     // JWT validation using the security module only
     let jwt_manager = JwtManager::new(
-        &secrecy::Secret::new(
+        &crate::security::secret::SecureString::new(
             "a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string(),
         ),
         60,

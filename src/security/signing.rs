@@ -9,8 +9,8 @@
 *  and secure key handling via secrecy::SecretVec.
 ******************************************************************************************/
 
+use crate::security::secret::SecureBytes;
 use hmac::{Hmac, Mac};
-use secrecy::{ExposeSecret, SecretVec};
 use serde::Serialize;
 use sha2::{Sha384, Sha512};
 
@@ -33,9 +33,8 @@ type HmacSha384 = Hmac<Sha384>;
 /// # Errors
 /// يرجع خطأ إذا فشل إنشاء HMAC (مفتاح غير صالح).
 /// Returns error if HMAC cannot be constructed (invalid key).
-pub fn sign_hmac_sha512(data: &[u8], key: &SecretVec<u8>) -> Result<Vec<u8>, SigningError> {
-    let mut mac =
-        HmacSha512::new_from_slice(key.expose_secret()).map_err(|_| SigningError::InvalidKey)?;
+pub fn sign_hmac_sha512(data: &[u8], key: &SecureBytes) -> Result<Vec<u8>, SigningError> {
+    let mut mac = HmacSha512::new_from_slice(key.expose()).map_err(|_| SigningError::InvalidKey)?;
     mac.update(data);
     Ok(mac.finalize().into_bytes().to_vec())
 }
@@ -43,8 +42,8 @@ pub fn sign_hmac_sha512(data: &[u8], key: &SecretVec<u8>) -> Result<Vec<u8>, Sig
 /// يتحقق من صحة HMAC-SHA512
 /// Verifies HMAC-SHA512
 #[must_use]
-pub fn verify_hmac_sha512(data: &[u8], signature: &[u8], key: &SecretVec<u8>) -> bool {
-    let Ok(mut mac) = HmacSha512::new_from_slice(key.expose_secret()) else {
+pub fn verify_hmac_sha512(data: &[u8], signature: &[u8], key: &SecureBytes) -> bool {
+    let Ok(mut mac) = HmacSha512::new_from_slice(key.expose()) else {
         return false;
     };
     mac.update(data);
@@ -55,9 +54,8 @@ pub fn verify_hmac_sha512(data: &[u8], signature: &[u8], key: &SecretVec<u8>) ->
 /// Signs a byte slice using HMAC-SHA384 (for specific modules)
 ///
 /// # Errors
-pub fn sign_hmac_sha384(data: &[u8], key: &SecretVec<u8>) -> Result<Vec<u8>, SigningError> {
-    let mut mac =
-        HmacSha384::new_from_slice(key.expose_secret()).map_err(|_| SigningError::InvalidKey)?;
+pub fn sign_hmac_sha384(data: &[u8], key: &SecureBytes) -> Result<Vec<u8>, SigningError> {
+    let mut mac = HmacSha384::new_from_slice(key.expose()).map_err(|_| SigningError::InvalidKey)?;
     mac.update(data);
     Ok(mac.finalize().into_bytes().to_vec())
 }
@@ -65,8 +63,8 @@ pub fn sign_hmac_sha384(data: &[u8], key: &SecretVec<u8>) -> Result<Vec<u8>, Sig
 /// يتحقق من صحة HMAC-SHA384
 /// Verifies HMAC-SHA384
 #[must_use]
-pub fn verify_hmac_sha384(data: &[u8], signature: &[u8], key: &SecretVec<u8>) -> bool {
-    let Ok(mut mac) = HmacSha384::new_from_slice(key.expose_secret()) else {
+pub fn verify_hmac_sha384(data: &[u8], signature: &[u8], key: &SecureBytes) -> bool {
+    let Ok(mut mac) = HmacSha384::new_from_slice(key.expose()) else {
         return false;
     };
     mac.update(data);
@@ -81,7 +79,7 @@ pub fn verify_hmac_sha384(data: &[u8], signature: &[u8], key: &SecretVec<u8>) ->
 pub fn sign_struct_excluding_field<T: Serialize>(
     value: &T,
     exclude_field: &str,
-    key: &SecretVec<u8>,
+    key: &SecureBytes,
 ) -> Result<Vec<u8>, SigningError> {
     // تسلسل إلى JSON ثم إزالة الحقل عبر serde_json::Value
     let json =
@@ -104,7 +102,7 @@ pub fn verify_struct_excluding_field<T: Serialize>(
     value: &T,
     exclude_field: &str,
     signature: &[u8],
-    key: &SecretVec<u8>,
+    key: &SecureBytes,
 ) -> bool {
     let Ok(mut json) = serde_json::to_value(value) else {
         return false;
@@ -124,7 +122,7 @@ mod tests {
 
     #[test]
     fn hmac_sha512_roundtrip() {
-        let key = SecretVec::new(vec![1u8; 64]);
+        let key = SecureBytes::new(vec![1u8; 64]);
         let data = b"hello";
         let sig = sign_hmac_sha512(data, &key).unwrap();
         assert!(verify_hmac_sha512(data, &sig, &key));
@@ -138,7 +136,7 @@ mod tests {
             b: String,
             signature: Option<String>,
         }
-        let key = SecretVec::new(vec![42u8; 32]);
+        let key = SecureBytes::new(vec![42u8; 32]);
         let s = Sample {
             a: 7,
             b: "x".to_string(),

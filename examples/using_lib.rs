@@ -4,13 +4,13 @@
 use mkt_ksa_geo_sec::core::geo_resolver::{
     DefaultAiModel, DefaultBlockchain, GeoLocation, GeoReaderEnum, GeoResolver, MockGeoReader,
 };
-use secrecy::SecretVec;
+use mkt_ksa_geo_sec::security::secret::SecureBytes;
 use std::sync::Arc;
 
 fn main() {
     // Build a resolver with a mock geo reader (no external DB needed)
     let resolver = GeoResolver::new(
-        SecretVec::new(vec![1; 32]),
+        SecureBytes::new(vec![1; 32]),
         Arc::new(DefaultAiModel),
         Arc::new(DefaultBlockchain),
         true,

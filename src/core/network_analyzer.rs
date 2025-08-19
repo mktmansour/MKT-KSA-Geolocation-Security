@@ -34,11 +34,11 @@
     5.  A fully `async` design for high performance and low resource consumption.
 ******************************************************************************************/
 
+use crate::security::secret::SecureBytes;
 use aes_gcm::aead::{Aead, KeyInit};
 use aes_gcm::AeadCore;
 use aes_gcm::{Aes256Gcm, Key};
 use async_trait::async_trait;
-use secrecy::{ExposeSecret, SecretVec};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::net::IpAddr;
@@ -157,7 +157,7 @@ pub trait AiNetworkAnalyzer: Send + Sync {
 // The Network Analysis Engine
 // ================================================================
 pub struct NetworkAnalyzer {
-    encryption_key: SecretVec<u8>,
+    encryption_key: SecureBytes,
     proxy_db: Arc<RwLock<ProxyDatabase>>,
     geo_reader: Arc<crate::core::geo_resolver::GeoReaderEnum>,
     ai_analyzer: Arc<dyn AiNetworkAnalyzer>,
@@ -167,7 +167,7 @@ impl NetworkAnalyzer {
     /// إنشاء محرك جديد مع حقن التبعيات.
     /// Creates a new engine with dependency injection.
     pub fn new(
-        encryption_key: SecretVec<u8>,
+        encryption_key: SecureBytes,
         proxy_db: Arc<RwLock<ProxyDatabase>>,
         geo_reader: Arc<crate::core::geo_resolver::GeoReaderEnum>,
         ai_analyzer: Arc<dyn AiNetworkAnalyzer>,
@@ -268,7 +268,7 @@ impl NetworkAnalyzer {
     /// يقوم بتشفير عنوان الـ IP باستخدام AES-256-GCM.
     /// Encrypts an IP address using AES-256-GCM.
     fn encrypt_ip(&self, ip: &IpAddr) -> Result<String, NetworkError> {
-        let key_slice = self.encryption_key.expose_secret();
+        let key_slice = self.encryption_key.expose();
         let key = Key::<Aes256Gcm>::from_slice(key_slice);
         let cipher = Aes256Gcm::new(key);
         let nonce = Aes256Gcm::generate_nonce(&mut rand::rngs::OsRng);
@@ -360,7 +360,7 @@ mod tests {
         );
 
         // 3. Setup other components
-        let encryption_key = SecretVec::new(vec![42; 32]);
+        let encryption_key = crate::security::secret::SecureBytes::new(vec![42; 32]);
         let ai_analyzer = Arc::new(DefaultAiNetworkAnalyzer);
 
         NetworkAnalyzer::new(encryption_key, proxy_db, geo_reader, ai_analyzer)

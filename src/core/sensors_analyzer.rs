@@ -33,10 +33,10 @@
     5.  Provide smart default implementations as a starting point for analysis.
 ******************************************************************************************/
 
+use crate::security::secret::SecureBytes;
 use crate::security::signing::sign_hmac_sha384;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use secrecy::SecretVec;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -103,14 +103,14 @@ pub trait SensorAnomalyDetector: Send + Sync {
 // The Sensor Analysis Engine
 // ================================================================
 pub struct SensorsAnalyzerEngine {
-    signing_key: SecretVec<u8>,
+    signing_key: SecureBytes,
     detector: Arc<dyn SensorAnomalyDetector>,
 }
 
 impl SensorsAnalyzerEngine {
     /// إنشاء محرك جديد مع حقن التبعيات.
     /// Creates a new engine with dependency injection.
-    pub fn new(signing_key: SecretVec<u8>, detector: Arc<dyn SensorAnomalyDetector>) -> Self {
+    pub fn new(signing_key: SecureBytes, detector: Arc<dyn SensorAnomalyDetector>) -> Self {
         Self {
             signing_key,
             detector,
@@ -269,7 +269,6 @@ impl SensorAnomalyDetector for DefaultSensorAnomalyDetector {
 mod tests {
     use super::*;
     use hmac::{Hmac, Mac};
-    use secrecy::ExposeSecret;
     use sha2::Sha384;
     use std::time::Duration;
 
@@ -287,7 +286,7 @@ mod tests {
     }
 
     fn setup_test_engine(detector: Arc<dyn SensorAnomalyDetector>) -> SensorsAnalyzerEngine {
-        let key = SecretVec::new(vec![42; 48]); // 48 bytes for HMAC-SHA384
+        let key = crate::security::secret::SecureBytes::new(vec![42; 48]); // 48 bytes for HMAC-SHA384
         SensorsAnalyzerEngine::new(key, detector)
     }
 
@@ -359,7 +358,7 @@ mod tests {
         let result = engine.analyze(reading, &[]).await.unwrap();
 
         // 2. Verify the signature
-        let mut mac = Hmac::<Sha384>::new_from_slice(engine.signing_key.expose_secret()).unwrap();
+        let mut mac = Hmac::<Sha384>::new_from_slice(engine.signing_key.expose()).unwrap();
         let mut result_to_verify = result.clone();
         result_to_verify.signature = String::new();
         let serialized = serde_json::to_vec(&result_to_verify).unwrap();

@@ -43,8 +43,8 @@ use actix_web::{web, App, HttpServer};
 use config::Config;
 use config::Environment;
 use maxminddb::Reader;
+use mkt_ksa_geo_sec::security::secret::SecureBytes;
 use mysql_async::Pool;
-use secrecy::SecretVec;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -130,7 +130,7 @@ async fn main() -> std::io::Result<()> {
     };
 
     let geo_resolver = Arc::new(GeoResolver::new(
-        SecretVec::new(vec![1; 32]),
+        SecureBytes::new(vec![1; 32]),
         Arc::new(GeoAiModel),
         Arc::new(DefaultBlockchain),
         true,
@@ -163,7 +163,7 @@ async fn main() -> std::io::Result<()> {
     });
 
     let sensors_engine = Arc::new(SensorsAnalyzerEngine::new(
-        SecretVec::new(vec![42; 48]),
+        SecureBytes::new(vec![42; 48]),
         Arc::new(mkt_ksa_geo_sec::core::sensors_analyzer::DefaultSensorAnomalyDetector::default()),
     ));
 
@@ -171,7 +171,7 @@ async fn main() -> std::io::Result<()> {
         mkt_ksa_geo_sec::core::network_analyzer::ProxyDatabase::default(),
     ));
     let network_engine = Arc::new(NetworkAnalyzer::new(
-        SecretVec::new(vec![42; 32]),
+        SecureBytes::new(vec![42; 32]),
         proxy_db,
         geo_reader.clone(),
         Arc::new(mkt_ksa_geo_sec::core::network_analyzer::DefaultAiNetworkAnalyzer),
@@ -184,7 +184,7 @@ async fn main() -> std::io::Result<()> {
         sensors_engine,
         network_engine,
         scoring_strategy,
-        SecretVec::new(b"a_very_secret_final_verdict_key".to_vec()),
+        SecureBytes::new(b"a_very_secret_final_verdict_key".to_vec()),
     ));
 
     // 6. تجميع كل الخدمات في الحالة المشتركة

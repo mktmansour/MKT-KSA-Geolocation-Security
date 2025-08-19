@@ -28,9 +28,9 @@
     and embedding sensitive information in the token.
 ******************************************************************************************/
 
+use crate::security::secret::SecureString;
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
-use secrecy::{ExposeSecret, Secret};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use uuid::Uuid;
@@ -89,12 +89,12 @@ impl JwtManager {
     /// English: Creates a new JWT manager with a secret key and identity metadata.
     #[must_use]
     pub fn new(
-        secret: &Secret<String>,
+        secret: &SecureString,
         token_duration_sec: i64,
         issuer: String,
         audience: String,
     ) -> Self {
-        let secret_bytes = secret.expose_secret().as_bytes();
+        let secret_bytes = secret.expose().as_bytes();
         Self {
             encoding_key: EncodingKey::from_secret(secret_bytes),
             decoding_key: DecodingKey::from_secret(secret_bytes),
@@ -155,7 +155,7 @@ mod tests {
     use super::*;
 
     fn create_manager() -> JwtManager {
-        let secret = Secret::new(
+        let secret = crate::security::secret::SecureString::new(
             "a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string(),
         );
         JwtManager::new(
@@ -213,7 +213,9 @@ mod tests {
         let token = manager1.generate_token(user_id, vec![]).unwrap();
 
         // Create another manager with a different secret
-        let wrong_secret = Secret::new("this_is_the_wrong_secret_key_and_should_fail".to_string());
+        let wrong_secret = crate::security::secret::SecureString::new(
+            "this_is_the_wrong_secret_key_and_should_fail".to_string(),
+        );
         let manager2 = JwtManager::new(
             &wrong_secret,
             60,
@@ -241,7 +243,7 @@ mod tests {
         let token = manager.generate_token(user_id, vec![]).unwrap();
 
         let wrong_issuer_manager = JwtManager::new(
-            &Secret::new(
+            &crate::security::secret::SecureString::new(
                 "a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string(),
             ),
             60,

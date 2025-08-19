@@ -40,9 +40,9 @@ use crate::core::geo_resolver::{GeoLocation, GeoResolver};
 use crate::core::network_analyzer::NetworkAnalyzer;
 use crate::core::sensors_analyzer::SensorsAnalyzerEngine;
 
+use crate::security::secret::SecureBytes;
 use crate::security::signing::sign_hmac_sha512;
 use async_trait::async_trait;
-use secrecy::SecretVec;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use thiserror::Error;
@@ -127,7 +127,7 @@ pub struct CrossValidationEngine {
     pub sensors_engine: Arc<SensorsAnalyzerEngine>,
     pub network_engine: Arc<NetworkAnalyzer>,
     pub scoring_strategy: Arc<dyn ScoringStrategy>,
-    pub signing_key: SecretVec<u8>,
+    pub signing_key: SecureBytes,
 }
 
 impl CrossValidationEngine {
@@ -140,7 +140,7 @@ impl CrossValidationEngine {
         sensors_engine: Arc<SensorsAnalyzerEngine>,
         network_engine: Arc<NetworkAnalyzer>,
         scoring_strategy: Arc<dyn ScoringStrategy>,
-        signing_key: SecretVec<u8>,
+        signing_key: SecureBytes,
     ) -> Self {
         Self {
             geo_resolver,
@@ -307,7 +307,7 @@ mod tests {
             )),
         );
         let geo_resolver = Arc::new(GeoResolver::new(
-            SecretVec::new(vec![1; 32]),
+            crate::security::secret::SecureBytes::new(vec![1; 32]),
             Arc::new(DefaultAiModel),
             Arc::new(DefaultBlockchain),
             true,
@@ -334,7 +334,7 @@ mod tests {
 
         // 4. Build SensorsAnalyzerEngine
         let sensors_engine = Arc::new(SensorsAnalyzerEngine::new(
-            SecretVec::new(vec![42; 48]),
+            crate::security::secret::SecureBytes::new(vec![42; 48]),
             Arc::new(crate::core::sensors_analyzer::DefaultSensorAnomalyDetector::default()),
         ));
 
@@ -356,7 +356,7 @@ mod tests {
             )),
         );
         let network_engine = Arc::new(NetworkAnalyzer::new(
-            SecretVec::new(vec![42; 32]),
+            crate::security::secret::SecureBytes::new(vec![42; 32]),
             proxy_db,
             geo_reader,
             Arc::new(crate::core::network_analyzer::DefaultAiNetworkAnalyzer),
@@ -377,7 +377,7 @@ mod tests {
             sensors_engine,
             network_engine,
             scoring_strategy,
-            SecretVec::new(b"final_verdict_signing_key".to_vec()),
+            crate::security::secret::SecureBytes::new(b"final_verdict_signing_key".to_vec()),
         )
     }
 
