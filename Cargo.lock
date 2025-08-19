@@ -19,7 +19,6 @@ dependencies = [
  "chrono",
  "config",
  "futures",
- "getrandom 0.2.16",
  "hex",
  "hmac",
  "jsonwebtoken",

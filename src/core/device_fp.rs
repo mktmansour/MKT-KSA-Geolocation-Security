@@ -51,6 +51,8 @@ use std::time::Instant;
 
 use async_trait::async_trait;
 use blake3::Hasher;
+use rand::rngs::OsRng;
+use rand::RngCore;
 use secrecy::{ExposeSecret, SecretVec};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -338,7 +340,8 @@ impl DefaultQuantumEngine {
     /// Returns `FingerprintError::QuantumInitFailed` if secure key generation fails.
     pub fn new() -> Result<Self, FingerprintError> {
         let mut key_bytes = [0u8; 64];
-        getrandom::getrandom(&mut key_bytes)
+        OsRng
+            .try_fill_bytes(&mut key_bytes)
             .map_err(|e| FingerprintError::QuantumInitFailed(e.to_string()))?;
         Ok(Self {
             secure_key: SecretVec::new(key_bytes.to_vec()),
