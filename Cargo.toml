@@ -45,7 +45,7 @@ regex = "1.11.1"
 lru = "0.16.0"
 rayon = "1.11.0"
 ## removed: once_cell, lazy_static (migrated to std::sync::LazyLock)
-cfg-if = "1.0.1"
+cfg-if = "1.0.3"
 rand = "0.8.5"
 chrono = { version = "0.4", features = ["serde"] }
 # -------------------------------------------------------------------
