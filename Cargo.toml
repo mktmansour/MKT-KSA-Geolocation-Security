@@ -55,7 +55,7 @@ serde_json = "1"
 reqwest = { version = "0.12.23", default-features = false, features = ["json", "rustls-tls"] }
 serde = { version = "1", features = ["derive"] }
 ## removed: serde_derive (serde derives provided by serde = { features = ["derive"] })
-thiserror = "2.0.12"
+thiserror = "2.0.16"
 maxminddb = { version = "0.26.0", features = ["mmap"] }
 pqcrypto-traits = "0.3.5"
 # governor = "0.6"  # أبقِ فقط governor إذا كنت تستخدمه فعليًا في الكود
