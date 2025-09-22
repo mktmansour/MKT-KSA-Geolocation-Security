@@ -20,7 +20,7 @@ ammonia = "4.1.1"
 anyhow = "1.0.99"
 async-trait = "0.1"
 # تم حذف dotenv
-config = "0.15.13"
+config = "0.15.16"
 futures = "0.3"
 log = "0.4"
 # Database
