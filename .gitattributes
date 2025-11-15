@@ -1,0 +1,13 @@
+/.github/**        export-ignore
+/docs/**           export-ignore
+/tests/**          export-ignore
+/benches/**        export-ignore
+/examples/**       export-ignore
+/scripts/**        export-ignore
+/.cargo-home/**    export-ignore
+/deny.toml         export-ignore
+/.gitignore        export-ignore
+/.gitattributes    export-ignore
+/archive/**        export-ignore
+
+

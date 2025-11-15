@@ -5,7 +5,7 @@ authors = ["Mansour Khalid <mkt-edge@outlook.sa>"]
 edition = "2021"
 license = "Apache-2.0"
 description = "Smart geolocation & behavioral security library for Rust"
-readme = "README_EN.md"
+readme = "README.md"
 repository = "https://github.com/mktmansour/MKT-KSA-Geolocation-Security"
 categories = ["network-programming", "authentication", "cryptography"]
 keywords = ["geolocation", "behavior", "device-fingerprint", "rate-limiting", "security"]
@@ -14,6 +14,27 @@ exclude = [
   ".github/**",
   ".cargo-home/**",
   "target/**",
+  "docs/**",
+  "archive/**",
+  ".env",
+  ".env.example",
+  "dashboard.html",
+  "GeoLite2-City-Test.mmdb",
+  "AI_Development_Log.md",
+  "Dockerfile",
+  "CONTRIBUTING.md",
+  "SECURITY.md",
+  "cbindgen.toml",
+  "rust-toolchain.toml",
+  "tests/**",
+  "benches/**",
+  "examples/**",
+  "scripts/**",
+  ".vscode/**",
+  ".idea/**",
+  ".gitattributes",
+  ".gitignore",
+  "deny.toml",
   "*.png",
   "*.jpg",
   "*.jpeg",

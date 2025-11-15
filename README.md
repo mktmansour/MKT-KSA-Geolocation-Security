@@ -1,3 +1,12 @@
+# MKT-KSA-Geolocation-Security
+
+A zero-dependency standard HTTP library (pure Rust) for secure Webhook/API ingestion. It ships with HMAC‑SHA512 request signing (Host binding optional), an RFC‑aware OAuth2 implementation (from scratch), adaptive security guards, and production‑grade CI/CD.
+
+Production builds are UI‑free by design: the library exposes API/Webhook endpoints only. A small demo binary is included for local verification.
+
+
+
+
 # MKT KSA Geolocation Security
 
 <div align="center">
@@ -7,7 +16,7 @@
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)](https://www.rust-lang.org)
 [![Zero Dependencies](https://img.shields.io/badge/dependencies-zero-success.svg)](Cargo.toml)
-[![Security](https://img.shields.io/badge/security-sovereign-critical.svg)](docs/SBOM.md)
+[![Security](https://img.shields.io/badge/security-sovereign-critical.svg)](#security)
 
 </div>
 
@@ -15,26 +24,26 @@
 
 ## 📋 Table of Contents
 
-- [Overview](#overview)
-- [Target Audience](#target-audience)
-- [Key Advantages](#key-advantages)
-- [Use Cases & Applications](#use-cases--applications)
-- [Architecture](#architecture)
-- [Core Features](#core-features)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [API Routes](#api-routes)
-- [Webhook Guards](#webhook-guards)
-- [Key Rotation](#key-rotation)
-- [Dashboard](#dashboard)
-- [Export & Cloud Integration](#export--cloud-integration)
-- [FFI Interface](#ffi-interface)
-- [Optional Features](#optional-features)
-- [Usage Examples](#usage-examples)
-- [Testing](#testing)
-- [Security](#security)
-- [License](#license)
-- [Contact](#contact)
+1. [Overview](#overview)
+2. [Target Audience](#target-audience)
+3. [Key Advantages](#key-advantages)
+4. [Use Cases & Applications](#use-cases--applications)
+5. [Architecture](#architecture)
+6. [Core Features](#core-features)
+7. [Installation](#installation)
+8. [Quick Start](#quick-start)
+9. [API Routes](#api-routes)
+10. [Webhook Guards](#webhook-guards)
+11. [Key Rotation](#key-rotation)
+12. [Dashboard](#dashboard)
+13. [Export & Cloud Integration](#export--cloud-integration)
+14. [FFI Interface](#ffi-interface)
+15. [Optional Features](#optional-features)
+16. [Usage Examples](#usage-examples)
+17. [Testing](#testing)
+18. [Security](#security)
+19. [License](#license)
+20. [Contact](#contact)
 
 ---
 
