@@ -268,7 +268,9 @@ impl SensorAnomalyDetector for DefaultSensorAnomalyDetector {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(feature = "sign_hmac")]
     use hmac::{Hmac, Mac};
+    #[cfg(feature = "sign_hmac")]
     use sha2::Sha384;
     use std::time::Duration;
 

@@ -1,0 +1,452 @@
+name: CI
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  rust-ci:
+    name: Rust CI (${{ matrix.os }}, ${{ matrix.toolchain }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        toolchain: [stable]
+    env:
+      CARGO_TERM_COLOR: always
+      # Budgets in bytes (يمكن تعديلها لاحقًا حسب حاجة المشروع)
+      BUDGET_STD_DASHBOARD_DEMO: "12582912" # 12 MB
+      BUDGET_HMAC_CLIENT: "6291456"         # 6 MB
+      AGE_PUBLIC_KEY: ${{ secrets.AGE_PUBLIC_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.toolchain }}
+          components: clippy, rustfmt
+          override: true
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Generate lockfile (if missing)
+        run: cargo generate-lockfile
+
+      - name: Cargo fmt (check)
+        run: cargo fmt --all -- --check
+
+      - name: Cargo clippy (strict)
+        run: cargo clippy -q --features "api_std_http,sign_hmac,sign_host" -- -D warnings
+
+      - name: Cargo test (library, features)
+        run: cargo test -q --features "api_std_http,sign_hmac,sign_host" --lib
+
+      - name: Cargo build (no default features, library only)
+        run: cargo build -q --no-default-features --lib
+      - name: Cargo build (release, production features, bins)
+        env:
+          RUSTFLAGS: -C debuginfo=1 -C split-debuginfo=packed
+        run: cargo build -q --release --features "api_std_http,sign_hmac,sign_host" --bins
+      - name: Strip release binaries (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          set -e
+          for bin in std_dashboard_demo hmac_client; do
+            if [ -f "target/release/$bin" ]; then
+              strip -s "target/release/$bin" || true
+            fi
+          done
+
+      - name: Install cargo-audit
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit
+
+      - name: Cargo audit
+        run: cargo audit -q
+
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+
+      - name: Cargo deny (advisories, licenses, bans)
+        run: cargo deny check
+
+      - name: Report release profile (lto/codegen-units) [Unix]
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          echo "=== Release profile in Cargo.toml ==="
+          grep -n "profile.release" -n -n Cargo.toml || true
+          grep -n "lto" Cargo.toml || echo "lto: (not set -> default)"
+          grep -n "codegen-units" Cargo.toml || echo "codegen-units: (not set -> default)"
+      - name: Report release profile (lto/codegen-units) [Windows]
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Write-Host "=== Release profile in Cargo.toml ==="
+          Select-String -Path Cargo.toml -Pattern 'profile\.release' -SimpleMatch -Encoding UTF8 | ForEach-Object { $_.Line } | Write-Host
+          if (-not (Select-String -Path Cargo.toml -Pattern '^lto\s*=' -SimpleMatch -Encoding UTF8)) { Write-Host "lto: (not set -> default)" }
+          if (-not (Select-String -Path Cargo.toml -Pattern '^codegen-units\s*=' -SimpleMatch -Encoding UTF8)) { Write-Host "codegen-units: (not set -> default)" }
+
+      - name: Report binary sizes [Linux]
+        if: runner.os == 'Linux'
+        run: |
+          set -e
+          for bin in std_dashboard_demo hmac_client; do
+            if [ -f "target/release/$bin" ]; then
+              echo "$bin size (bytes): $(stat -c%s target/release/$bin)"
+            fi
+          done
+      - name: Report binary sizes [macOS]
+        if: runner.os == 'macOS'
+        run: |
+          set -e
+          for bin in std_dashboard_demo hmac_client; do
+            if [ -f "target/release/$bin" ]; then
+              echo "$bin size (bytes): $(stat -f%z target/release/$bin)"
+            fi
+          done
+      - name: Report binary sizes [Windows]
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          foreach ($bin in @("std_dashboard_demo.exe","hmac_client.exe")) {
+            $p = Join-Path "target\\release" $bin
+            if (Test-Path $p) {
+              (Get-Item $p).Length | Write-Host "$bin size (bytes):"
+            }
+          }
+
+      # --- Symbol extraction and encryption (optional via AGE_PUBLIC_KEY) ---
+      - name: Install age/binutils [Linux]
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y age binutils
+
+      - name: Install age [macOS]
+        if: runner.os == 'macOS'
+        run: |
+          brew update
+          brew install age
+
+      - name: Install age [Windows]
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: choco install age -y
+
+      - name: Extract symbols [Linux]
+        if: runner.os == 'Linux'
+        run: |
+          set -e
+          mkdir -p symbols
+          for bin in std_dashboard_demo hmac_client; do
+            p="target/release/$bin"
+            if [ -f "$p" ]; then
+              objcopy --only-keep-debug "$p" "symbols/$bin.debug" || true
+              # strip already done earlier, but ensure again
+              strip -s "$p" || true
+              objcopy --add-gnu-debuglink="symbols/$bin.debug" "$p" || true
+            fi
+          done
+
+      - name: Extract symbols [macOS]
+        if: runner.os == 'macOS'
+        run: |
+          set -e
+          mkdir -p symbols
+          for bin in std_dashboard_demo hmac_client; do
+            p="target/release/$bin"
+            if [ -f "$p" ]; then
+              dsymutil "$p" -o "symbols/$bin.dSYM" || true
+              strip -S -x "$p" || true
+              if [ -d "symbols/$bin.dSYM" ]; then
+                tar -czf "symbols/$bin.dSYM.tar.gz" -C symbols "$bin.dSYM"
+                rm -rf "symbols/$bin.dSYM"
+              fi
+            fi
+          done
+
+      - name: Extract symbols [Windows]
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $sym = "symbols"
+          New-Item -ItemType Directory -Force -Path $sym | Out-Null
+          foreach ($bin in @("std_dashboard_demo.exe","hmac_client.exe")) {
+            $p = Join-Path "target\\release" $bin
+            $pdb = [System.IO.Path]::ChangeExtension($p, ".pdb")
+            if (Test-Path $pdb) {
+              Copy-Item $pdb (Join-Path $sym ([System.IO.Path]::GetFileName($pdb))) -Force
+            }
+          }
+
+      - name: Encrypt symbols with age [Unix]
+        if: runner.os != 'Windows' && env.AGE_PUBLIC_KEY != ''
+        run: |
+          set -e
+          mkdir -p symbols_enc
+          shopt -s nullglob
+          for f in symbols/*; do
+            [ -f "$f" ] || continue
+            out="symbols_enc/$(basename "$f").age"
+            age -r "$AGE_PUBLIC_KEY" -o "$out" "$f"
+          done
+
+      - name: Encrypt symbols with age [Windows]
+        if: runner.os == 'Windows' && env.AGE_PUBLIC_KEY != ''
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path symbols_enc | Out-Null
+          Get-ChildItem -Path symbols -File | ForEach-Object {
+            $out = Join-Path "symbols_enc" ($_.Name + ".age")
+            age -R $env:AGE_PUBLIC_KEY -o $out $_.FullName
+          }
+
+      - name: Upload encrypted symbols (if available)
+        uses: actions/upload-artifact@v4
+        with:
+          name: symbols_encrypted-${{ runner.os }}
+          path: |
+            symbols_enc/**
+          if-no-files-found: ignore
+
+      - name: Enforce binary size budget [Linux/macOS]
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -e
+          check() {
+            local bin="$1"
+            local budget="$2"
+            local path="target/release/$bin"
+            if [ -f "$path" ]; then
+              size=$(stat -c%s "$path" 2>/dev/null || stat -f%z "$path")
+              echo "$bin size: $size bytes (budget: $budget)"
+              if [ "$size" -gt "$budget" ]; then
+                echo "::error::$bin exceeds budget ($size > $budget)"; exit 1
+              fi
+            else
+              echo "skip: $path not found"
+            fi
+          }
+          check "std_dashboard_demo" "$BUDGET_STD_DASHBOARD_DEMO"
+          check "hmac_client" "$BUDGET_HMAC_CLIENT"
+
+      - name: Enforce binary size budget [Windows]
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          function Check-Bin {
+            param([string]$Name,[long]$Budget)
+            $p = Join-Path "target\\release" $Name
+            if (Test-Path $p) {
+              $size = (Get-Item $p).Length
+              Write-Host "$Name size: $size bytes (budget: $Budget)"
+              if ($size -gt $Budget) {
+                Write-Error "$Name exceeds budget ($size > $Budget)"
+                exit 1
+              }
+            } else {
+              Write-Host "skip: $p not found"
+            }
+          }
+          Check-Bin -Name "std_dashboard_demo.exe" -Budget $env:BUDGET_STD_DASHBOARD_DEMO
+          Check-Bin -Name "hmac_client.exe" -Budget $env:BUDGET_HMAC_CLIENT
+
+  feature-matrix:
+    name: Feature Matrix (Ubuntu)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [minimal, api_only, sign_only, full]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          components: clippy, rustfmt
+          override: true
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: feature-matrix-${{ matrix.variant }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            feature-matrix-
+      - name: Resolve feature flags
+        id: flags
+        run: |
+          case "${{ matrix.variant }}" in
+            minimal) echo "ARGS=--no-default-features" >> $GITHUB_OUTPUT ;;
+            api_only) echo "ARGS=--no-default-features --features api_std_http" >> $GITHUB_OUTPUT ;;
+            sign_only) echo "ARGS=--no-default-features --features sign_hmac" >> $GITHUB_OUTPUT ;;
+            full) echo "ARGS=--features api_std_http,sign_hmac,sign_host" >> $GITHUB_OUTPUT ;;
+          esac
+      - name: Cargo check (compile)
+        run: cargo check -q ${{ steps.flags.outputs.ARGS }}
+      - name: Cargo test (only for full)
+        if: matrix.variant == 'full'
+        run: cargo test -q --lib ${{ steps.flags.outputs.ARGS }}
+
+  perf-bench:
+    name: Perf Benches (Ubuntu)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - name: Set WARN budgets for PR
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          echo "PERF_BUDGET_WARN_AUTHORIZE_PARSE_NS=50000" >> $GITHUB_ENV
+          echo "PERF_BUDGET_WARN_TOKEN_PARSE_NS=50000" >> $GITHUB_ENV
+          echo "PERF_BUDGET_WARN_POLICY_EVAL_NS=60000" >> $GITHUB_ENV
+          echo "PERF_BUDGET_WARN_URL_DECODE_NS=40000" >> $GITHUB_ENV
+      - name: Set FAIL budgets for main
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          echo "PERF_BUDGET_FAIL_AUTHORIZE_PARSE_NS=50000" >> $GITHUB_ENV
+          echo "PERF_BUDGET_FAIL_TOKEN_PARSE_NS=50000" >> $GITHUB_ENV
+          echo "PERF_BUDGET_FAIL_POLICY_EVAL_NS=60000" >> $GITHUB_ENV
+          echo "PERF_BUDGET_FAIL_URL_DECODE_NS=40000" >> $GITHUB_ENV
+      - name: Run benches (test-based) with output
+        run: cargo test --features "api_std_http,sign_hmac,sign_host" --lib api::std_http::tests::bench -- --nocapture
+
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*.*.*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+
+jobs:
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: rustfmt
+      - name: Cargo fmt check
+        run: cargo fmt --all --check
+
+  clippy:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+        features:
+          - ""
+          - "api_std_http"
+          - "api_std_http,egress,egress_http_std"
+          - "api_std_http,compress_rle"
+          - "api_std_http,compress_rle,smtp_std"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: clippy
+      - name: Clippy (no features)
+        if: ${{ matrix.features == '' }}
+        run: cargo clippy --no-default-features --lib -- -D warnings
+      - name: Clippy (with features)
+        if: ${{ matrix.features != '' }}
+        run: cargo clippy --no-default-features --features "${{ matrix.features }}" --bins -- -D warnings
+
+  check_doc_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Cargo check (zero-deps lib)
+        run: cargo check --no-default-features --lib
+      - name: Cargo doc (zero-deps)
+        run: cargo doc --no-default-features --no-deps
+      - name: Cargo test (zero-deps lib)
+        run: cargo test --no-default-features --lib
+
+  cbindgen:
+    name: Generate C header (cbindgen)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Install cbindgen
+        run: cargo install cbindgen --locked
+      - name: Generate header
+        run: |
+          mkdir -p target/cbindgen
+          cbindgen --config cbindgen.toml --crate mkt_ksa_geo_sec --output target/cbindgen/mkt_ksa_geo_sec.h
+      - name: Upload header artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mkt_ksa_geo_sec.h
+          path: target/cbindgen/mkt_ksa_geo_sec.h
+
+  miri:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+          components: miri, rust-src
+      - name: Miri setup
+        run: cargo +nightly miri setup
+      - name: Miri tests (zero-deps lib)
+        run: cargo +nightly miri test --no-default-features --lib
+
+

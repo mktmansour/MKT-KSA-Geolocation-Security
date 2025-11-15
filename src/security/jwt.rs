@@ -29,10 +29,15 @@
 ******************************************************************************************/
 
 use crate::security::secret::SecureString;
+#[cfg(feature = "jwt")]
 use chrono::{Duration, Utc};
+#[cfg(feature = "jwt")]
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "jwt")]
 use thiserror::Error;
+#[cfg(feature = "uuid_fmt")]
 use uuid::Uuid;
 
 /// Arabic: تعريف الأخطاء المخصصة لوحدة JWT.

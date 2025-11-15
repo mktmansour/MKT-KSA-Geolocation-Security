@@ -25,7 +25,9 @@
 ******************************************************************************************/
 
 use std::str::FromStr;
+#[cfg(feature = "validation")]
 use thiserror::Error;
+#[cfg(feature = "uuid_fmt")]
 use uuid::Uuid;
 
 /// Arabic: تعريف الأخطاء المخصصة لمحرك السياسات.

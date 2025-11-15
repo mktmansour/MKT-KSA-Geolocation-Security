@@ -19,7 +19,11 @@
     This file contains general helper functions and utilities used across the project (e.g., encryption, distance calculation, etc.).
     The goal is to centralize common helper logic for easier maintenance and reuse.
 ******************************************************************************************/
-use anyhow::Error;
+// zero-dependency error type (explicit) to avoid unit-error in Result
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum HelperError {
+    NotImplemented,
+}
 
 /// Arabic: يقوم بتشفير البيانات باستخدام مفتاح مشترك. هذا تنفيذ وهمي.
 ///
@@ -30,8 +34,8 @@ use anyhow::Error;
 ///
 /// # Errors
 /// Returns an error if encryption fails (currently never fails as it's a stub).
-pub fn aes_encrypt(data: &[u8], _key: &[u8]) -> Result<Vec<u8>, Error> {
-    // TODO: Implement actual AES-256-GCM encryption
+pub fn aes_encrypt(data: &[u8], _key: &[u8]) -> Result<Vec<u8>, HelperError> {
+    // Stub: return input as-is until crypto feature is enabled
     Ok(data.to_vec())
 }
 
@@ -45,4 +49,18 @@ pub const fn calculate_distance(_lat1: f64, _lon1: f64, _lat2: f64, _lon2: f64) 
     // TODO: Implement the actual Haversine formula for accurate distance calculation.
     // For now, returning 0.0 for compatibility.
     0.0
+}
+
+/// Arabic: مقارنة زمن ثابت لمصفوفتين بايت (تجنب قنوات التوقيت)
+/// English: Constant-time equality for two byte slices (avoid timing channels)
+#[must_use]
+pub fn ct_eq(a: &[u8], b: &[u8]) -> bool {
+    if a.len() != b.len() {
+        return false;
+    }
+    let mut diff: u8 = 0;
+    for i in 0..a.len() {
+        diff |= a[i] ^ b[i];
+    }
+    diff == 0
 }

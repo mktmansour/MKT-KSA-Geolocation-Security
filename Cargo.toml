@@ -21,73 +21,74 @@ exclude = [
   "*.psd",
 ]
 
+[[bin]]
+name = "MKT_KSA_Geolocation_Security"
+path = "src/main.rs"
+required-features = ["core_full", "api_std_http"]
+
+[[bin]]
+name = "std_dashboard_demo"
+path = "src/bin/std_dashboard_demo.rs"
+required-features = ["api_std_http", "sign_hmac", "sign_host"]
+
+[[bin]]
+name = "hmac_client"
+path = "src/bin/hmac_client.rs"
+required-features = ["sign_hmac", "sign_host"]
+
 [lib]
 name = "mkt_ksa_geo_sec"
 crate-type = ["rlib", "cdylib", "staticlib"]
+
 [dependencies]
-actix-web = "4.0"
-actix-rt = "2.10"
-ammonia = "4.1.1"
-anyhow = "1.0.99"
-async-trait = "0.1"
-# تم حذف dotenv
-config = "0.15.13"
-futures = "0.3"
-log = "0.4"
-# Database
-mysql_async = "0.36.1"
-tokio = { version = "1", features = ["full"] }
-uuid = { version = "1.18.0", features = ["v4", "serde"] }
-# Crypto & Security
-aes-gcm = "0.10.3"
-secrecy = { version = "0.10.3", features = ["serde"] }
-zeroize = { version = "1.8.1", features = ["derive"] }
-hex = "0.4.3"
-hmac = "0.12.1"
-sha2 = "0.10.9"
-blake3 = "1.8.2"
-base64 = "0.22.1"
-jsonwebtoken = "9.3.1"
-# pqcrypto-kyber = "0.7.9"  # تم استبدالها
-pqcrypto-mlkem = "0.1.1"
-unicode-normalization = "0.1.24"
-validator = "0.20"
-regex = "1.11.1"
-lru = "0.16.0"
-rayon = "1.11.0"
-## removed: once_cell, lazy_static (migrated to std::sync::LazyLock)
-cfg-if = "1.0.1"
-rand = "0.8.5"
-chrono = { version = "0.4", features = ["serde"] }
-# -------------------------------------------------------------------
-# Utilities (Config, logging, caching, errors)
-# -------------------------------------------------------------------
-serde_json = "1"
-reqwest = { version = "0.12.23", default-features = false, features = ["json", "rustls-tls"] }
-serde = { version = "1", features = ["derive"] }
-## removed: serde_derive (serde derives provided by serde = { features = ["derive"] })
-thiserror = "2.0.12"
-maxminddb = { version = "0.26.0", features = ["mmap"] }
-pqcrypto-traits = "0.3.5"
-# governor = "0.6"  # أبقِ فقط governor إذا كنت تستخدمه فعليًا في الكود
+hmac = { version = "0.12", optional = true }
+sha2 = { version = "0.10", optional = true }
 
 [dev-dependencies]
-proptest = "1.7.0"
-rstest = "0.26.1"
-assert-json-diff = "2.0"
 
 [features]
 default = []
-v1_1 = []
-v2_0 = []
-v3_0 = []
-quantum = []
-adaptive = []
-predictive = []
-autonomous_vehicles = []
-generative_ai = []
-blockchain = []
-zkp = []
-quantum_computing = []
-ar_integration = []
-gpu = []
+# Consolidated features (no external deps retained)
+sign_hmac = ["dep:hmac", "dep:sha2"]
+sign_host = []
+oauth2 = []
+ledger_blake3 = []
+ffi_c = []
+
+## Functional areas (internal only, no external deps)
+egress = []
+api_std_http = []
+compress_rle = []
+smtp_std = []
+egress_http_std = ["egress"]
+
+# Core features that are actually used
+core_full = []
+jwt = []
+validation = []
+jws = []
+serde = []
+secure_secrecy = []
+webhook_out = []
+egress_url = []
+egress_reqwest = []
+uuid_fmt = []
+parallel = []
+webhook_in = []
+
+# Zero-deps core can opt-in to utilities (no external deps retained)
+core_utils = []
+
+# Input validation & sanitization
+input_validation = []
+
+# Config loader (binary/demo only)
+config_loader = []
+
+[profile.release]
+# Arabic: تحسينات إصدار متوازنة للأداء والحجم دون المساس بالأمان
+# English: Balanced release optimizations for performance and size without compromising security
+lto = "thin"
+codegen-units = 1
+panic = "abort"
+opt-level = 3

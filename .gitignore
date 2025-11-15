@@ -1,3 +1,11 @@
+.cargo-home/
+target/
+target_local/
+**/*.pdb
+**/*.dSYM/
+**/*.dSYM/**/*
+**/*.dSYM/Contents/Resources/DWARF/**
+
 # Rust & Cargo Build Artifacts
 /target/
 /debug/

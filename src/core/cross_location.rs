@@ -282,9 +282,12 @@ mod tests {
     };
     use crate::core::geo_resolver::GeoReaderEnum;
     use crate::core::geo_resolver::{DefaultAiModel, DefaultBlockchain};
+    #[cfg(feature = "sign_hmac")]
     use hmac::Hmac;
+    #[cfg(feature = "sign_hmac")]
     use hmac::Mac;
     use maxminddb::Reader;
+    #[cfg(feature = "sign_hmac")]
     use sha2::Sha512;
     use std::collections::HashMap;
     use std::fs;

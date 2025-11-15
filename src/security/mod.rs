@@ -24,14 +24,17 @@
 
 // Arabic: وحدة التحقق من المدخلات (Input Validator)
 // English: Input Validator module
+#[cfg(feature = "input_validation")]
 pub mod input_validator;
 
-// Arabic: وحدة التوكنات JWT
-// English: JWT module
+// Arabic: وحدة التوكنات JWT (اختيارية)
+// English: JWT module (optional)
+#[cfg(feature = "jwt")]
 pub mod jwt;
 
-// Arabic: وحدة السياسات الأمنية
-// English: Security Policy module
+// Arabic: وحدة السياسات الأمنية (اختيارية)
+// English: Security Policy module (optional)
+#[cfg(feature = "validation")]
 pub mod policy;
 
 // تم حذف pub mod ratelimit; لأن الملف لم يعد موجودًا
@@ -43,3 +46,27 @@ pub mod signing;
 // Arabic: طبقة تغليف لوحدة الأسرار لتوحيد الاستدعاءات وعزل تغييرات الإصدارات
 // English: Secret wrapper layer to unify calls and isolate version changes
 pub mod secret;
+
+// Arabic: وحدة توقيع/تحقق JWS اختيارية (Ed25519 + JCS)
+// English: Optional JWS sign/verify module (Ed25519 + JCS)
+#[cfg(feature = "jws")]
+pub mod jws;
+
+// Arabic: حارس الخروج/SSRF اختياري
+// English: Optional egress/SSRF guard
+#[cfg(feature = "egress")]
+pub mod egress_guard;
+
+// Arabic: مزوّد تشفير موحد صفر تبعيات (Trait) مع تنفيذ افتراضي NoCrypto
+// English: Unified crypto provider trait (zero‑deps) with default NoCrypto implementation
+pub mod crypto_provider;
+
+// Arabic: تشفير ذكي وصارم (واجهات/مخزن مفاتيح/AAD/ظرف) – صفر تبعية
+// English: Smart, strict crypto (traits/keystore/AAD/envelope) – zero‑deps
+pub mod crypto_smart;
+
+// Arabic: تفتيش صارم ومدقق سلامة (صفر تبعية)
+// English: Strict inspector and integrity fingerprint (zero‑deps)
+pub mod fingerprint;
+pub mod inspection;
+pub mod inspection_policy;

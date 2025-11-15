@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MKT KSA Geolocation Security Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; margin-bottom: 30px; background: rgba(255,255,255,0.95); padding: 20px; border-radius: 15px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
+        .header h1 { color: #2c3e50; margin: 0; font-size: 2.5em; font-weight: 300; }
+        .header .subtitle { color: #7f8c8d; margin: 10px 0; font-size: 1.1em; }
+        .lang-switch { margin: 15px 0; }
+        .lang-switch a { margin: 0 15px; text-decoration: none; color: #3498db; font-weight: 500; padding: 8px 16px; border-radius: 20px; transition: all 0.3s ease; }
+        .lang-switch a.active { background: #3498db; color: white; }
+        .lang-switch a:hover { background: rgba(52, 152, 219, 0.1); }
+        
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
+        .card { background: rgba(255,255,255,0.95); padding: 25px; border-radius: 15px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); backdrop-filter: blur(10px); transition: transform 0.3s ease; }
+        .card:hover { transform: translateY(-5px); }
+        .card h2 { color: #2c3e50; margin-bottom: 20px; font-size: 1.4em; font-weight: 500; display: flex; align-items: center; }
+        .card h2::before { content: attr(data-icon); margin-right: 10px; font-size: 1.2em; }
+        
+        .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin: 15px 0; }
+        .metric { background: #f8f9fa; padding: 15px; border-radius: 10px; text-align: center; border-left: 4px solid #3498db; }
+        .metric .label { font-weight: 600; color: #7f8c8d; font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.5px; }
+        .metric .value { color: #2c3e50; font-size: 1.3em; font-weight: 700; margin-top: 5px; }
+        
+        .button-group { display: flex; gap: 10px; flex-wrap: wrap; margin: 15px 0; }
+        .button { padding: 12px 24px; border: none; border-radius: 25px; cursor: pointer; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.3s ease; text-decoration: none; display: inline-flex; align-items: center; }
+        .button.primary { background: linear-gradient(45deg, #3498db, #2980b9); color: white; }
+        .button.success { background: linear-gradient(45deg, #27ae60, #229954); color: white; }
+        .button.warning { background: linear-gradient(45deg, #f39c12, #e67e22); color: white; }
+        .button.danger { background: linear-gradient(45deg, #e74c3c, #c0392b); color: white; }
+        .button.info { background: linear-gradient(45deg, #9b59b6, #8e44ad); color: white; }
+        .button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        
+        .status-badge { padding: 6px 12px; border-radius: 20px; font-size: 0.8em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .status-enabled { background: #d5f4e6; color: #27ae60; }
+        .status-disabled { background: #fadbd8; color: #e74c3c; }
+        .status-warning { background: #fef9e7; color: #f39c12; }
+        
+        .cloud-section { background: linear-gradient(45deg, #74b9ff, #0984e3); color: white; }
+        .security-section { background: linear-gradient(45deg, #fd79a8, #e84393); color: white; }
+        .performance-section { background: linear-gradient(45deg, #00b894, #00a085); color: white; }
+        .memory-section { background: linear-gradient(45deg, #fdcb6e, #e17055); color: white; }
+        
+        @media (max-width: 768px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .header h1 { font-size: 2em; }
+            .button-group { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ MKT KSA Geolocation Security Dashboard</h1>
+            <div class="subtitle">Professional Security Management System</div>
+            <div class="lang-switch">
+                <a href="#" class="active">🇺🇸 EN</a>
+                <a href="#">🇸🇦 AR</a>
+            </div>
+        </div>
+        
+        <div class="dashboard-grid">
+            <!-- Cloud Management Section -->
+            <div class="card cloud-section">
+                <h2 data-icon="☁️">Cloud Management</h2>
+                <div class="metric-grid">
+                    <div class="metric">
+                        <div class="label">Endpoints</div>
+                        <div class="value">0</div>
+                    </div>
+                    <div class="metric">
+                        <div class="label">Uploads</div>
+                        <div class="value">0</div>
+                    </div>
+                    <div class="metric">
+                        <div class="label">Status</div>
+                        <div class="value"><span class="status-badge status-disabled">Disabled</span></div>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button class="button primary" onclick="addCloudEndpoint()">➕ Add Endpoint</button>
+                    <button class="button success" onclick="uploadWeatherData()">🌤️ Upload Weather</button>
+                    <button class="button info" onclick="uploadClientData()">👥 Upload Clients</button>
+                    <button class="button warning" onclick="uploadAllData()">📊 Upload All</button>
+                </div>
+            </div>
+            
+            <!-- Security Status Section -->
+            <div class="card security-section">
+                <h2 data-icon="🛡️">Security Status</h2>
+                <div class="metric-grid">
+                    <div class="metric">
+                        <div class="label">Protection</div>
+                        <div class="value"><span class="status-badge status-enabled">Active</span></div>
+                    </div>
+                    <div class="metric">
+                        <div class="label">Requests/Hour</div>
+                        <div class="value">1,234</div>
+                    </div>
+                    <div class="metric">
+                        <div class="label">Blocked</div>
+                        <div class="value">32</div>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button class="button primary" onclick="viewSecurityLogs()">📋 View Logs</button>
+                    <button class="button warning" onclick="adjustSecurityLevel()">⚙️ Adjust Level</button>
+                    <button class="button danger" onclick="emergencyShutdown()">🚨 Emergency</button>
+                </div>
+            </div>
+            
+            <!-- Performance Section -->
+            <div class="card performance-section">
+                <h2 data-icon="⚡">Performance Monitor</h2>
+                <div class="metric-grid">
+                    <div class="metric">
+                        <div class="label">CPU Usage</div>
+                        <div class="value">23%</div>
+                    </div>
+                    <div class="metric">
+                        <div class="label">Memory</div>
+                        <div class="value">45%</div>
+                    </div>
+                    <div class="metric">
+                        <div class="label">Response Time</div>
+                        <div class="value">156ms</div>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button class="button primary" onclick="viewPerformanceDetails()">📈 Details</button>
+                    <button class="button warning" onclick="optimizePerformance()">🔧 Optimize</button>
+                    <button class="button info" onclick="exportPerformanceReport()">📊 Export Report</button>
+                </div>
+            </div>
+            
+            <!-- Memory Management Section -->
+            <div class="card memory-section">
+                <h2 data-icon="💾">Memory Management</h2>
+                <div class="metric-grid">
+                    <div class="metric">
+                        <div class="label">Limit</div>
+                        <div class="value">0 bytes</div>
+                    </div>
+                    <div class="metric">
+                        <div class="label">Auto</div>
+                        <div class="value"><span class="status-badge status-disabled">Disabled</span></div>
+                    </div>
+                    <div class="metric">
+                        <div class="label">Used Events</div>
+                        <div class="value">5</div>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button class="button success" onclick="enableAutoMemory()">✅ Enable Auto 1MB</button>
+                    <button class="button warning" onclick="purgeMemory()">🗑️ Purge Now</button>
+                    <button class="button info" onclick="viewMemoryDetails()">📊 Details</button>
+                </div>
+            </div>
+            
+            <!-- Key Auto-Rotation Section -->
+            <div class="card">
+                <h2 data-icon="🔑">Key Auto-Rotation</h2>
+                <div class="metric-grid">
+                    <div class="metric">
+                        <div class="label">Enabled</div>
+                        <div class="value"><span class="status-badge status-disabled">Disabled</span></div>
+                    </div>
+                    <div class="metric">
+                        <div class="label">Threshold</div>
+                        <div class="value">0</div>
+                    </div>
+                    <div class="metric">
+                        <div class="label">Interval</div>
+                        <div class="value">0 ms</div>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button class="button primary" onclick="enableKeyRotation()">🔄 Enable</button>
+                    <button class="button warning" onclick="rotateKeysNow()">⚡ Rotate Now</button>
+                    <button class="button info" onclick="viewKeyHistory()">📋 History</button>
+                </div>
+            </div>
+            
+            <!-- Anti-Replay Purge Section -->
+            <div class="card">
+                <h2 data-icon="🔄">Anti-Replay Purge</h2>
+                <div class="metric-grid">
+                    <div class="metric">
+                        <div class="label">Enabled</div>
+                        <div class="value"><span class="status-badge status-disabled">Disabled</span></div>
+                    </div>
+                    <div class="metric">
+                        <div class="label">Mode</div>
+                        <div class="value">weekly</div>
+                    </div>
+                    <div class="metric">
+                        <div class="label">Sensitivity</div>
+                        <div class="value">50</div>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button class="button primary" onclick="configureAntiReplay()">⚙️ Configure</button>
+                    <button class="button warning" onclick="purgeAntiReplayNow()">🗑️ Purge Now</button>
+                    <button class="button info" onclick="viewAntiReplayStats()">📊 Stats</button>
+                </div>
+            </div>
+            
+            <!-- Signature Stats Section -->
+            <div class="card">
+                <h2 data-icon="✍️">Signature Statistics</h2>
+                <div class="metric-grid">
+                    <div class="metric">
+                        <div class="label">Total Paths</div>
+                        <div class="value">1</div>
+                    </div>
+                    <div class="metric">
+                        <div class="label">Valid</div>
+                        <div class="value">0</div>
+                    </div>
+                    <div class="metric">
+                        <div class="label">Invalid</div>
+                        <div class="value">29</div>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button class="button primary" onclick="viewSignatureDetails()">📋 Details</button>
+                    <button class="button warning" onclick="resetSignatureStats()">🔄 Reset</button>
+                    <button class="button info" onclick="exportSignatureReport()">📊 Export</button>
+                </div>
+            </div>
+            
+            <!-- OAuth2 Section -->
+            <div class="card">
+                <h2 data-icon="🔐">OAuth2 System</h2>
+                <div class="metric-grid">
+                    <div class="metric">
+                        <div class="label">Clients</div>
+                        <div class="value">0</div>
+                    </div>
+                    <div class="metric">
+                        <div class="label">Tokens</div>
+                        <div class="value">0</div>
+                    </div>
+                    <div class="metric">
+                        <div class="label">Flows</div>
+                        <div class="value">0</div>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button class="button primary" onclick="viewOAuth2Clients()">👥 Clients</button>
+                    <button class="button success" onclick="viewOAuth2Tokens()">🎫 Tokens</button>
+                    <button class="button info" onclick="viewOAuth2Flows()">🔄 Flows</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function addCloudEndpoint() {
+            alert('Cloud endpoint functionality - Coming Soon!');
+        }
+        function uploadWeatherData() {
+            alert('Weather data upload - Coming Soon!');
+        }
+        function uploadClientData() {
+            alert('Client data upload - Coming Soon!');
+        }
+        function uploadAllData() {
+            alert('All data upload - Coming Soon!');
+        }
+        function viewSecurityLogs() {
+            alert('Security logs - Coming Soon!');
+        }
+        function adjustSecurityLevel() {
+            alert('Security level adjustment - Coming Soon!');
+        }
+        function emergencyShutdown() {
+            alert('Emergency shutdown - Coming Soon!');
+        }
+        function viewPerformanceDetails() {
+            alert('Performance details - Coming Soon!');
+        }
+        function optimizePerformance() {
+            alert('Performance optimization - Coming Soon!');
+        }
+        function exportPerformanceReport() {
+            alert('Performance report export - Coming Soon!');
+        }
+        function enableAutoMemory() {
+            alert('Auto memory enable - Coming Soon!');
+        }
+        function purgeMemory() {
+            alert('Memory purge - Coming Soon!');
+        }
+        function viewMemoryDetails() {
+            alert('Memory details - Coming Soon!');
+        }
+        function enableKeyRotation() {
+            alert('Key rotation enable - Coming Soon!');
+        }
+        function rotateKeysNow() {
+            alert('Key rotation now - Coming Soon!');
+        }
+        function viewKeyHistory() {
+            alert('Key history - Coming Soon!');
+        }
+        function configureAntiReplay() {
+            alert('Anti-replay configuration - Coming Soon!');
+        }
+        function purgeAntiReplayNow() {
+            alert('Anti-replay purge now - Coming Soon!');
+        }
+        function viewAntiReplayStats() {
+            alert('Anti-replay stats - Coming Soon!');
+        }
+        function viewSignatureDetails() {
+            alert('Signature details - Coming Soon!');
+        }
+        function resetSignatureStats() {
+            alert('Signature stats reset - Coming Soon!');
+        }
+        function exportSignatureReport() {
+            alert('Signature report export - Coming Soon!');
+        }
+        function viewOAuth2Clients() {
+            alert('OAuth2 clients - Coming Soon!');
+        }
+        function viewOAuth2Tokens() {
+            alert('OAuth2 tokens - Coming Soon!');
+        }
+        function viewOAuth2Flows() {
+            alert('OAuth2 flows - Coming Soon!');
+        }
+    </script>
+</body>
+</html>

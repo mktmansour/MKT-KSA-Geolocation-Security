@@ -1,36 +1,38 @@
-name: build-mkt-ksa-geo-sec
+name: release-binaries
 
 on:
-  workflow_dispatch:
   push:
     tags:
       - 'v*'
 
 jobs:
   build:
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions-rs/toolchain@v1
         with:
-          components: clippy,rustfmt
+          toolchain: stable
+          override: true
       - name: Install cbindgen
         run: cargo install cbindgen --locked
-      - name: Build release
-        run: cargo build --release
+      - name: Build cdylib/staticlib
+        run: |
+          cargo build --release --features ffi_c
       - name: Generate C header
-        run: cbindgen -o mkt_ksa_geo_sec.h
+        run: |
+          cbindgen --config cbindgen.toml --crate mkt_ksa_geo_sec --output mkt_ksa_geo_sec.h
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: mkt_ksa_geo_sec-${{ matrix.os }}
           path: |
-            mkt_ksa_geo_sec.h
             target/release/*.dll
             target/release/*.so
             target/release/*.dylib
+            mkt_ksa_geo_sec.h
 
 

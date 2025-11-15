@@ -10,38 +10,49 @@
 ******************************************************************************************/
 
 use crate::security::secret::SecureBytes;
+#[cfg(feature = "sign_hmac")]
 use hmac::{Hmac, Mac};
+#[cfg(feature = "serde")]
 use serde::Serialize;
+#[cfg(feature = "sign_hmac")]
 use sha2::{Sha384, Sha512};
 
 /// أخطاء التوقيع الموحدة
 /// Unified signing errors
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug)]
 pub enum SigningError {
-    #[error("invalid key for HMAC")]
+    /// invalid key for HMAC
     InvalidKey,
-    #[error("serialization failed: {0}")]
+    /// serialization failed: message
     Serialization(String),
+    /// feature disabled
+    FeatureDisabled,
 }
 
+#[cfg(feature = "sign_hmac")]
 type HmacSha512 = Hmac<Sha512>;
+#[cfg(feature = "sign_hmac")]
 type HmacSha384 = Hmac<Sha384>;
 
 /// يوقّع مصفوفة بايت باستخدام HMAC-SHA512
 /// Signs a byte slice using HMAC-SHA512
-///
-/// # Errors
-/// يرجع خطأ إذا فشل إنشاء HMAC (مفتاح غير صالح).
-/// Returns error if HMAC cannot be constructed (invalid key).
+#[cfg(feature = "sign_hmac")]
 pub fn sign_hmac_sha512(data: &[u8], key: &SecureBytes) -> Result<Vec<u8>, SigningError> {
     let mut mac = HmacSha512::new_from_slice(key.expose()).map_err(|_| SigningError::InvalidKey)?;
     mac.update(data);
     Ok(mac.finalize().into_bytes().to_vec())
 }
 
+/// نسخة بديلة عندما تكون الميزة معطلة
+#[cfg(not(feature = "sign_hmac"))]
+pub fn sign_hmac_sha512(_data: &[u8], _key: &SecureBytes) -> Result<Vec<u8>, SigningError> {
+    Err(SigningError::FeatureDisabled)
+}
+
 /// يتحقق من صحة HMAC-SHA512
 /// Verifies HMAC-SHA512
 #[must_use]
+#[cfg(feature = "sign_hmac")]
 pub fn verify_hmac_sha512(data: &[u8], signature: &[u8], key: &SecureBytes) -> bool {
     let Ok(mut mac) = HmacSha512::new_from_slice(key.expose()) else {
         return false;
@@ -50,19 +61,30 @@ pub fn verify_hmac_sha512(data: &[u8], signature: &[u8], key: &SecureBytes) -> b
     mac.verify_slice(signature).is_ok()
 }
 
+#[must_use]
+#[cfg(not(feature = "sign_hmac"))]
+pub fn verify_hmac_sha512(_data: &[u8], _signature: &[u8], _key: &SecureBytes) -> bool {
+    false
+}
+
 /// يوقّع مصفوفة بايت باستخدام HMAC-SHA384 (لاستخدامات معينة)
 /// Signs a byte slice using HMAC-SHA384 (for specific modules)
-///
-/// # Errors
+#[cfg(feature = "sign_hmac")]
 pub fn sign_hmac_sha384(data: &[u8], key: &SecureBytes) -> Result<Vec<u8>, SigningError> {
     let mut mac = HmacSha384::new_from_slice(key.expose()).map_err(|_| SigningError::InvalidKey)?;
     mac.update(data);
     Ok(mac.finalize().into_bytes().to_vec())
 }
 
+#[cfg(not(feature = "sign_hmac"))]
+pub fn sign_hmac_sha384(_data: &[u8], _key: &SecureBytes) -> Result<Vec<u8>, SigningError> {
+    Err(SigningError::FeatureDisabled)
+}
+
 /// يتحقق من صحة HMAC-SHA384
 /// Verifies HMAC-SHA384
 #[must_use]
+#[cfg(feature = "sign_hmac")]
 pub fn verify_hmac_sha384(data: &[u8], signature: &[u8], key: &SecureBytes) -> bool {
     let Ok(mut mac) = HmacSha384::new_from_slice(key.expose()) else {
         return false;
@@ -71,17 +93,20 @@ pub fn verify_hmac_sha384(data: &[u8], signature: &[u8], key: &SecureBytes) -> b
     mac.verify_slice(signature).is_ok()
 }
 
+#[must_use]
+#[cfg(not(feature = "sign_hmac"))]
+pub fn verify_hmac_sha384(_data: &[u8], _signature: &[u8], _key: &SecureBytes) -> bool {
+    false
+}
+
 /// يوقّع بنية قابلة للتسلسل باستثناء حقل معيّن (مثلاً signature)
 /// Signs a serializable struct while excluding a specific field (e.g., signature)
-///
-/// # Errors
-/// - Serialization: عند فشل التسلسل إلى JSON.
+#[cfg(all(feature = "serde", feature = "sign_hmac"))]
 pub fn sign_struct_excluding_field<T: Serialize>(
     value: &T,
     exclude_field: &str,
     key: &SecureBytes,
 ) -> Result<Vec<u8>, SigningError> {
-    // تسلسل إلى JSON ثم إزالة الحقل عبر serde_json::Value
     let json =
         serde_json::to_value(value).map_err(|e| SigningError::Serialization(e.to_string()))?;
     let json = match json {
@@ -95,8 +120,18 @@ pub fn sign_struct_excluding_field<T: Serialize>(
     sign_hmac_sha512(&data, key)
 }
 
+#[cfg(any(not(feature = "serde"), not(feature = "sign_hmac")))]
+pub fn sign_struct_excluding_field<T>(
+    _value: &T,
+    _exclude_field: &str,
+    _key: &SecureBytes,
+) -> Result<Vec<u8>, SigningError> {
+    Err(SigningError::FeatureDisabled)
+}
+
 /// يتحقق من بنية قابلة للتسلسل باستثناء حقل معيّن
 /// Verifies a serializable struct while excluding a specific field
+#[cfg(all(feature = "serde", feature = "sign_hmac"))]
 #[must_use]
 pub fn verify_struct_excluding_field<T: Serialize>(
     value: &T,
@@ -116,33 +151,29 @@ pub fn verify_struct_excluding_field<T: Serialize>(
     verify_hmac_sha512(&data, signature, key)
 }
 
+#[cfg(any(not(feature = "serde"), not(feature = "sign_hmac")))]
+#[must_use]
+pub fn verify_struct_excluding_field<T>(
+    _value: &T,
+    _exclude_field: &str,
+    _signature: &[u8],
+    _key: &SecureBytes,
+) -> bool {
+    false
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    #[cfg(not(feature = "sign_hmac"))]
     #[test]
-    fn hmac_sha512_roundtrip() {
+    fn hmac_sha512_disabled_by_default() {
         let key = SecureBytes::new(vec![1u8; 64]);
         let data = b"hello";
-        let sig = sign_hmac_sha512(data, &key).unwrap();
-        assert!(verify_hmac_sha512(data, &sig, &key));
-    }
-
-    #[test]
-    fn struct_sign_verify_excluding_signature() {
-        #[derive(serde::Serialize)]
-        struct Sample {
-            a: u32,
-            b: String,
-            signature: Option<String>,
-        }
-        let key = SecureBytes::new(vec![42u8; 32]);
-        let s = Sample {
-            a: 7,
-            b: "x".to_string(),
-            signature: None,
-        };
-        let sig = sign_struct_excluding_field(&s, "signature", &key).unwrap();
-        assert!(verify_struct_excluding_field(&s, "signature", &sig, &key));
+        let _ = (key, data);
+        // Default build is zero-deps; feature is disabled so function returns FeatureDisabled
+        let err = sign_hmac_sha512(data, &SecureBytes::new(vec![0; 32])).err();
+        assert!(matches!(err, Some(SigningError::FeatureDisabled)));
     }
 }

@@ -20,23 +20,15 @@ pub const EPS_F64: f64 = 1.0e-12;
 /// عند عدم القدرة على التحويل (قيمة سالبة)، يرجع 0.0.
 /// If conversion fails (negative), returns 0.0.
 #[must_use]
-pub fn time_delta_secs(
-    start: chrono::DateTime<chrono::Utc>,
-    end: chrono::DateTime<chrono::Utc>,
-) -> f64 {
-    end.signed_duration_since(start)
-        .to_std()
-        .map_or(0.0, |d| d.as_secs_f64())
+pub fn time_delta_secs(start: std::time::SystemTime, end: std::time::SystemTime) -> f64 {
+    end.duration_since(start).map_or(0.0, |d| d.as_secs_f64())
 }
 
 /// فرق الزمن عالي الدقة بالثواني (يجمع الثواني والنانoseconds)
 /// High-resolution time delta in seconds (secs + nanos)
 #[must_use]
-pub fn time_delta_secs_high_res(
-    start: chrono::DateTime<chrono::Utc>,
-    end: chrono::DateTime<chrono::Utc>,
-) -> f64 {
-    end.signed_duration_since(start).to_std().map_or(0.0, |d| {
+pub fn time_delta_secs_high_res(start: std::time::SystemTime, end: std::time::SystemTime) -> f64 {
+    end.duration_since(start).map_or(0.0, |d| {
         d.as_secs_f64() + f64::from(d.subsec_nanos()) / 1_000_000_000.0
     })
 }

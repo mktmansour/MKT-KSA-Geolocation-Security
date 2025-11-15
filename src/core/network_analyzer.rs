@@ -35,8 +35,11 @@
 ******************************************************************************************/
 
 use crate::security::secret::SecureBytes;
+#[cfg(feature = "crypto_aesgcm")]
 use aes_gcm::aead::{Aead, KeyInit};
+#[cfg(feature = "crypto_aesgcm")]
 use aes_gcm::AeadCore;
+#[cfg(feature = "crypto_aesgcm")]
 use aes_gcm::{Aes256Gcm, Key};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
@@ -265,8 +268,9 @@ impl NetworkAnalyzer {
         score.max(0.0)
     }
 
-    /// يقوم بتشفير عنوان الـ IP باستخدام AES-256-GCM.
-    /// Encrypts an IP address using AES-256-GCM.
+    /// يقوم بتشفير عنوان الـ IP.
+    /// Encrypts an IP address.
+    #[cfg(feature = "crypto_aesgcm")]
     fn encrypt_ip(&self, ip: &IpAddr) -> Result<String, NetworkError> {
         let key_slice = self.encryption_key.expose();
         let key = Key::<Aes256Gcm>::from_slice(key_slice);
@@ -277,11 +281,22 @@ impl NetworkAnalyzer {
             .encrypt(&nonce, ip.to_string().as_bytes())
             .map_err(|e| NetworkError::CryptoError(e.to_string()))?;
 
-        // دمج nonce مع النص المشفر
-        // Combine nonce with ciphertext
         let mut combined = nonce.to_vec();
         combined.extend_from_slice(&ciphertext);
         Ok(hex::encode(combined))
+    }
+
+    /// بديل صفري التبعيات: إخراج تجزئة SipHash للـ IP كـ hex.
+    /// Zero-deps fallback: output SipHash of IP string as hex.
+    #[cfg(not(feature = "crypto_aesgcm"))]
+    fn encrypt_ip(&self, ip: &IpAddr) -> Result<String, NetworkError> {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+        let mut hasher = DefaultHasher::new();
+        let ip_str = ip.to_string();
+        ip_str.hash(&mut hasher);
+        let hash = hasher.finish();
+        Ok(format!("{:016x}", hash))
     }
 }
 

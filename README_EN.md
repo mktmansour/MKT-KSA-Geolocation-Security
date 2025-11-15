@@ -1,757 +1,1060 @@
-# 🛡️🌍 MKT_KSA_Geolocation_Security
-**مكتبة التحقق الجغرافي والأمني السعودي الذكية – MKT KSA 🇸🇦**
-**Smart Saudi Geolocation & Security Library** 
-> 🔐 Rust | 🛰️ Smart Security | 🏙️ Smart City Ready | 📄 Apache 2.0 |  Developed by Mansour Bin Khalid (KSA 🇸🇦)
+# MKT KSA Geolocation Security
 
-[![Rust](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/rust.yml/badge.svg?branch=main)](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/rust.yml)      [![Clippy](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/clippy.yml/badge.svg)](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/clippy.yml)
+<div align="center">
 
-[![Crates.io](https://img.shields.io/crates/v/MKT_KSA_Geolocation_Security.svg?style=for-the-badge)](https://crates.io/crates/MKT_KSA_Geolocation_Security)
-[![Docs.rs](https://img.shields.io/docsrs/MKT_KSA_Geolocation_Security?style=for-the-badge)](https://docs.rs/MKT_KSA_Geolocation_Security)
-[![Downloads](https://img.shields.io/crates/d/MKT_KSA_Geolocation_Security.svg?style=for-the-badge)](https://crates.io/crates/MKT_KSA_Geolocation_Security)
-[![License](https://img.shields.io/crates/l/MKT_KSA_Geolocation_Security?style=for-the-badge)](LICENSE)
-![MSRV](https://img.shields.io/badge/MSRV-1.89%2B-informational?style=for-the-badge)
-![Audit](https://img.shields.io/badge/audit-clean-success?style=for-the-badge)
-![Maintenance](https://img.shields.io/badge/maintenance-actively%20maintained-success?style=for-the-badge)
-![Edition](https://img.shields.io/badge/edition-2021-blue?style=for-the-badge)
----
-<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/ffe24b4e-fc3f-4203-8c4a-08633ae43488" />
+### Zero-Dependency Sovereign Security Library for Sensitive Applications
 
-## 📘 Table of Contents
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)](https://www.rust-lang.org)
+[![Zero Dependencies](https://img.shields.io/badge/dependencies-zero-success.svg)](Cargo.toml)
+[![Security](https://img.shields.io/badge/security-sovereign-critical.svg)](docs/SBOM.md)
 
-* [🗺️ Project Overview](#-project-overview)
-* [📂 Main Files](#-main-files)
-* [🧩 Constants & Public Functions](#-constants--public-functions)
-  * [🖊️ Signing Module Functions](#-signing-module-functions)
-  * [⏱️ Precision Module Functions](#-precision-module-functions)
-* [🔑 Config & Endpoints](#-config--endpoints)
-* [🧭 Architecture](#-architecture)
-* [🛠️ Verification Examples](#-verification-examples)
-* [⚙️ Core Engine Modules](#-core-engine-modules)
-* [📡 Sensors Analyzer](#-sensors-analyzer)
-* [☁️ Weather Validation](#-weather-validation)
-* [📜 History Service](#-history-service)
-* [🔄 Cross-Validation Engine](#-cross-validation-engine)
-* [⚠️ Dependency Audit](#-dependency-audit)
-* [✅ Test Results](#-test-results)
-* [🔒 Current Release Stability](#-current-release-stability)
-* [⬆️ Full Dependency Upgrade Plan](#-full-dependency-upgrade-plan)
-* [⭐ Features](#-features)
-* [🧠 Developer Guide](#-developer-guide)
-* [📈 System State](#-system-state)
-* [📝 Release Notes v1.0.2](#-release-notes-v102)
-  * [🔧 Internal Signature Changes](#-internal-signature-changes-no-behaviorroute-changes)
-  * [📑 Current Signatures (Reference)](#-current-signatures-reference)
-  * [🧹 Formatting and Extra Checks](#-formatting-and-extra-checks)
-* [📦 Using as a Rust library](#-using-as-a-rust-library)
-* [🔗 Linking via C-ABI](#-linking-via-c-abi)
+</div>
 
 ---
 
-## 🗺️ Project Overview
+## 📋 Table of Contents
 
-**MKT_KSA_Geolocation_Security** is an advanced security library for smart cities, sovereign sectors, and technology enterprises. It leverages geolocation verification, behavioral analytics, device fingerprinting, AI, and a modular, extensible architecture – with full English documentation for every module and function.
-
----
-
-## 📂 Main Files
-
-| File Name            | Path                             | Role (English)                                 |
-| -------------------- | -------------------------------- | ---------------------------------------------- |
-| main.rs              | src/main.rs                      | Main entry point, initializes server & modules |
-| models.rs            | src/db/models.rs                 | DB models                                      |
-| crud.rs              | src/db/crud.rs                   | DB CRUD functions                              |
-| mod.rs (db)          | src/db/mod.rs                    | DB module index                                |
-| ratelimit.rs         | src/security/ratelimit.rs        | Rate limiting module (DoS protection)          |
-| input_validator.rs   | src/security/input_validator.rs  | Input validation tools                         |
-| policy.rs            | src/security/policy.rs           | Policy engine                                  |
-| jwt.rs               | src/security/jwt.rs              | JWT management                                 |
-| mod.rs (security)    | src/security/mod.rs              | Security module index                          |
-| geo_resolver.rs      | src/core/geo_resolver.rs         | Geolocation resolver engine                    |
-| behavior_bio.rs      | src/core/behavior_bio.rs         | Behavioral analytics engine                    |
-| device_fp.rs         | src/core/device_fp.rs            | Device fingerprinting                          |
-| network_analyzer.rs  | src/core/network_analyzer.rs     | Network analysis & concealment detection       |
-| sensors_analyzer.rs  | src/core/sensors_analyzer.rs     | Sensors data analysis engine                   |
-| weather_val.rs       | src/core/weather_val.rs          | Weather validation engine                      |
-| cross_location.rs    | src/core/cross_location.rs       | Cross-validation engine                        |
-| history.rs           | src/core/history.rs              | History management & anomaly detection         |
-| mod.rs (core)        | src/core/mod.rs                  | Core engine module index                       |
-| auth.rs              | src/api/auth.rs                  | Auth endpoints                                 |
-| alerts.rs            | src/api/alerts.rs                | Security alerts endpoints                      |
-| geo.rs               | src/api/geo.rs                   | Geolocation endpoints                          |
-| device.rs            | src/api/device.rs                | Device endpoints                               |
-| behavior.rs          | src/api/behavior.rs              | Behavior analytics endpoints                   |
-| network.rs           | src/api/network.rs               | Network analysis endpoints                     |
-| sensors.rs           | src/api/sensors.rs               | Sensors endpoints                              |
-| weather.rs           | src/api/weather.rs               | Weather endpoints                              |
-| dashboard.rs         | src/api/dashboard.rs             | Dashboard endpoints                            |
-| smart_access.rs      | src/api/smart_access.rs          | Smart access endpoint                          |
-| mod.rs (api)         | src/api/mod.rs                   | API module index                               |
-| mod.rs (utils)       | src/utils/mod.rs                 | Utils module index                             |
-| precision.rs         | src/utils/precision.rs           | Precision utilities (time/numeric/geospatial)  |
-| helpers.rs           | src/utils/helpers.rs             | General helper functions                       |
-| logger.rs            | src/utils/logger.rs              | Logger module                                  |
-| cache.rs             | src/utils/cache.rs               | Cache module                                   |
-| signing.rs           | src/security/signing.rs          | High-security signing (HMAC) utilities         |
-| Cargo.toml           | Cargo.toml                       | Dependency management file                     |
+- [Overview](#overview)
+- [Target Audience](#target-audience)
+- [Key Advantages](#key-advantages)
+- [Use Cases & Applications](#use-cases--applications)
+- [Architecture](#architecture)
+- [Core Features](#core-features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [API Routes](#api-routes)
+- [Webhook Guards](#webhook-guards)
+- [Key Rotation](#key-rotation)
+- [Dashboard](#dashboard)
+- [Export & Cloud Integration](#export--cloud-integration)
+- [FFI Interface](#ffi-interface)
+- [Optional Features](#optional-features)
+- [Usage Examples](#usage-examples)
+- [Testing](#testing)
+- [Security](#security)
+- [License](#license)
+- [Contact](#contact)
 
 ---
 
-## 🧩 Constants & Public Functions
+## 🎯 Overview
 
-### Constants
+**MKT KSA Geolocation Security** is a comprehensive sovereign security library developed in Rust, designed specifically for sensitive applications requiring **full digital sovereignty** and **zero external dependencies**.
 
-| Constant Name            | Default Value | Defined In       |
-| ------------------------ | ------------- | ---------------- |
-| MAX_ACCURACY_THRESHOLD   | 50.0          | geo_resolver.rs  |
-| MIN_SIGNAL_STRENGTH      | 30            | geo_resolver.rs  |
-| QUANTUM_SECURITY_LEVEL   | 90            | geo_resolver.rs  |
-| MAX_HISTORY_SIZE         | 100           | geo_resolver.rs  |
+The library provides a multi-layered security system including:
+- Strict input/output inspection
+- Digital integrity fingerprinting
+- Automatic risk-based key rotation
+- 50+ per-path webhook guards with HMAC-SHA512 signatures
+- Smart Anti-Replay protection
+- AI-driven adaptive telemetry
+- Comprehensive dashboard with full EN/AR localization
+- C-ABI FFI interface for multi-language integration
 
----
+### 🏆 Why This Library?
 
-### Public Functions & Main Structs
-
-| Function/Struct Name         | Signature                                      | Defined In           | Description (English)                       |
-| ---------------------------- | ---------------------------------------------- | -------------------- | ------------------------------------------ |
-| get_user_by_id               | async fn get_user_by_id(pool, user_id)         | db/crud.rs           | Fetch user from DB                          |
-| verify_smart_access          | async fn verify_smart_access(...)              | core/composite_verification.rs | Smart composite security check              |
-| process                      | async fn process(input: BehaviorInput)         | core/behavior_bio.rs | Analyze user/device behavior                |
-| generate_fingerprint         | async fn generate_fingerprint(os, device, env) | core/device_fp.rs    | Generate adaptive device fingerprint        |
-| analyze                      | async fn analyze(provider: &dyn NetworkInfoProvider) | core/network_analyzer.rs | Analyze network & detect concealment tools  |
-| fetch_and_validate           | async fn fetch_and_validate(lat, lng)          | core/weather_val.rs  | Fetch & validate weather data               |
-| validate                     | async fn validate(input: CrossValidationInput) | core/cross_location.rs | Full cross-validation                       |
-| log_event                    | async fn log_event(event: &HistoryEvent)       | core/history.rs      | Log historical event                        |
-| detect_timeline_anomalies    | async fn detect_timeline_anomalies(entity_id, window) | core/history.rs | Detect timeline anomalies                   |
-| check                        | async fn check(ip)                             | security/ratelimit.rs | Rate limiting check                         |
-| sign_location                | fn sign_location(location: &GeoLocation)       | core/geo_resolver.rs | Digitally sign location data                |
-| verify_signature             | fn verify_signature(location: &GeoLocation)    | core/geo_resolver.rs | Verify digital signature                    |
-| config                       | fn config(cfg: &mut ServiceConfig)             | api/mod.rs           | Register all API routes                     |
+✅ **Digital Sovereignty**: Zero external dependencies — no third-party libs, no supply-chain risks  
+✅ **Multi-Layer Security**: Comprehensive protection from input to output  
+✅ **Adaptive Intelligence**: Automatic tightening/relaxation based on risk level  
+✅ **Full Transparency**: Monitor and export all metrics and events  
+✅ **Flexibility & Scale**: 50+ ready API routes, runtime-updatable policies  
+✅ **High Performance**: Lightweight and optimized core  
 
 ---
 
-### 🖊️ Signing Module Functions
+## 👥 Target Audience
 
-| Function Name                   | Signature                                                                 | Defined In                | Description                                  |
-| --------------------------------| ------------------------------------------------------------------------- | ------------------------- | -------------------------------------------- |
-| sign_hmac_sha512                | fn sign_hmac_sha512(data: &[u8], key: &SecureBytes) -> Result<Vec<u8>, SigningError> | src/security/signing.rs   | HMAC-SHA512 signature over bytes             |
-| verify_hmac_sha512              | fn verify_hmac_sha512(data: &[u8], sig: &[u8], key: &SecureBytes) -> bool            | src/security/signing.rs   | Verifies HMAC-SHA512                         |
-| sign_hmac_sha384                | fn sign_hmac_sha384(data: &[u8], key: &SecureBytes) -> Result<Vec<u8>, SigningError> | src/security/signing.rs   | HMAC-SHA384 signature                        |
-| verify_hmac_sha384              | fn verify_hmac_sha384(data: &[u8], sig: &[u8], key: &SecureBytes) -> bool            | src/security/signing.rs   | Verifies HMAC-SHA384                         |
-| sign_struct_excluding_field     | fn sign_struct_excluding_field<T: Serialize>(value: &T, exclude_field: &str, key: &SecureBytes) -> Result<Vec<u8>, SigningError> | src/security/signing.rs | Sign serializable struct excluding one field |
-| verify_struct_excluding_field   | fn verify_struct_excluding_field<T: Serialize>(value: &T, exclude_field: &str, sig: &[u8], key: &SecureBytes) -> bool | src/security/signing.rs | Verify serializable struct excluding field   |
+### Government & Sovereign Application Developers
+Those requiring zero-dependency security solutions to ensure full digital sovereignty and compliance with national standards.
 
----
+### Cybersecurity Teams
+Building advanced protection systems with strict inspection, integrity fingerprinting, and real-time intrusion detection.
 
-### ⏱️ Precision Module Functions
+### FinTech Developers
+Needing automatic key rotation, strong digital signatures, and anti-replay protection for financial transactions.
 
-| Function Name           | Signature                                                               | Defined In                | Description                                          |
-| ----------------------- | ----------------------------------------------------------------------- | ------------------------- | ---------------------------------------------------- |
-| time_delta_secs         | fn time_delta_secs(start: DateTime<Utc>, end: DateTime<Utc>) -> f64     | src/utils/precision.rs    | Time delta in seconds (with negative guard)          |
-| time_delta_secs_high_res| fn time_delta_secs_high_res(start: DateTime<Utc>, end: DateTime<Utc>) -> f64 | src/utils/precision.rs | High-resolution time delta (secs + nanos)            |
-| avg_f32                 | fn avg_f32(values: &[f32]) -> f32                                       | src/utils/precision.rs    | f32 average using internal f64 accumulation          |
-| haversine_km            | fn haversine_km(a: (f64, f64), b: (f64, f64)) -> f64                    | src/utils/precision.rs    | Haversine distance in kilometers                     |
-| speed_kmh               | fn speed_kmh(distance_km: f64, seconds: f64) -> f64                     | src/utils/precision.rs    | Speed (km/h) with division-by-zero guard             |
-| weighted_sum_f64        | fn weighted_sum_f64(values: &[f64], weights: &[f64]) -> Option<f64>     | src/utils/precision.rs    | Weighted sum (f64), None if lengths mismatch         |
-| rate_of_change_f64      | fn rate_of_change_f64(value_delta: f64, seconds: f64) -> f64            | src/utils/precision.rs    | Rate of change per second with zero-division guard   |
-### Main Traits
+### HealthTech Companies
+Protecting sensitive patient data with precise telemetry and complete event tracking.
 
-| Trait Name                | Signature                        | Defined In           | Description (English)                       |
-| ------------------------- | -------------------------------- | -------------------- | ------------------------------------------ |
-| AiModel                   | trait AiModel: detect_fraud, analyze_movement, ... | core/geo_resolver.rs | AI models for geolocation                   |
-| Blockchain                | trait Blockchain: store_location, verify_location, ... | core/geo_resolver.rs | Blockchain integration                      |
-| BehavioralModel           | trait BehavioralModel: analyze   | core/behavior_bio.rs | Behavioral analysis models                  |
-| AnomalyDetector           | trait AnomalyDetector: detect    | core/behavior_bio.rs | Behavioral anomaly detection                |
-| SecurityMonitor           | trait SecurityMonitor: scan_environment, ... | core/device_fp.rs    | Device security monitoring                  |
-| QuantumEngine             | trait QuantumEngine: get_secure_key, ... | core/device_fp.rs    | Post-quantum crypto engine                  |
-| AiProcessor               | trait AiProcessor: generate_ai_signature | core/device_fp.rs    | AI processor for fingerprinting             |
-| NetworkInfoProvider       | trait NetworkInfoProvider: get_connection_type, ... | core/network_analyzer.rs | Network info provider                       |
-| AiNetworkAnalyzer         | trait AiNetworkAnalyzer: analyze | core/network_analyzer.rs | AI network analyzer                         |
-| SensorAnomalyDetector     | trait SensorAnomalyDetector: analyze | core/sensors_analyzer.rs | Sensor anomaly detection                    |
-| WeatherProvider           | trait WeatherProvider: get_weather, ... | core/weather_val.rs  | Weather data provider                       |
-| ScoringStrategy           | trait ScoringStrategy: calculate_score | core/cross_location.rs | Trust scoring strategy                      |
+### IoT & Smart Device Platforms
+Verifying device fingerprints, geolocation, and behavior to prevent spoofing and breaches.
+
+### Embedded Systems Developers
+Requiring lightweight zero-deps library with C-ABI FFI for integration with embedded systems.
+
+### Security Researchers & Academics
+Studying and implementing advanced security mechanisms (Anti-Replay, HMAC, key rotation, DSL policies).
+
+### DevOps/SRE Teams
+Monitoring security via centralized dashboard, metrics export, and cloud integration for SIEM systems.
 
 ---
 
-## 🔑 Config & Endpoints
+## ⭐ Key Advantages
 
-### Environment Keys (.env / config)
+### 🛡️ Full Digital Sovereignty
+- **Zero external dependencies by default** — no third-party libraries, no supply-chain risks
+- All algorithms implemented internally without external imports
+- Full source code control and auditable
 
-| Key Name      | Role                    | Example                       |
-| ------------- | ----------------------- | ----------------------------- |
-| API_KEY       | Main authentication key | API_KEY=your_secret_key       |
-| JWT_SECRET    | JWT signing/verification secret | JWT_SECRET=32+_chars_secret |
-| DATABASE_URL  | DB connection string    | DATABASE_URL=mysql://...      |
-| LOG_LEVEL     | Logging verbosity       | LOG_LEVEL=debug               |
-| GEO_PROVIDER  | Geolocation provider    | GEO_PROVIDER=ipapi            |
+### 🔐 Multi-Layer Security
+
+#### Per-Path Webhook Guards
+- 50+ independent guards with HMAC-SHA512 signatures
+- Configurable timestamp windows per path
+- Automatic tightening based on path sensitivity
+
+#### Strong Anti-Replay Protection
+- Nonce tracking to prevent request replay
+- Adaptive purging (daily/weekly/monthly) based on load
+- Configurable capacity and behavior
+
+#### Strict Inspection
+- XSS, SQL injection, and dangerous path detection
+- Header and body size limits
+- UTF-8 validation and safe content patterns
+
+#### Egress Guard (SSRF Protection)
+- Prevent SSRF and dangerous destinations
+- Host/port allow/deny lists
+- RFC1918 and private address detection
+
+### 🤖 Adaptive AI Intelligence
+
+#### Automatic Tightening/Relaxation
+- Dynamic security adjustment based on risk level
+- Timestamp window reduction on rising threats
+- Safe relaxation when risks subside
+
+#### Self-Rotating Keys
+- Automatic rotation on exceeding risk threshold
+- Multi-version support (N and N+1)
+- Webhook notifications on rotation
+
+#### Smart Anti-Replay Purge
+- Adaptive scheduling (daily/weekly/monthly)
+- Configurable sensitivity (0-100)
+- Live statistics and status
+
+### 📊 Full Transparency & Monitoring
+
+#### Comprehensive Dashboard
+- HTML/JSON with full EN/AR localization
+- Live metrics for all counters
+- Key rotation and anti-replay status
+- Complete guards list with configurations
+
+#### Multi-Format Export
+- CSV compatible with Excel
+- NDJSON for events and metrics
+- Cloud push for data forwarding
+
+#### Per-Path Statistics
+- Successful/failed signature counters
+- Precise event tracking
+- Complete timeline logs
+
+### 🔧 Flexibility & Extensibility
+
+#### Live Policies
+- Runtime JSON/DSL updates
+- No server restart required
+- Immediate policy application
+
+#### 50+ Ready API Routes
+- Complete key management
+- Backup and scheduling
+- Smart firewall
+- Alerts and monitoring
+
+#### C-ABI FFI Interface
+- Integration with C/C++/Python/Java/.NET
+- Auto-generated headers
+- Stable ABI across versions
+
+### ⚡ High Performance & Efficiency
+
+#### Lightweight Core
+- Low memory and CPU footprint
+- Adaptive memory guard with auto-purge
+- Tight resource management
+
+#### Optional Compression
+- RLE for large payloads (>512B)
+- Inbound/outbound compression counters
+- Dynamic enable/disable
+
+#### Smart Firewall
+- Circuit breaker for resource protection
+- Detailed counters (allowed/blocked)
+- Manual open/close for emergencies
+
+### ✅ Guaranteed Quality
+
+#### Comprehensive Testing
+- Clippy with zero warnings
+- Miri for zero-deps core
+- Complete integration tests
+- Fuzz-like for random inputs
+
+#### Full Documentation
+- Comprehensive docs.rs
+- Detailed SBOM
+- Practical examples
+
+#### Open Source
+- Apache-2.0 License
+- Fully auditable code
+- Contributions welcome
+
+### 🔑 Sovereign Cryptography
+
+#### Internal HMAC-SHA512
+- Implemented without external dependencies
+- Strong digital signatures
+- Secure verification
+
+#### Constant-Time Comparisons
+- ct_eq to prevent timing channels
+- Protection against timing attacks
+- Proven security
+
+#### Advanced Key Rotation
+- Multi-version support
+- Smooth transition (N → N+1)
+- Gradual old key deprecation
 
 ---
 
-### API Endpoints
+## 🚀 Use Cases & Applications
 
-| Path                  | Method | Role (English)                  | Defined In                 |
-| --------------------- | ------ | ------------------------------- | -------------------------- |
-| /api/auth/login       | POST   | User login                      | api/auth.rs                |
-| /api/auth/user        | GET    | Fetch user data                 | api/auth.rs                |
-| /api/alerts/trigger   | POST   | Trigger security alert          | api/alerts.rs              |
-| /api/geo/resolve      | POST   | Geolocation resolve             | api/geo.rs                 |
-| /api/device/resolve   | POST   | Device resolve/register         | api/device.rs              |
-| /api/behavior/analyze | POST   | Behavior analysis               | api/behavior.rs            |
-| /api/network/analyze  | POST   | Network analysis                | api/network.rs             |
-| /api/sensors/analyze  | POST   | Sensors data analysis           | api/sensors.rs             |
-| /api/weather/summary  | GET    | Weather summary                 | api/weather.rs             |
-| /api/dashboard        | GET    | Dashboard summary               | api/dashboard.rs           |
-| /api/smart_access     | POST   | Smart composite access check    | api/smart_access.rs        |
+### 1. 🏛️ E-Government Systems
+- Sovereign government service portals
+- Digital identity and biometric verification systems
+- Secure electronic voting platforms
+- Government document management systems
+
+### 2. 💰 Financial Services & Banking
+- Digital wallets and electronic payment applications
+- Trading platforms and cryptocurrency exchanges
+- Real-time money transfer systems
+- Secure payment gateways with PCI DSS compliance
+
+### 3. 🏥 Healthcare
+- Electronic Medical Records (EMR/EHR) systems
+- Telemedicine platforms
+- Vaccine and epidemic tracking applications
+- Electronic prescription systems
+
+### 4. 📡 Internet of Things (IoT)
+- Smart home systems with device fingerprint verification
+- Vehicle and asset tracking devices
+- Industrial sensor networks (IIoT)
+- Smart city systems
+
+### 5. 🛒 E-Commerce
+- Online retail platforms
+- Secure payment gateways
+- Inventory and supply chain management systems
+- Loyalty and rewards programs
+
+### 6. 📚 Education & E-Learning
+- Electronic examination platforms
+- Secure Learning Management Systems (LMS)
+- Digital certificate applications
+- Secure virtual classrooms
+
+### 7. 🚚 Transportation & Logistics
+- Shipment tracking with geo-verification
+- Fleet management systems
+- Ride-sharing platforms
+- Smart delivery solutions
+
+### 8. ⚡ Energy & Utilities
+- Smart Grid systems
+- Critical infrastructure monitoring
+- Renewable energy plant management
+- Secure smart meters
+
+### 9. 🛡️ Cybersecurity
+- Intrusion Detection/Prevention Systems (IDS/IPS)
+- SIEM platforms
+- Behavior analysis and anomaly detection tools
+- SOC (Security Operations Center) solutions
+
+### 10. 📱 Telecommunications & Media
+- Secure live streaming platforms
+- Encrypted messaging applications
+- Sensitive Content Management Systems (CMS)
+- Secure VoIP services
+
+### 11. 🏭 Industry & Manufacturing
+- Industrial Control Systems (SCADA/ICS)
+- Production line monitoring
+- Digital quality management
+- Smart predictive maintenance
+
+### 12. 🔬 Scientific Research
+- Sensitive research data exchange platforms
+- Virtual laboratory systems
+- DNA and bioinformatics databases
+- Secure research collaboration networks
 
 ---
 
-## 🧭 Architecture
+## 🏗️ Architecture
 
-```mermaid
-graph TD
-    A[main.rs 🧩\nEntry] --> B[API Layer 🌐]
-    A --> C[Core Engines 🧠]
-    A --> D[DB Layer 🗄️]
-    B -->|Endpoints| E[🔓 /auth, /alerts, /users, ...]
-    C --> F[GeoResolver 🌍]
-    C --> G[BehaviorEngine 🧠]
-    C --> H[DeviceFingerprint 📱]
-    C --> I[NetworkAnalyzer 🌐🔍]
-    C --> J[SensorsAnalyzer 📡]
-    C --> K[WeatherEngine ☁️]
-    C --> L[CrossValidator 🔄]
-    C --> M[CompositeVerifier 🛡️]
-    C --> N[HistoryService 🕓]
-    D --> O[CRUD + Models ⚙️]
-    B --> P[Security Layer 🔐]
-    P --> Q[InputValidator 📥]
-    P --> R[JWT Manager 🔑]
-    P --> S[Policy Engine ⚖️]
-    P --> T[RateLimiter 🚦]
+```
+┌─────────────────────────────────────────────────────────┐
+│         Dashboard (HTML/JSON) + Exports (CSV)           │
+│              EN/AR Localization Support                 │
+├─────────────────────────────────────────────────────────┤
+│           API Routes (50+ endpoints)                    │
+│  /keys/* /backup/* /webhook/* /policy/* /memory/*      │
+├─────────────────────────────────────────────────────────┤
+│       Per-Path Webhook Guards (HMAC-SHA512)            │
+│   Signature Verification + Anti-Replay + Timestamps    │
+├─────────────────────────────────────────────────────────┤
+│         Inspection Policy (JSON/DSL Runtime)            │
+│    Method/Path/ContentType Allow/Deny + Limits         │
+├─────────────────────────────────────────────────────────┤
+│      Fingerprint (Integrity) + Telemetry (Events)      │
+│         ct_eq comparisons + NDJSON logging             │
+├─────────────────────────────────────────────────────────┤
+│    Key Rotation + Anti-Replay Purge + Memory Guard     │
+│      Adaptive AI-driven tightening/relaxation          │
+├─────────────────────────────────────────────────────────┤
+│   Egress Guard (SSRF Protection) + Smart Firewall      │
+│    RFC1918 check + Circuit Breaker + Rate Limiting     │
+├─────────────────────────────────────────────────────────┤
+│         Core (Digest, Resolver, Analyzers)             │
+│            Zero-Dependency Sovereign Core               │
+└─────────────────────────────────────────────────────────┘
 ```
 
-> **Description:**
-> The diagram shows the interaction of main units (API, core engine, DB, security layer) highlighting new engines (sensors, weather, cross-validation, history) up to the smart composite security layer.
+---
+
+## 🎁 Core Features
+
+✅ **Zero Dependencies by Default** — Core operates without any external libraries  
+✅ **50+ Independent Webhook Guards** — Per-path configurable protection  
+✅ **Automatic Key Rotation** — Risk-based self-rotation  
+✅ **Adaptive Anti-Replay** — Smart periodic purging (daily/weekly/monthly)  
+✅ **Intelligent Telemetry** — Automatic guard tightening/relaxation  
+✅ **Comprehensive Dashboard** — HTML/JSON with EN/AR localization  
+✅ **CSV/NDJSON Export** — Excel-compatible exports  
+✅ **Optional Cloud Integration** — Push data to external systems  
+✅ **Live Policies** — Runtime JSON/DSL updates  
+✅ **Egress Guard** — SSRF protection  
+✅ **Memory Guard** — Auto/manual event purging  
+✅ **C-ABI FFI** — Multi-language integration  
+✅ **Optional RLE Compression** — For large payloads  
+✅ **Smart Firewall** — Circuit breaker protection  
+✅ **HMAC-SHA512 Signing** — Internal implementation  
 
 ---
 
-## 🛠️ Verification Examples
+## 📦 Installation
 
-### Full Composite Security Check
-
-```rust
-let allowed_zones = vec!["Riyadh".to_string(), "Jeddah".to_string()];
-let allowed_hours = Some((6, 18));
-let access_granted = composite_verifier.verify_smart_access(
-    geo_input, // (Option<IpAddr>, Option<(f64, f64, u8, f64)>)
-    behavior_input, // BehaviorInput
-    (os, device, env), // (&str, &str, &str)
-    &allowed_zones,
-    allowed_hours,
-).await?;
-if !access_granted {
-    // Deny access or log suspicious attempt
-}
-```
-
----
-
-### Geo Verification Only
-
-```rust
-let geo_location = geo_resolver.resolve(Some(ip), Some(gps), None, None, None, None, None).await?;
-if let Some(city) = &geo_location.city {
-    if allowed_zones.contains(city) {
-        // Geo verification successful
-    } else {
-        // Access denied due to location
-    }
-}
-```
-
----
-
-### Behavior Verification Only
-
-```rust
-let behavior_result = behavior_engine.process(behavior_input).await?;
-if behavior_result.risk_level as u8 < 3 {
-    // Low risk behavior
-} else {
-    // Medium or high risk behavior
-}
-```
-
----
-
-### Device Verification Only
-
-```rust
-let device_fp = device_fp_engine.generate_fingerprint(os, device, env).await?;
-if device_fp.security_level >= 5 {
-    // Device is trusted
-} else {
-    // Device is not trusted
-}
-```
-
----
-
-### Role Verification Only
-
-```rust
-let role_row: Option<Row> = mysql_async::prelude::Queryable::exec_first(
-    &mut conn, "SELECT role FROM user_roles WHERE user_id = ? AND role = ?",
-    (user_id.to_string(), "admin"),
-).await?;
-if role_row.is_some() {
-    // User has required role
-} else {
-    // User lacks required role
-}
-```
-
----
-
-## ⚙️ Core Engine Modules
-
-### 🕓 History Service
-
-- **Description:** Manages, stores, and analyzes historical events and behaviors for users/devices, with anomaly detection and DB integration.
-- **Key functions:** log_event, get_entity_history, detect_timeline_anomalies
-
----
-
-### 🔄 Cross-Validation Engine
-
-- **Description:** Advanced orchestrator combining results from verification engines (geo, behavior, device, etc.) to issue a final, signed verdict.
-- **Key functions:** validate, sign_verdict
-
----
-
-### 📡 Sensors Analyzer
-
-- **Description:** Analyzes sensor data (e.g., accelerometer, gyroscope) for anomalies/tampering, issuing a digitally signed analysis certificate.
-- **Key functions:** analyze (SensorsAnalyzerEngine)
-
----
-
-### ☁️ Weather Validation
-
-- **Description:** Aggregates and validates weather data from multiple providers, comparing results and providing unified, reliable data.
-- **Key functions:** fetch_and_validate (WeatherEngine)
-
----
-
-## ⚠️ Dependency Audit
-
-| Dependency         | Type         | Direct? | Indirect? | Security/Category Notes         |
-|-------------------|--------------|---------|-----------|------------------------|
-| actix-web         | External     | Yes     | No        | Main web framework     |
-| actix-rt          | External     | Yes     | No        | Async runtime          |
-| ammonia           | External     | Yes     | No        | HTML sanitization      |
-| anyhow            | External     | Yes     | No        | Error handling         |
-| async-trait       | External     | Yes     | No        | Async trait support    |
-| config            | External     | Yes     | No        | Config management      |
-| futures           | External     | Yes     | No        | Async utilities        |
-| log               | External     | Yes     | No        | Logging                |
-| mysql_async       | External     | Yes     | No        | Database (MySQL)       |
-| tokio             | External     | Yes     | No        | Async runtime          |
-| uuid              | External     | Yes     | No        | UUIDs                  |
-| aes-gcm           | External     | Yes     | No        | Advanced encryption    |
-| secrecy           | External     | Yes     | No        | Secure secret handling |
-| zeroize           | External     | Yes     | No        | Secure memory zeroing  |
-| hex               | External     | Yes     | No        | Hex encoding/decoding  |
-| hmac              | External     | Yes     | No        | HMAC signatures        |
-| sha2              | External     | Yes     | No        | SHA2 hashing           |
-| blake3            | External     | Yes     | No        | BLAKE3 hashing         |
-| base64            | External     | Yes     | No        | Base64 encoding        |
-| jsonwebtoken      | External     | Yes     | No        | JWT tokens             |
-| pqcrypto-mlkem    | External     | Yes     | No        | Post-quantum crypto    |
-| unicode-normalization| External  | Yes     | No        | Unicode normalization  |
-| validator         | External     | Yes     | No        | Input validation       |
-| regex             | External     | Yes     | No        | Regex                  |
-| getrandom         | External     | No      | Yes       | Random number generation (via rand::OsRng) |
-| lru               | External     | Yes     | No        | LRU cache              |
-| rayon             | External     | Yes     | No        | Parallel processing    |
-| once_cell         | External     | Yes     | No        | One-time initialization |
-| lazy_static       | External     | Yes     | No        | Static constants       |
-| cfg-if            | External     | Yes     | No        | Conditional compilation |
-| rand              | External     | Yes     | No        | Random number generation|
-| chrono            | External     | Yes     | No        | Date/time handling     |
-| serde_json        | External     | Yes     | No        | JSON                   |
-| reqwest           | External     | Yes     | No        | HTTP requests (Rustls) |
-| serde             | External     | Yes     | No        | Serialization          |
-| serde_derive      | External     | Yes     | No        | Serde derive           |
-| thiserror         | External     | Yes     | No        | Custom errors          |
-| maxminddb         | External     | Yes     | No        | GeoIP database         |
-| pqcrypto-traits   | External     | Yes     | No        | Post-quantum crypto traits |
-| proptest          | Dev          | Yes     | No        | Property-based testing |
-| rstest            | Dev          | Yes     | No        | Scenario-based testing |
-| assert-json-diff  | Dev          | Yes     | No        | JSON diff assertions   |
-
-**Stability Notes (Update):**
-- Updated on: 14 Aug 2025
-- Pinned `anyhow` to `1.0.99`.
-- Upgraded: `base64 0.22.1`, `lru 0.16.0`, `maxminddb 0.26.0`, `reqwest 0.12.22`, `thiserror 2.0.12`, `uuid 1.18.0`.
-- Added `categories` and `keywords` in `Cargo.toml`.
-- Using `JWT_SECRET` for JWT instead of a hardcoded value.
-- No functional changes; all tests still pass.
-
-**Security Notes:**
-- All dependencies are carefully selected, with no reliance on OpenSSL (all crypto is Rust-native or Rustls).
-- It is recommended to run `cargo audit` and `cargo update` regularly.
-
----
-
-## ✅ Test Results
-
-```bash
-running 35 tests
-... all tests passed ...
-
-test result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.04s
-```
-
-* All tests passed (35 tests).
-
----
-
-## 🔒 Current Release Stability
-
-- Toolchain/Env: Stable Rust 1.89.0 (Windows MSVC), with `$env:CARGO_HOME` and `$env:RUSTUP_HOME` configured.
-- Build: `cargo check` successful.
-- Tests: `cargo test` fully passing (35/35) after making a time-dependent test deterministic using a fixed timestamp, with no logic changes.
-- Formatting: `cargo fmt --check` clean.
-- Linter: `cargo clippy` shows only non-critical warnings (unused imports/variables and style suggestions), no behavior changes.
-- Security: `cargo audit` reports no known vulnerabilities.
-- Operational note: `RateLimiter` module exists and is intentionally disabled by default pending later decision.
-
----
-
-## ⬆️ Full Dependency Upgrade Plan
-
-### Scope
-- Crates with newer releases available: `base64 (0.22)`, `getrandom (0.3)`, `lru (0.16)`, `maxminddb (0.26)`, `rand (0.9)`, `reqwest (0.12)`, `rstest (0.26)`, `secrecy (0.10)`, `thiserror (2)`.
-
-### Policy
-- No general breaking changes: upgrade in stages, running build/tests and `audit/clippy/fmt` after each stage.
-- Do not modify the public API behavior in this track; any breaking adjustments are deferred to a major release.
-
-### Stages
-1) thiserror 2 → verify build & tests.
-2) secrecy 0.10 → ensure integration with `zeroize` and secret wrappers.
-3) reqwest 0.12 + compatible rustls → review simple API shifts if any.
-4) maxminddb 0.26 → minor API updates if needed, with GeoIP test.
-5) rand 0.9 + getrandom 0.3 → review random generation call sites.
-6) base64 0.22 → adjust encode/decode calls if API changed.
-7) lru 0.16 → review constructor/traits.
-8) rstest 0.26 (dev) → update test annotations if needed.
-
-### Guarantees
-- Run full CI at each stage: `check`, `test`, `fmt`, `clippy`, `audit`.
-- Document outcomes of each stage in release notes before merge.
-
-## ⭐ Features & Target Audiences
-
-### 🎯 Library Purpose & Security Strength
-
-- **Purpose:**
-  - To provide a comprehensive smart security verification platform for smart cities, sovereign entities, financial institutions, and technology companies, with full support for customization and integration.
-  - Designed to be a standard for geolocation and behavioral security in high-sensitivity environments, with scalability and easy integration into any modern system.
-- **Security Strength:**
-  - The library is built on a modular, multi-layered architecture, combining geolocation verification, behavioral analytics, device fingerprinting, network analysis, tamper detection, cross-validation, and weather/sensor auditing.
-  - All operations are backed by advanced encryption (AES-GCM, HMAC, Post-Quantum), secure secret management (secrecy, zeroize), and digital signatures.
-  - No reliance on OpenSSL; only secure, modern Rust libraries are used.
-  - Supports smart city policies, concealment tool detection (VPN/Proxy/Tor), and provides historical logging and anomaly analysis.
-
----
-
-### 🏆 Main Features
-
-* 🔐 Multi-source composite verification: (geo, behavior, device, network, sensors, weather).
-* 🧠 AI integration & adaptive security: AI support and adaptive security algorithms.
-* 🛰️ Advanced concealment detection: VPN/Proxy/Tor detection and advanced methods.
-* 🏙️ Smart city & enterprise policies: advanced zones/permissions/times support.
-* ⚡ Modular, flexible architecture: pluggable and customizable for any engine or logic.
-* 📄 Full English documentation: every part is fully documented in English.
-* 🔑 Secret management & post-quantum crypto: secrecy and post-quantum crypto support.
-* 🚦 Rate limiting: built-in RateLimiter module.
-* 🔌 Easy integration: REST API or direct Rust Traits.
-* 🕓 Historical logging & anomaly analysis: advanced history module.
-* ☁️ Weather data auditing: weather module for environmental checks.
-* 📡 Sensor data analysis: supports smart device and IoT scenarios.
-
----
-
-### 👤 Target Audiences
-
-- **Sovereign and Governmental Entities:**
-  - Sovereign agencies, security sectors, command and control centers, smart cities, cybersecurity, passports, traffic, civil defense, municipalities, emergency systems.
-- **Financial and Banking Institutions:**
-  - Banks, insurance companies, digital payment providers, stock exchanges.
-- **Large and Medium Technology Companies:**
-  - Cloud service providers, AI companies, cybersecurity, IoT, smart city solutions.
-- **Transport and Logistics Companies:**
-  - Delivery companies, smart transport, fleet management, aviation, airports.
-- **Healthcare Sector:**
-  - Hospitals, digital health systems, emergency medical management.
-- **Education Sector:**
-  - Universities, smart schools, secure digital exam systems.
-- **Identity and Access Applications:**
-  - Access control systems, multi-factor authentication (MFA), digital identity solutions.
-- **Energy and Utilities Companies:**
-  - Electricity, water, oil & gas, smart infrastructure networks.
-- **Industrial and Control Sector:**
-  - Smart factories, SCADA systems, industrial robotics.
-- **Any developer or organization seeking modern, customizable, and integrable security solutions.**
-
----
-
-## 🧠 Developer Guide
-
-### 🚀 Basic Integration Steps
-
-1. **Set up environment variables (.env/config):**
-
-   ```bash
-   API_KEY=your_secret_key
-   DATABASE_URL=mysql://user:pass@host/db
-   ```
-2. **Initialize core engines in your app:**
-
-   * Call public functions like:
-     `verify_smart_access`, `process`, `generate_fingerprint`
-3. **Customize security logic:**
-
-   * Inject your own AI model or custom verification logic via Traits
-   * Easily customize policies (zones, times, permissions)
-4. **Use API endpoints or direct Rust integration:**
-
-   * Call REST API (/users/{id}, /alerts/trigger)
-   * Or bind functions directly in code
-
-#### Quick Integration Example (Rust)
-
-```rust
-let allowed_zones = vec!["Riyadh".to_string(), "Jeddah".to_string()];
-let allowed_hours = Some((6, 18)); // 6 AM to 6 PM
-let access_granted = composite_verifier.verify_smart_access(
-    geo_input,
-    behavior_input,
-    device_info,
-    &allowed_zones,
-    allowed_hours,
-).await?;
-if !access_granted {
-    // Deny access or log suspicious attempt
-}
-```
-
-## 🔌 Feature Flags
-
-#### This crate supports advanced feature flags to activate specialized capabilities.  
-#### You can enable them via `Cargo.toml` like this:
-
-toml
-#### [dependencies]
-#### MKT_KSA_Geolocation_Security = { version = "1.0.0", features = ["adaptive", "quantum"] }
-
-| Feature Name          | Description                                                                                  |
-| --------------------- | -------------------------------------------------------------------------------------------- |
-| `adaptive`            | Enables AI-driven adaptive behavior analysis.                                                |
-| `ar_integration`      | Integrates Augmented Reality (AR) sources for enhanced location validation.                  |
-| `autonomous_vehicles` | Activates modules designed for autonomous cars and smart fleet systems.                      |
-| `blockchain`          | Supports blockchain-based authentication and data anchoring.                                 |
-| `generative_ai`       | Uses generative AI models to dynamically generate and adjust security policies.              |
-| `gpu`                 | Enables GPU acceleration for heavy analysis (e.g. sensor or network data).                   |
-| `predictive`          | Adds predictive modeling and anomaly detection based on behavioral patterns.                 |
-| `quantum`             | Activates modules compatible with post-quantum cryptography.                                 |
-| `quantum_computing`   | Enables integrations with quantum computing backends and processors.                         |
-| `v1_1`                | Enables compatibility with API version 1.1 for legacy support.                               |
-| `v2_0`                | Enables compatibility with API version 2.0 (default for most modules).                       |
-| `v3_0`                | Enables next-gen modules for upcoming API version 3.0.                                       |
-| `zkp`                 | Adds support for Zero-Knowledge Proofs for privacy-preserving validation and access control. |
-```
- 
-## 📦 Using as a Rust library
+### From Crates.io
 
 ```toml
 [dependencies]
-MKT_KSA_Geolocation_Security = "1.0.2" # import path in Rust: mkt_ksa_geo_sec
-# Or from Git:
-# MKT_KSA_Geolocation_Security = { git = "https://github.com/mktmansour/MKT-KSA-Geolocation-Security" }
+mkt_ksa_geo_sec = "1.0.2"
 ```
 
+### From Source
+
+```bash
+git clone https://github.com/mktmansour/MKT-KSA-Geolocation-Security
+cd MKT-KSA-Geolocation-Security
+cargo build --release
+```
+
+### Build with Specific Features
+
+```bash
+# HTTP server only
+cargo build --features api_std_http
+
+# Server + HMAC
+cargo build --features "api_std_http,sign_hmac"
+
+# Server + HMAC + RLE + FFI
+cargo build --features "api_std_http,sign_hmac,compress_rle,ffi_c"
+```
+
+---
+
+## 🚀 Quick Start
+
+### Basic Example
+
 ```rust
-use mkt_ksa_geo_sec::core::geo_resolver::{
-    GeoResolver, DefaultAiModel, DefaultBlockchain, GeoReaderEnum, MockGeoReader,
-};
-use mkt_ksa_geo_sec::security::secret::SecureBytes;
+use mkt_ksa_geo_sec::api::std_http;
+use mkt_ksa_geo_sec::security::inspection_policy::InboundPolicy;
 use std::sync::Arc;
 
-let resolver = GeoResolver::new(
-    SecureBytes::new(vec![1; 32]),
-    Arc::new(DefaultAiModel),
-    Arc::new(DefaultBlockchain),
-    true,
-    false,
-    Arc::new(GeoReaderEnum::Mock(MockGeoReader::new())),
+fn main() {
+    // Initialize telemetry
+    mkt_ksa_geo_sec::telemetry::init();
+    
+    // Default safe policy
+    let policy = InboundPolicy::default();
+    
+    // Simple handler
+    let handler = Arc::new(|req: &std_http::Request| {
+        std_http::Response::json(200, r#"{"status":"ok","endpoints":["/dashboard","/metrics"]}"#)
+    });
+    
+    // Run server
+    println!("Server running on http://127.0.0.1:8080");
+    std_http::run_with_policy("127.0.0.1:8080", policy, handler).unwrap();
+}
+```
+
+### Example with Webhook
+
+```rust
+use mkt_ksa_geo_sec::{api::std_http, webhook, telemetry};
+use std::sync::Arc;
+
+struct MyWebhook;
+
+impl webhook::WebhookEndpoint for MyWebhook {
+    fn receive(&self, payload: &str) -> Result<(), webhook::WebhookError> {
+        telemetry::record_event("webhook_received", payload);
+        
+        // Check for dangerous content
+        if payload.contains("attack") {
+            telemetry::set_risk(80);
+            return Err(webhook::WebhookError::InvalidPayload);
+        }
+        
+        Ok(())
+    }
+}
+
+fn main() {
+    telemetry::init();
+    
+    // Attach webhook
+    std_http::set_webhook_endpoint(Arc::new(MyWebhook));
+    
+    // Run with policy
+    let policy = InboundPolicy::default();
+    let handler = Arc::new(|req| {
+        std_http::Response::json(200, r#"{"ok":true}"#)
+    });
+    
+    std_http::run_with_policy("127.0.0.1:8080", policy, handler).unwrap();
+}
+```
+
+---
+
+## 🔌 API Routes
+
+### 📨 Webhooks — External Ingress
+
+| Route | Method | Description | Guard |
+|-------|--------|-------------|-------|
+| `/ai/ingest` | POST | Receive AI data | required, auth_hmac |
+| `/ai/model/update` | POST | Update AI model | required, auth_hmac |
+| `/ai/feedback` | POST | Model feedback | required, auth_hmac |
+| `/weather/hook` | POST | Weather data | required, weather_hmac |
+| `/weather/alerts` | POST | Weather alerts | required, weather_hmac |
+| `/alerts/in` | POST | Security alerts | required, auth_hmac |
+| `/partner/events` | POST | Partner events | required, partner_hmac |
+| `/partner/telemetry` | POST | Partner telemetry | required, partner_hmac |
+| `/geo/satellite` | POST | Satellite data | required, auth_hmac |
+| `/geo/maplayer` | POST | Map layers | required, auth_hmac |
+| `/webhook/in` | POST | General ingress | required, auth_hmac |
+
+### 🔑 Key Management
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/keys/create` | POST | Create new key |
+| `/keys/rotate` | POST | Rotate existing key |
+| `/keys/meta` | GET | Fetch key metadata |
+| `/keys/export_hex` | GET | Export keys (requires consent) |
+| `/keys/auto/config` | POST | Configure auto-rotation |
+| `/keys/auto/disable` | POST | Disable auto-rotation |
+
+### 💾 Backup
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/backup/download` | GET | Download NDJSON log |
+| `/backup/send` | POST | Send to external destination |
+| `/backup/consent` | POST | Set consent token |
+| `/backup/schedule` | POST | Schedule periodic backup |
+| `/backup/schedule/disable` | POST | Cancel scheduling |
+| `/backup/email` | POST | Send via email (smtp_std) |
+
+### 🧱 Firewall
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/fw/metrics` | GET | Firewall metrics |
+| `/fw/open` | POST | Open circuit breaker (503) |
+| `/fw/close` | POST | Close breaker (restore) |
+
+### 📊 Dashboard & Export
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/dashboard` | GET | HTML/JSON dashboard (lang=en\|ar) |
+| `/metrics` | GET | Live JSON metrics |
+| `/events.ndjson` | GET | Stream events NDJSON |
+| `/export/csv` | GET | Export CSV (type=metrics\|events) |
+| `/cloud/push` | POST | Push to cloud (url=...) |
+
+### 🛡️ Webhook Guards
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/webhook/guard/list` | GET | List guards |
+| `/webhook/guard/set` | POST | Set path guard |
+| `/webhook/guard/disable` | POST | Disable guard |
+| `/webhook/guard/stats` | GET | Signature statistics |
+
+### 📜 Policies
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/policy/get` | GET | Get live policy |
+| `/policy/set` | POST | Apply JSON runtime |
+| `/policy/set_dsl` | POST | Apply DSL text |
+
+### 🔄 Anti-Replay Purge
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/anti_replay/purge/config` | POST | Configure purge |
+| `/anti_replay/purge/disable` | POST | Disable purge |
+| `/anti_replay/purge/run` | POST | Run immediately |
+| `/anti_replay/purge/status` | GET | Purge status |
+
+### 🧠 Memory Guard
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/memory/config` | POST | Set limit & auto |
+| `/memory/purge` | POST | Purge now |
+| `/memory/status` | GET | Memory status |
+
+### 🚨 Alerts
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/alerts/set` | POST | Set risk alert |
+| `/alerts/disable` | POST | Disable alerts |
+
+### 🎨 Others
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/templates/set` | POST | Set email templates |
+| `/templates/default` | POST | Set default template |
+| `/toggle` | GET | Toggle compression |
+| `/features/enable` | POST | Enable feature |
+| `/features/disable` | POST | Disable feature |
+| `/lang/set` | POST | Set language |
+
+---
+
+## 🛡️ Webhook Guards
+
+### What are Guards?
+
+Guards are per-path security mechanisms providing:
+- **HMAC-SHA512 signatures** for source integrity
+- **Anti-Replay** to prevent request duplication
+- **Timestamp windows** for limited acceptance
+- **Adaptive tightening/relaxation** based on risk
+
+### Guard Configuration
+
+```rust
+pub struct GuardConfig {
+    pub path: String,           // Path
+    pub alg: String,            // "hmac-sha512" or "none"
+    pub key_id: String,         // Key identifier
+    pub required: bool,         // Require signature?
+    pub ts_window_ms: u64,      // Timestamp window (ms)
+    pub anti_replay_on: bool,   // Enable anti-replay?
+}
+```
+
+### Example: Configure Guard
+
+```bash
+# Set guard for /ai/ingest
+curl -X POST "http://127.0.0.1:8080/webhook/guard/set?path=/ai/ingest&alg=hmac-sha512&key=auth_hmac&ts=300000&required=1&replay=1"
+
+# List all guards
+curl http://127.0.0.1:8080/webhook/guard/list
+
+# Signature statistics
+curl http://127.0.0.1:8080/webhook/guard/stats
+```
+
+### Example: Send Signed Request
+
+```python
+import hmac
+import hashlib
+import time
+import requests
+
+def sign_request(method, path, body, key):
+    ts = str(int(time.time() * 1000))
+    nonce = hashlib.sha256(ts.encode()).hexdigest()[:16]
+    
+    # Canonical: method|path|content-type|timestamp|nonce|sha512(body)
+    body_hash = hashlib.sha512(body.encode()).hexdigest()
+    canonical = f"{method}|{path}|application/json|{ts}|{nonce}|{body_hash}"
+    
+    # Compute HMAC-SHA512
+    sig = hmac.new(key.encode(), canonical.encode(), hashlib.sha512).hexdigest()
+    
+    return {
+        'X-MKT-Alg': 'hmac-sha512',
+        'X-MKT-KeyId': 'auth_hmac',
+        'X-MKT-Timestamp': ts,
+        'X-MKT-Nonce': nonce,
+        'X-MKT-Signature': sig
+    }
+
+# Send signed request
+headers = sign_request('POST', '/ai/ingest', '{"data":"test"}', 'your-secret-key')
+headers['Content-Type'] = 'application/json'
+r = requests.post('http://127.0.0.1:8080/ai/ingest', 
+                  json={"data":"test"}, 
+                  headers=headers)
+print(r.json())
+```
+
+### Automatic Tightening
+
+When signature errors or risks rise, guards automatically tighten:
+- Reduce `ts_window_ms`
+- Enforce `required=true`
+- Enable `anti_replay_on=true`
+
+### Safe Relaxation
+
+When risks drop and errors are rare, guards relax toward baseline settings.
+
+---
+
+## 🔑 Key Rotation
+
+### Manual Rotation
+
+```bash
+# Create key
+curl -X POST "http://127.0.0.1:8080/keys/create?id=auth_hmac&ver=1&len=32"
+
+# Rotate key
+curl -X POST "http://127.0.0.1:8080/keys/rotate?id=auth_hmac&ver=2&len=32"
+
+# Fetch metadata
+curl "http://127.0.0.1:8080/keys/meta?id=auth_hmac"
+```
+
+### Auto-Rotation
+
+```bash
+# Configure auto-rotation
+# threshold: risk level for rotation (0-100)
+# interval: check period in seconds
+# ids: comma-separated key IDs
+# len: key length in bytes
+curl -X POST "http://127.0.0.1:8080/keys/auto/config?threshold=85&interval=300&ids=auth_hmac,backup_key&len=32"
+
+# Disable auto-rotation
+curl -X POST "http://127.0.0.1:8080/keys/auto/disable"
+```
+
+### Multi-Version Support
+
+The system supports accepting two key versions simultaneously (N and N+1) for smooth transitions without service interruption:
+
+```
+Before rotation:  v1 (active)
+During rotation:  v1 (active)  +  v2 (active)
+After rotation:   v2 (active),  v1 (gradual deprecation)
+```
+
+---
+
+## 📊 Dashboard
+
+### Access
+
+```bash
+# HTML Arabic
+http://127.0.0.1:8080/dashboard?fmt=html&lang=ar
+
+# HTML English
+http://127.0.0.1:8080/dashboard?fmt=html&lang=en
+
+# JSON
+http://127.0.0.1:8080/dashboard
+```
+
+### Dashboard Contents
+
+#### 📈 Live Metrics
+- Inspected/blocked requests
+- Signature success/failure
+- Inbound/outbound compression
+- Computed fingerprints
+- Inbound/outbound webhooks
+
+#### 🔑 Key Rotation Status
+- Enabled/disabled
+- Risk threshold
+- Check interval
+- Last rotation
+- Tracked keys count
+
+#### 🔄 Anti-Replay Purge Status
+- Enabled/disabled
+- Mode (daily/weekly/monthly)
+- Purge interval
+- Next purge
+- Sensitivity (0-100)
+
+#### 🧠 Memory Status
+- Set limit
+- Auto-purge enabled?
+- Events used
+- Overflow warnings
+
+#### 🎛️ Enabled Features
+- AI Insights
+- Cloud Integration
+- CSV Export
+
+#### 🛡️ Guards List
+- Path
+- Algorithm
+- Key ID
+- Required?
+- Timestamp window
+- Anti-replay on?
+
+#### 📊 Signature Statistics
+- Per-path: success/failure
+- Total signatures
+- Success rate
+
+---
+
+## 📤 Export & Cloud Integration
+
+### CSV Export
+
+```bash
+# Export metrics
+curl "http://127.0.0.1:8080/export/csv?type=metrics" -o metrics.csv
+
+# Export events
+curl "http://127.0.0.1:8080/export/csv?type=events" -o events.csv
+```
+
+### NDJSON Export
+
+```bash
+# Download event log
+curl "http://127.0.0.1:8080/backup/download" -o events.ndjson
+
+# Stream events live
+curl "http://127.0.0.1:8080/events.ndjson"
+```
+
+### Cloud Push
+
+```bash
+# Enable cloud feature first
+curl -X POST "http://127.0.0.1:8080/features/enable?name=cloud"
+
+# Push metrics
+curl -X POST "http://127.0.0.1:8080/cloud/push?url=https://api.example.com/receive"
+```
+
+---
+
+## 🔗 FFI Interface
+
+### Build with FFI
+
+```bash
+cargo build --release --features ffi_c
+
+# Header auto-generated at: include/mkt_ksa_geo_sec.h
+```
+
+### Generated Header
+
+```c
+// include/mkt_ksa_geo_sec.h
+
+// ABI version (stable)
+uint32_t mkt_abi_version(void);
+
+// SemVer string (NUL-terminated)
+const char* mkt_semver_string(void);
+
+// HMAC-SHA512
+int32_t mkt_hmac_sha512(
+    const uint8_t* data_ptr,
+    size_t data_len,
+    const uint8_t* key_ptr,
+    size_t key_len,
+    uint8_t* out_ptr,
+    size_t out_len
 );
 ```
 
-Note: The Rust import path is `mkt_ksa_geo_sec`.
-
-## 🔗 Linking via C-ABI
-
-- Built as `cdylib/staticlib` and consumable from C/C++/Python/.NET/Java/Go.
-- Exported functions:
-  - `generate_adaptive_fingerprint(os: *const c_char, device_info: *const c_char, env_data: *const c_char) -> *mut c_char`
-  - `free_fingerprint_string(ptr: *mut c_char)`
-
-Generated header filename: `mkt_ksa_geo_sec.h`.
-
-Minimal C usage:
+### C Example
 
 ```c
-// header generated via cbindgen
-char* fp = generate_adaptive_fingerprint("Windows", "LaptopX", "Office");
-printf("%s\n", fp);
-free_fingerprint_string(fp);
-```
-#### 💡 Advanced Tips
+#include "mkt_ksa_geo_sec.h"
+#include <stdio.h>
 
-* All engines are pluggable or replaceable
-* Full customization (session/device/role)
-* All examples, functions, and constants are fully documented in English
-
----
-
-## 📝 Release Notes v1.0.2
-
-- **Severity**: Low to Medium – code quality and linter cleanups, no public behavior changes.
-- **Key Fixes:**
-  - Full strict Clippy pass with `-D warnings` across all targets; zero warnings remain.
-  - Unified JWT extraction patterns in API and adopted `let-else` where suitable.
-  - Localized `#[allow(...)]` only when changing code would risk public API/behavior.
-  - Added `# Errors`/`# Panics` documentation in critical Result-returning functions.
-  - Addressed floating-point and suboptimal_flops hints via targeted allows without changing logic.
-  - Resolved `unused_async`/`unused_self` for internal/experimental functions.
-  - No public API changes; no logic/files removed.
-- **Tests**: 37/37 passing.
-- **Clippy**: fully clean.
-- **Dependencies**:
-  - No production dependency versions changed in this release.
-  - Note: duplicate transitive versions (e.g., base64/http/lru/windows-sys) retained intentionally to avoid breakage.
-  - cargo audit: allowed warning for `rust-ini` (yanked) via `config`; non-functional impact (transitive only); documented for future review.
-
-#### 🔄 Dependency Changes (this session)
-- **Removed**:
-  - `once_cell`, `lazy_static`: replaced by `std::sync::LazyLock`.
-  - `serde_derive`: redundant since `serde` enables `derive` feature.
-  - `getrandom` (direct): removed as a direct dependency; switched to `rand::rngs::OsRng::try_fill_bytes` for secure randomness.
-- **Updated**:
-  - `reqwest`: 0.12.22 → 0.12.23 (Rustls; minor patches).
-  - `pqcrypto-mlkem`: 0.1.0 → 0.1.1.
-  - `secrecy`: 0.8.x → 0.10.3. Introduced internal wrappers `security::secret::{SecureString, SecureBytes}` to abstract breaking API changes. All call sites updated with no behavior/security change.
-- **Transitive bumps**:
-  - `async-trait`, `hyper`, `thiserror`, and others auto-updated within constraints.
-
-#### 🆕 New Files Created
-- `src/security/signing.rs`: Central high-security HMAC signing module (no OpenSSL).
-- `src/utils/precision.rs`: Precision utilities for time/numeric/geospatial calculations.
-
-### 🔧 Internal Signature Changes (no behavior/route changes)
-
-- **API layer** (`src/api/*.rs`):
-  - Switched from `HttpRequest` to extractors: `web::Data<AppState>`, `web::Json<...>`, and `BearerToken` to ensure Send-safe futures and cleaner handler signatures.
-- **Geo engine** (`src/core/geo_resolver.rs`):
-  - `resolve` now takes a `ResolveParams` struct instead of many positional args; all call sites updated.
-- **Behavior engine** (`src/core/behavior_bio.rs`):
-  - `get_user_profile_data` is now synchronous (removed `async` as there was no `await`); updated call in `src/api/auth.rs` (removed `.await`).
-- **Device FP / FFI** (`src/core/device_fp.rs`):
-  - C-ABI functions are now `unsafe extern "C"` with `# Safety` docs, preserving implementation logic.
-  - All `secrecy::Secret`/`SecretVec` usages migrated to `security::secret::{SecureString, SecureBytes}`.
-
-### 🧹 Formatting and Extra Checks
-- Applied `cargo fmt --all` to fix minor formatting diffs reported by `--check`.
-- `cargo tree -d` shows acceptable transitive duplicates at present: `base64 (0.21/0.22)`, `http (0.2/1.x)`, `lru (0.14/0.16)`, `hashbrown (0.14/0.15)`, `socket2 (0.5/0.6)`, `windows-sys (0.52/0.59)`.
-
-#### 📑 Current Signatures (Reference)
-
-- **API Handlers**
-
-```rust
-pub async fn trigger_alert(
-    payload: web::Json<AlertTriggerRequest>,
-    bearer: BearerToken,
-) -> impl Responder;
-
-pub async fn analyze_behavior(
-    app_data: web::Data<AppState>,
-    payload: web::Json<BehaviorAnalyzeRequest>,
-    bearer: BearerToken,
-) -> impl Responder;
-
-pub async fn dashboard_summary(bearer: BearerToken) -> impl Responder;
-
-pub async fn resolve_device(
-    app_data: web::Data<AppState>,
-    payload: web::Json<DeviceResolveRequest>,
-    bearer: BearerToken,
-) -> impl Responder;
-
-pub async fn resolve_geo(
-    app_data: web::Data<AppState>,
-    payload: web::Json<GeoResolveRequest>,
-    bearer: BearerToken,
-) -> impl Responder;
-
-pub async fn analyze_network(
-    app_data: web::Data<AppState>,
-    payload: web::Json<NetworkAnalyzeRequest>,
-    bearer: BearerToken,
-) -> impl Responder;
-
-pub async fn analyze_sensors(
-    app_data: web::Data<AppState>,
-    payload: web::Json<SensorsAnalyzeRequest>,
-    bearer: BearerToken,
-) -> impl Responder;
-
-pub async fn weather_summary(
-    _payload: web::Json<WeatherSummaryRequest>,
-    bearer: BearerToken,
-) -> impl Responder;
-```
-
-- **Core**
-
-```rust
-impl GeoResolver {
-    pub async fn resolve(
-        &self,
-        params: ResolveParams,
-    ) -> Result<GeoLocation, GeoResolverError>;
-}
-
-impl UserService {
-    pub fn get_user_profile_data(
-        &self,
-        _requester_id: Uuid,
-        _target_user_id: Uuid,
-    ) -> Result<User, BehaviorError>;
+int main() {
+    // Display version
+    printf("ABI: %u\n", mkt_abi_version());
+    printf("Version: %s\n", mkt_semver_string());
+    
+    // Compute HMAC
+    const uint8_t data[] = "Hello, World!";
+    const uint8_t key[] = "secret-key";
+    uint8_t out[64];
+    
+    int ret = mkt_hmac_sha512(data, 13, key, 10, out, 64);
+    if (ret == 0) {
+        printf("HMAC: ");
+        for (int i = 0; i < 64; i++) {
+            printf("%02x", out[i]);
+        }
+        printf("\n");
+    }
+    
+    return 0;
 }
 ```
 
-- **FFI surface (C ABI)**
+### Linking
 
-```rust
-pub unsafe extern "C" fn generate_adaptive_fingerprint(
-    os: *const c_char,
-    device_info: *const c_char,
-    env_data: *const c_char,
-) -> *mut c_char;
+```bash
+# Linux/macOS
+gcc -o example example.c -L./target/release -lmkt_ksa_geo_sec
 
-pub unsafe extern "C" fn free_fingerprint_string(ptr: *mut c_char);
+# Windows
+cl.exe example.c mkt_ksa_geo_sec.lib
 ```
+
 ---
+
+## 🎛️ Optional Features
+
+| Feature | Description | Dependencies |
+|---------|-------------|--------------|
+| `api_std_http` | Internal zero-deps HTTP/1.1 server | ✅ Zero |
+| `sign_hmac` | Internal HMAC-SHA512 signing | ✅ Zero |
+| `compress_rle` | RLE compression/decompression | ✅ Zero |
+| `egress` | Egress guard layer | ✅ Zero |
+| `egress_http_std` | Simple HTTP egress client | ✅ Zero |
+| `smtp_std` | Simple email sending (TCP) | ✅ Zero |
+| `ffi_c` | C-ABI interface + header | ✅ Zero |
+| `ledger_blake3` | BLAKE3 event ledger | ✅ Zero |
+| `core_utils` | Core utility helpers | ✅ Zero |
+| `input_validation` | Additional input validation | ✅ Zero |
+
+**Note**: All features are zero-dependency — no external crates added.
+
+---
+
+## 💡 Usage Examples
+
+### Run Demo Dashboard
+
+```bash
+# Set environment variables (Windows)
+$env:CARGO_HOME="C:\rust\cargo"
+$env:RUSTUP_HOME="C:\rust\rustup"
+
+# Run
+cargo run --bin std_dashboard_demo --features api_std_http
+
+# Access
+# http://127.0.0.1:8080/dashboard?fmt=html&lang=en
+```
+
+### Enable AI Feature
+
+```bash
+curl -X POST "http://127.0.0.1:8080/features/enable?name=ai_insights"
+```
+
+### Set Memory Limit
+
+```bash
+# 1MB limit with auto-purge
+curl -X POST "http://127.0.0.1:8080/memory/config?limit=1048576&auto=1"
+
+# Immediate purge
+curl -X POST "http://127.0.0.1:8080/memory/purge"
+
+# Status
+curl "http://127.0.0.1:8080/memory/status"
+```
+
+### Configure Anti-Replay Purge
+
+```bash
+# Daily purge with sensitivity 70
+curl -X POST "http://127.0.0.1:8080/anti_replay/purge/config?mode=daily&sensitivity=70&window=300000&capacity=2048"
+
+# Run immediately
+curl -X POST "http://127.0.0.1:8080/anti_replay/purge/run"
+
+# Status
+curl "http://127.0.0.1:8080/anti_replay/purge/status"
+```
+
+### Apply DSL Policy
+
+```bash
+# Create policy.dsl file
+cat > policy.dsl << 'EOF'
+# Security policy
+allowed_methods=GET,POST
+allowed_path_prefixes=/api,/webhook
+denied_path_prefixes=/admin,/internal
+allowed_content_types=application/json,text/plain
+limits.max_headers_bytes=8192
+limits.max_body_bytes=1048576
+EOF
+
+# Apply
+curl -X POST "http://127.0.0.1:8080/policy/set_dsl" \
+     -H "Content-Type: text/plain" \
+     --data-binary @policy.dsl
+```
+
+---
+
+## 🧪 Testing
+
+### Core Tests (Zero-Deps)
+
+```bash
+# Library tests
+cargo test --no-default-features
+
+# Strict Clippy
+cargo clippy --lib --no-default-features -- -D warnings
+
+# Formatting
+cargo fmt --all
+
+# Miri (memory safety check)
+cargo +nightly miri test --no-default-features
+```
+
+### Server Tests
+
+```bash
+# Tests with api_std_http
+cargo test --features api_std_http
+
+# Clippy for binaries
+cargo clippy --bins --features api_std_http -- -D warnings
+```
+
+### Fuzz-Like Testing
+
+```bash
+# Test random inputs
+cargo test --test fuzz_like --features api_std_http
+```
+
+---
+
+## 🔐 Security
+
+### Vulnerability Reporting
+
+If you discover a security vulnerability, please send a private report to:
+**mkt-edge@outlook.sa**
+
+Please **do not** publish vulnerabilities in public Issues.
+
+### Implemented Best Practices
+
+✅ Constant-time comparisons (ct_eq) for fingerprints and signatures  
+✅ Strict input limits (headers/body)  
+✅ UTF-8 validation and XSS detection  
+✅ Egress guard against SSRF  
+✅ Strong anti-replay  
+✅ Internal HMAC-SHA512  
+✅ Adaptive risk-based tightening  
+✅ Continuous auditing (Clippy/Miri/Tests)  
+
+### External Auditing
+
+The project is fully open-source and auditable. Security reviews from the community are welcome.
+
+---
+
+## 📄 License
+
+This project is licensed under **Apache License 2.0**.
+
+See [LICENSE](LICENSE) file for full details.
+
+---
+
+## 📞 Contact
+
+### Author
+**Mansour Khalid**  
+📧 mkt-edge@outlook.sa
+
+### Links
+
+- 🌐 **Repository**: [github.com/mktmansour/MKT-KSA-Geolocation-Security](https://github.com/mktmansour/MKT-KSA-Geolocation-Security)
+- 📚 **Documentation**: [docs.rs/MKT_KSA_Geolocation_Security](https://docs.rs/MKT_KSA_Geolocation_Security)
+- 📦 **Crates.io**: [crates.io/crates/MKT_KSA_Geolocation_Security](https://crates.io/crates/MKT_KSA_Geolocation_Security)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/issues)
+
+---
+
+## 🙏 Acknowledgments
+
+Thanks to the Rust community for excellent tools and continuous support.
+
+---
+
+## 📚 Additional Resources
+
+- [docs/SBOM.md](docs/SBOM.md) - Software Bill of Materials
+- [docs/Final_Engineering_Report.md](docs/Final_Engineering_Report.md) - Comprehensive Engineering Report
+- [docs/Test_Plan.md](docs/Test_Plan.md) - Test Plan
+- [include/mkt_ksa_geo_sec.h](include/mkt_ksa_geo_sec.h) - FFI C-ABI Header
+
+---
+
+<div align="center">
+
+**Made with ❤️ in Saudi Arabia**
+
+</div>

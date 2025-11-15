@@ -22,15 +22,28 @@ Supported crate types:
 
 pub mod api;
 pub mod core;
-pub mod db;
+pub mod crypto;
+// Database module removed - using webhook architecture instead
+pub mod oauth2;
 pub mod security;
 pub mod utils;
+pub mod webhook;
+#[cfg(feature = "compress_rle")]
+pub mod utils_rle_alias {
+    pub use crate::utils::rle::*;
+}
+#[cfg(feature = "ffi_c")]
+pub mod ffi;
+pub mod telemetry;
 
 // Re-export AppState to make API handlers importable from the lib root when needed
+#[cfg(feature = "core_full")]
 pub mod app_state;
+#[cfg(feature = "core_full")]
 pub use app_state::AppState;
 
 // Re-exports of commonly used items for ergonomic public API
+#[cfg(feature = "core_full")]
 pub use crate::core::geo_resolver::{GeoLocation, GeoResolver};
 pub use crate::security::signing;
 pub use crate::utils::precision;

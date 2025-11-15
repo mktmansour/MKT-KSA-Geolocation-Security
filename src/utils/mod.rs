@@ -38,3 +38,8 @@ pub mod logger;
 // Arabic: وحدة الدقة والحسابات الرقمية والجغرافية
 // English: Precision and numeric/geo utilities module
 pub mod precision;
+
+// Arabic: وحدة ضغط RLE اختيارية — لا تُضمّن إلا مع ميزة compress_rle
+// English: Optional RLE compression module — compiled only with feature compress_rle
+#[cfg(feature = "compress_rle")]
+pub mod rle;

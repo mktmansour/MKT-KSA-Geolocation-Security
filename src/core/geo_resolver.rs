@@ -48,8 +48,8 @@ use crate::security::signing::{sign_struct_excluding_field, verify_struct_exclud
 use crate::utils::helpers::{aes_encrypt, calculate_distance};
 use anyhow::anyhow;
 use async_trait::async_trait;
+#[cfg(feature = "core_full")]
 use blake3::Hasher;
-use hmac::{Hmac, Mac};
 use log::error;
 use lru::LruCache;
 use maxminddb::Reader;
@@ -57,6 +57,7 @@ use pqcrypto_mlkem::mlkem1024;
 use pqcrypto_traits::kem::{Ciphertext, SharedSecret};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "sign_hmac")]
 use sha2::Sha512; // Using SHA512 for HMAC as it's a common strong choice
 use std::collections::VecDeque;
 use std::env;
@@ -725,18 +726,27 @@ impl GeoResolver {
         let secret = env::var("LOCATION_SECRET_KEY")
             .map_err(|_| GeoResolverError::SecurityViolation("مفتاح الأمان غير محدد".to_string()))?;
 
+        #[cfg(feature = "sign_hmac")]
         let mut mac = Hmac::<Sha512>::new_from_slice(secret.as_bytes())
             .map_err(|e| GeoResolverError::CryptoError(e.into()))?;
 
-        mac.update(&data);
-        let signature = mac.finalize().into_bytes();
+        #[cfg(feature = "sign_hmac")]
+        {
+            mac.update(&data);
+            let signature = mac.finalize().into_bytes();
 
-        // الجمع بين البيانات والتوقيع
-        // Combine data and signature
-        let mut result = data;
-        result.extend_from_slice(&signature);
-
-        Ok(result)
+            // الجمع بين البيانات والتوقيع
+            // Combine data and signature
+            let mut result = data;
+            result.extend_from_slice(&signature);
+            Ok(result)
+        }
+        #[cfg(not(feature = "sign_hmac"))]
+        {
+            Err(GeoResolverError::CryptoError(anyhow!(
+                "sign_hmac feature disabled"
+            )))
+        }
     }
 
     #[allow(dead_code)]
@@ -774,12 +784,22 @@ impl GeoResolver {
         let secret = env::var("LOCATION_SECRET_KEY")
             .map_err(|_| GeoResolverError::SecurityViolation("مفتاح الأمان غير محدد".to_string()))?;
 
+        #[cfg(feature = "sign_hmac")]
         let mut mac = Hmac::<Sha512>::new_from_slice(secret.as_bytes())
             .map_err(|e| GeoResolverError::CryptoError(e.into()))?;
 
-        mac.update(encrypted);
-        mac.verify_slice(signature)
-            .map_err(|_| GeoResolverError::SecurityViolation("توقيع غير صالح".to_string()))?;
+        #[cfg(feature = "sign_hmac")]
+        {
+            mac.update(encrypted);
+            mac.verify_slice(signature)
+                .map_err(|_| GeoResolverError::SecurityViolation("توقيع غير صالح".to_string()))?;
+        }
+        #[cfg(not(feature = "sign_hmac"))]
+        {
+            return Err(GeoResolverError::CryptoError(anyhow!(
+                "sign_hmac feature disabled"
+            )));
+        }
 
         // فك التشفير
         // Decryption
