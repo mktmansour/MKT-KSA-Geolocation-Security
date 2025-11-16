@@ -346,7 +346,7 @@ Monitoring security via centralized dashboard, metrics export, and cloud integra
 
 ## 🎁 Core Features
 
-✅ **Zero Dependencies by Default** — Core operates without any external libraries  
+✅ **Zero Dependencies by Default (and for signing)** — Core and HMAC/SHA‑512 are implemented internally with no external crates  
 ✅ **50+ Independent Webhook Guards** — Per-path configurable protection  
 ✅ **Automatic Key Rotation** — Risk-based self-rotation  
 ✅ **Adaptive Anti-Replay** — Smart periodic purging (daily/weekly/monthly)  
@@ -370,7 +370,7 @@ Monitoring security via centralized dashboard, metrics export, and cloud integra
 
 ```toml
 [dependencies]
-mkt_ksa_geo_sec = "1.0.2"
+mkt_ksa_geo_sec = "2.0.0"
 ```
 
 ### From Source

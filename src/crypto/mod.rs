@@ -12,3 +12,5 @@ pub mod keystore;
 pub mod policy;
 pub mod selector;
 pub mod traits;
+pub mod sha512_pure;
+pub mod hmac_pure;

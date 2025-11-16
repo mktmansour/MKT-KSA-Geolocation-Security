@@ -6,6 +6,9 @@ target_local/
 **/*.dSYM/**/*
 **/*.dSYM/Contents/Resources/DWARF/**
 
+# Release artifacts
+/dist/
+
 # Rust & Cargo Build Artifacts
 /target/
 /debug/

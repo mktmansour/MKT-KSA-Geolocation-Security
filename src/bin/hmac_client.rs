@@ -33,19 +33,11 @@ fn main() {
     }
 
     fn sha512_hex(data: &[u8]) -> String {
-        use sha2::{Digest, Sha512};
-        let mut h = Sha512::new();
-        h.update(data);
-        let out = h.finalize();
-        to_hex(&out)
+        mkt_ksa_geo_sec::crypto::sha512_pure::sha512_hex(data)
     }
 
     fn hmac_sha512_hex(key: &[u8], msg: &[u8]) -> String {
-        use hmac::{Hmac, Mac};
-        use sha2::Sha512;
-        let mut mac = Hmac::<Sha512>::new_from_slice(key).expect("HMAC key");
-        mac.update(msg);
-        let sig = mac.finalize().into_bytes();
+        let sig = mkt_ksa_geo_sec::crypto::hmac_pure::hmac_sha512(key, msg);
         to_hex(&sig)
     }
 

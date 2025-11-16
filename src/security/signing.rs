@@ -10,12 +10,11 @@
 ******************************************************************************************/
 
 use crate::security::secret::SecureBytes;
-#[cfg(feature = "sign_hmac")]
-use hmac::{Hmac, Mac};
 #[cfg(feature = "serde")]
 use serde::Serialize;
+
 #[cfg(feature = "sign_hmac")]
-use sha2::{Sha384, Sha512};
+use crate::crypto::hmac_pure::{ct_eq, hmac_sha384, hmac_sha512};
 
 /// أخطاء التوقيع الموحدة
 /// Unified signing errors
@@ -29,18 +28,13 @@ pub enum SigningError {
     FeatureDisabled,
 }
 
-#[cfg(feature = "sign_hmac")]
-type HmacSha512 = Hmac<Sha512>;
-#[cfg(feature = "sign_hmac")]
-type HmacSha384 = Hmac<Sha384>;
+// Pure implementations are used; no external types required.
 
 /// يوقّع مصفوفة بايت باستخدام HMAC-SHA512
 /// Signs a byte slice using HMAC-SHA512
 #[cfg(feature = "sign_hmac")]
 pub fn sign_hmac_sha512(data: &[u8], key: &SecureBytes) -> Result<Vec<u8>, SigningError> {
-    let mut mac = HmacSha512::new_from_slice(key.expose()).map_err(|_| SigningError::InvalidKey)?;
-    mac.update(data);
-    Ok(mac.finalize().into_bytes().to_vec())
+    Ok(hmac_sha512(key.expose(), data).to_vec())
 }
 
 /// نسخة بديلة عندما تكون الميزة معطلة
@@ -54,11 +48,8 @@ pub fn sign_hmac_sha512(_data: &[u8], _key: &SecureBytes) -> Result<Vec<u8>, Sig
 #[must_use]
 #[cfg(feature = "sign_hmac")]
 pub fn verify_hmac_sha512(data: &[u8], signature: &[u8], key: &SecureBytes) -> bool {
-    let Ok(mut mac) = HmacSha512::new_from_slice(key.expose()) else {
-        return false;
-    };
-    mac.update(data);
-    mac.verify_slice(signature).is_ok()
+    let expected = hmac_sha512(key.expose(), data);
+    ct_eq(&expected, signature)
 }
 
 #[must_use]
@@ -71,9 +62,7 @@ pub fn verify_hmac_sha512(_data: &[u8], _signature: &[u8], _key: &SecureBytes) -
 /// Signs a byte slice using HMAC-SHA384 (for specific modules)
 #[cfg(feature = "sign_hmac")]
 pub fn sign_hmac_sha384(data: &[u8], key: &SecureBytes) -> Result<Vec<u8>, SigningError> {
-    let mut mac = HmacSha384::new_from_slice(key.expose()).map_err(|_| SigningError::InvalidKey)?;
-    mac.update(data);
-    Ok(mac.finalize().into_bytes().to_vec())
+    Ok(hmac_sha384(key.expose(), data).to_vec())
 }
 
 #[cfg(not(feature = "sign_hmac"))]
@@ -86,11 +75,8 @@ pub fn sign_hmac_sha384(_data: &[u8], _key: &SecureBytes) -> Result<Vec<u8>, Sig
 #[must_use]
 #[cfg(feature = "sign_hmac")]
 pub fn verify_hmac_sha384(data: &[u8], signature: &[u8], key: &SecureBytes) -> bool {
-    let Ok(mut mac) = HmacSha384::new_from_slice(key.expose()) else {
-        return false;
-    };
-    mac.update(data);
-    mac.verify_slice(signature).is_ok()
+    let expected = hmac_sha384(key.expose(), data);
+    ct_eq(&expected, signature)
 }
 
 #[must_use]
@@ -164,8 +150,6 @@ pub fn verify_struct_excluding_field<T>(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[cfg(not(feature = "sign_hmac"))]
     #[test]
     fn hmac_sha512_disabled_by_default() {

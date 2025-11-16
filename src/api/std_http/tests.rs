@@ -163,6 +163,25 @@ fn oauth2_token_client_credentials_success() {
 
 #[test]
 fn oauth2_userinfo_with_client_credentials_insufficient_scope() {
+    {
+        use crate::oauth2::clients::{
+            get_client_manager, ClientAuthMethod, ClientSecurityPolicy, ClientType,
+        };
+        let cm = get_client_manager();
+        if cm.get_client("demo_client").is_none() {
+            let _ = cm.register_client(
+                "demo_client".to_string(),
+                "Demo Client".to_string(),
+                ClientType::Service,
+                ClientAuthMethod::None,
+            );
+        }
+        // Ensure client_credentials and "read" scope are allowed for deterministic tests
+        let mut pol = ClientSecurityPolicy::default();
+        pol.allowed_scopes = vec!["read".to_string()];
+        pol.allowed_grant_types = vec![crate::oauth2::core::GrantType::ClientCredentials];
+        let _ = cm.update_client_security_policy("demo_client", pol);
+    }
     let token_resp = super::handle_oauth2_request(&Request {
         method: "POST".to_string(),
         path: "/oauth/token".to_string(),

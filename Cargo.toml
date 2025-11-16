@@ -1,6 +1,6 @@
 [package]
 name = "MKT_KSA_Geolocation_Security"
-version = "1.0.2"
+version = "2.0.0"
 authors = ["Mansour Khalid <mkt-edge@outlook.sa>"]
 edition = "2021"
 license = "Apache-2.0"
@@ -62,15 +62,13 @@ name = "mkt_ksa_geo_sec"
 crate-type = ["rlib", "cdylib", "staticlib"]
 
 [dependencies]
-hmac = { version = "0.12", optional = true }
-sha2 = { version = "0.10", optional = true }
 
 [dev-dependencies]
 
 [features]
 default = []
 # Consolidated features (no external deps retained)
-sign_hmac = ["dep:hmac", "dep:sha2"]
+sign_hmac = []
 sign_host = []
 oauth2 = []
 ledger_blake3 = []

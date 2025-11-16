@@ -38,11 +38,7 @@ pub(crate) fn find_header<'a>(headers: &'a [(String, String)], key: &str) -> Opt
 
 #[cfg(feature = "sign_hmac")]
 fn sha512_hex(data: &[u8]) -> String {
-    use sha2::{Digest, Sha512};
-    let mut hasher = Sha512::new();
-    hasher.update(data);
-    let out = hasher.finalize();
-    to_hex(&out)
+    crate::crypto::sha512_pure::sha512_hex(data)
 }
 
 pub(crate) fn canonical_string(
