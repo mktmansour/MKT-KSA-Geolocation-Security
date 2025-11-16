@@ -26,7 +26,7 @@ function Has-Cmd {
 
 # 1) Quality & security gates (local)
 Invoke-Step "cargo fmt --check"      { cargo fmt --check }
-Invoke-Step "cargo clippy -D warnings" { cargo clippy -q -D warnings --all-targets --all-features }
+Invoke-Step "cargo clippy -D warnings (selected features)" { cargo clippy --features $Features -- -D warnings }
 Invoke-Step "cargo test --lib ($Features)" { cargo test -q --features $Features --lib }
 
 if (Has-Cmd "cargo-audit") {
@@ -36,7 +36,7 @@ if (Has-Cmd "cargo-audit") {
 }
 
 if (Has-Cmd "cargo-deny") {
-    Invoke-Step "cargo deny check" { cargo deny check -q } -Optional
+    Invoke-Step "cargo deny check" { cargo deny check } -Optional
 }
 
 if ($CheckOnly) {

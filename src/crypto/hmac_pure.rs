@@ -70,5 +70,3 @@ pub fn ct_eq(a: &[u8], b: &[u8]) -> bool {
     }
     diff == 0
 }
-
-

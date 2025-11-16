@@ -151,11 +151,13 @@ pub fn verify_struct_excluding_field<T>(
 #[cfg(test)]
 mod tests {
     #[cfg(not(feature = "sign_hmac"))]
+    use super::{sign_hmac_sha512, SigningError};
+    #[cfg(not(feature = "sign_hmac"))]
+    use crate::security::secret::SecureBytes;
+    #[cfg(not(feature = "sign_hmac"))]
     #[test]
     fn hmac_sha512_disabled_by_default() {
-        let key = SecureBytes::new(vec![1u8; 64]);
         let data = b"hello";
-        let _ = (key, data);
         // Default build is zero-deps; feature is disabled so function returns FeatureDisabled
         let err = sign_hmac_sha512(data, &SecureBytes::new(vec![0; 32])).err();
         assert!(matches!(err, Some(SigningError::FeatureDisabled)));
