@@ -16,7 +16,7 @@ crate-type = ["rlib", "cdylib", "staticlib"]
 [dependencies]
 actix-web = "4.0"
 actix-rt = "2.10"
-ammonia = "4.1.1"
+ammonia = "4.1.2"
 anyhow = "1.0.99"
 async-trait = "0.1"
 # تم حذف dotenv
@@ -56,7 +56,7 @@ reqwest = { version = "0.12.23", default-features = false, features = ["json", "
 serde = { version = "1", features = ["derive"] }
 ## removed: serde_derive (serde derives provided by serde = { features = ["derive"] })
 thiserror = "2.0.12"
-maxminddb = { version = "0.26.0", features = ["mmap"] }
+maxminddb = { version = "0.27.0", features = ["mmap"] }
 pqcrypto-traits = "0.3.5"
 # governor = "0.6"  # أبقِ فقط governor إذا كنت تستخدمه فعليًا في الكود
 
