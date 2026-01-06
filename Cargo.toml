@@ -1,6 +1,6 @@
 [package]
 name = "MKT_KSA_Geolocation_Security"
-version = "v2.0.0"
+version = "v1.0.2"
 authors = ["Mansour Khalid <mkt-edge@outlook.sa>"]
 edition = "2021"
 license = "Apache-2.0"
@@ -14,6 +14,7 @@ keywords = ["geolocation", "behavior", "device-fingerprint", "rate-limiting", "s
 name = "mkt_ksa_geo_sec"
 crate-type = ["rlib", "cdylib", "staticlib"]
 [dependencies]
+rayon = "1.11.0"
 actix-web = "4.0"
 actix-rt = "2.10"
 ammonia = "4.1.1"
@@ -43,8 +44,7 @@ unicode-normalization = "0.1.24"
 validator = "0.20"
 regex = "1.12.2"
 lru = "0.16.0"
-[dependencies]
-rayon = "1.11"
+
 ## removed: once_cell, lazy_static (migrated to std::sync::LazyLock)
 cfg-if = "1.0.4"
 rand = "0.8.5"
