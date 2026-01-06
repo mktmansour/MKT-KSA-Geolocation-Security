@@ -1,6 +1,6 @@
 [package]
 name = "MKT_KSA_Geolocation_Security"
-version = "1.0.2"
+version = "v2.0.0"
 authors = ["Mansour Khalid <mkt-edge@outlook.sa>"]
 edition = "2021"
 license = "Apache-2.0"
@@ -43,7 +43,7 @@ unicode-normalization = "0.1.24"
 validator = "0.20"
 regex = "1.12.2"
 lru = "0.16.0"
-rayon = "1.11.0"
+rayon = "1.11"
 ## removed: once_cell, lazy_static (migrated to std::sync::LazyLock)
 cfg-if = "1.0.4"
 rand = "0.8.5"
