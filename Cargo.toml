@@ -14,6 +14,7 @@ keywords = ["geolocation", "behavior", "device-fingerprint", "rate-limiting", "s
 name = "mkt_ksa_geo_sec"
 crate-type = ["rlib", "cdylib", "staticlib"]
 [dependencies]
+disallowed-types = ["time::format_description::well_known::Rfc2822"]
 rayon = "1.11.0"
 actix-web = "4.0"
 actix-rt = "2.10"
