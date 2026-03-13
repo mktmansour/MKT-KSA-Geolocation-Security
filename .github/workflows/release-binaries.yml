@@ -4,33 +4,62 @@ on:
   workflow_dispatch:
   push:
     tags:
-      - 'v*'
+      - "v*"
+
+permissions:
+  contents: read
 
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+
     runs-on: ${{ matrix.os }}
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          components: clippy,rustfmt
+          submodules: false
+
+      - name: Cleanup stray advisory-db submodule residue
+        shell: bash
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git submodule deinit -f --all || true
+          rm -rf .git/modules/cargo-home/advisory-db || true
+          rm -rf cargo-home/advisory-db || true
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+
       - name: Install cbindgen
         run: cargo install cbindgen --locked
+
       - name: Build release
-        run: cargo build --release
+        run: cargo build --release --locked
+
       - name: Generate C header
         run: cbindgen -o mkt_ksa_geo_sec.h
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: mkt_ksa_geo_sec-${{ matrix.os }}
+          if-no-files-found: warn
           path: |
             mkt_ksa_geo_sec.h
             target/release/*.dll
             target/release/*.so
             target/release/*.dylib
-
-
+            target/release/*.a
+            target/release/*.lib
