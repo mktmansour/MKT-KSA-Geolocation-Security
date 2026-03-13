@@ -1,6 +1,6 @@
 [package]
 name = "MKT_KSA_Geolocation_Security"
-version = "v1.0.2"
+version = "1.0.2"
 authors = ["Mansour Khalid <mkt-edge@outlook.sa>"]
 edition = "2021"
 license = "Apache-2.0"
@@ -14,7 +14,6 @@ keywords = ["geolocation", "behavior", "device-fingerprint", "rate-limiting", "s
 name = "mkt_ksa_geo_sec"
 crate-type = ["rlib", "cdylib", "staticlib"]
 [dependencies]
-disallowed-types = ["time::format_description::well_known::Rfc2822"]
 rayon = "1.11.0"
 actix-web = "4.0"
 actix-rt = "2.10"

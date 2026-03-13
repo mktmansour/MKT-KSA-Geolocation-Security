@@ -50,6 +50,7 @@ use anyhow::anyhow;
 use async_trait::async_trait;
 use blake3::Hasher;
 use hmac::{Hmac, Mac};
+#[allow(unused_imports)]
 use log::error;
 use lru::LruCache;
 use maxminddb::Reader;

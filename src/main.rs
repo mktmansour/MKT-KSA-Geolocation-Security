@@ -64,6 +64,7 @@ use mkt_ksa_geo_sec::core::geo_resolver::{
 };
 use mkt_ksa_geo_sec::core::network_analyzer::NetworkAnalyzer;
 use mkt_ksa_geo_sec::core::sensors_analyzer::SensorsAnalyzerEngine;
+use mkt_ksa_geo_sec::core::composite_verification::CompositeVerifier;
 // إذا فعّلت النسخة من GitHub استخدم:
 // use crate::security::ratelimit::rate_limiter_dynamic;
 
@@ -178,18 +179,28 @@ async fn main() -> std::io::Result<()> {
     ));
 
     let x_engine = Arc::new(CrossValidationEngine::new(
-        geo_resolver,
-        fp_engine,
-        behavior_engine,
-        sensors_engine,
-        network_engine,
+        Arc::clone(&geo_resolver),
+        Arc::clone(&fp_engine),
+        Arc::clone(&behavior_engine),
+        Arc::clone(&sensors_engine),
+        Arc::clone(&network_engine),
         scoring_strategy,
         SecureBytes::new(b"a_very_secret_final_verdict_key".to_vec()),
     ));
 
+    // 5. إنشاء محرك التحقق المركب للمدن الذكية
+    // 5. Create the composite verifier for smart city access
+    let composite_verifier = Arc::new(CompositeVerifier {
+        geo: geo_resolver,
+        behavior: behavior_engine,
+        device_fp: fp_engine,
+        network: network_engine,
+    });
+
     // 6. تجميع كل الخدمات في الحالة المشتركة
     let app_state = web::Data::new(AppState {
         x_engine: Arc::clone(&x_engine),
+        composite_verifier,
         db_pool,
     });
 

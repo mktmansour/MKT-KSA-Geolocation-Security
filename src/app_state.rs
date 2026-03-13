@@ -1,3 +1,4 @@
+use crate::core::composite_verification::CompositeVerifier;
 use crate::core::cross_location::CrossValidationEngine;
 use mysql_async::Pool;
 use std::sync::Arc;
@@ -6,5 +7,6 @@ use std::sync::Arc;
 /// English: Shared application state (used by API and the server)
 pub struct AppState {
     pub x_engine: Arc<CrossValidationEngine>,
+    pub composite_verifier: Arc<CompositeVerifier>,
     pub db_pool: Option<Pool>,
 }

@@ -10,11 +10,13 @@
 **/*.dll
 **/*.so
 **/*.dylib
-**/*.lock
 
 # Dependency Caches
 Cargo.lock
 Cargo.toml.bk
+
+# Local Cargo home (used during CI/dev caching)
+.cargo-home/
 
 # IDE / Editor Configs
 .idea/
@@ -59,8 +61,4 @@ tests/results/
 *.pem
 *.key
 *.crt
-<<<<<<< HEAD
 secrets.json
-=======
-secrets.json
->>>>>>> 9f9a4c785307adff189d537b95ef5815a075b0a9

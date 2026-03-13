@@ -24,10 +24,10 @@
 
 use std::sync::Arc;
 use chrono::Timelike;
-use crate::core::geo_resolver::{GeoResolver, GeoLocation};
-use crate::core::behavior_bio::{BehaviorEngine, BehaviorInput, AnalysisResult as BehaviorResult};
-use crate::core::device_fp::{AdaptiveFingerprintEngine, AdaptiveFingerprint};
-use crate::core::network_analyzer::{NetworkAnalyzer, NetworkAnalysisResult};
+use crate::core::geo_resolver::{GeoResolver, ResolveParams};
+use crate::core::behavior_bio::{BehaviorEngine, BehaviorInput};
+use crate::core::device_fp::AdaptiveFingerprintEngine;
+use crate::core::network_analyzer::NetworkAnalyzer;
 
 /// Arabic: هيكل التحقق المركب يجمع كل المحركات المتخصصة
 /// English: CompositeVerifier struct aggregates all specialized engines
@@ -53,7 +53,7 @@ impl CompositeVerifier {
         let geo_location = match &geo_input {
             Some((ip, gps)) => {
                 self.geo
-                    .resolve(crate::core::geo_resolver::GeoResolver::ResolveParams {
+                    .resolve(ResolveParams {
                         ip: Some(*ip),
                         gps: Some(*gps),
                         sim_location: None,
