@@ -2,22 +2,49 @@ name: Rust
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 env:
   CARGO_TERM_COLOR: always
+
+permissions:
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
-    - name: Security audit
-      run: cargo install cargo-audit && cargo audit --json
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Cleanup stray advisory-db submodule residue
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git submodule deinit -f --all || true
+          rm -rf .git/modules/cargo-home/advisory-db || true
+          rm -rf cargo-home/advisory-db || true
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+
+      - name: Build
+        run: cargo build --verbose --locked
+
+      - name: Run tests
+        run: cargo test --verbose --locked
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit --locked
+
+      - name: Security audit
+        run: cargo audit --file audit.toml --deny warnings
