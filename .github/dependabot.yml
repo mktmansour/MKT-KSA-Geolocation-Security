@@ -1,11 +1,10 @@
-
 version: 2
 updates:
   - package-ecosystem: "cargo"
-    directory: "/"                # مكان وجود Cargo.toml وCargo.lock
+    directory: "/"
     schedule:
-      interval: "weekly"          # تحقق من التحديثات أسبوعيًا (يمكنك تغييرها إلى daily أو monthly)
-    open-pull-requests-limit: 5   # (اختياري) الحد الأقصى لطلبات التحديث المفتوحة
+      interval: "weekly"
+    open-pull-requests-limit: 5
     labels:
       - "dependencies"
       - "rust"
