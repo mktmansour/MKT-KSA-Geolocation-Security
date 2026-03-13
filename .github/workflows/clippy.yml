@@ -17,6 +17,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          submodules: false
+
+      - name: Cleanup stray advisory-db submodule residue
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git submodule deinit -f --all || true
+          rm -rf .git/modules/cargo-home/advisory-db || true
+          rm -rf cargo-home/advisory-db || true
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -33,3 +41,9 @@ jobs:
 
       - name: Format check
         run: cargo fmt --all -- --check
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit --locked
+
+      - name: Security audit
+        run: cargo audit --file audit.toml --deny warnings
