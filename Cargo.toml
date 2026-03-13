@@ -10,24 +10,35 @@ repository = "https://github.com/mktmansour/MKT-KSA-Geolocation-Security"
 categories = ["network-programming", "authentication", "cryptography"]
 keywords = ["geolocation", "behavior", "device-fingerprint", "rate-limiting", "security"]
 
+[patch.crates-io]
+ammonia = "4.1.2"
+bytes = "1.11.1"
+maxminddb = "0.27.0"
+quinn-proto = "0.11.14"
+time = "0.3.47"
+lru = "0.16.3"
+
 [lib]
 name = "mkt_ksa_geo_sec"
 crate-type = ["rlib", "cdylib", "staticlib"]
+
 [dependencies]
 rayon = "1.11.0"
 actix-web = "4.0"
 actix-rt = "2.10"
-ammonia = "4.1.1"
+ammonia = "4.1.2"
 anyhow = "1.0.99"
 async-trait = "0.1"
 # تم حذف dotenv
 config = "0.15.17"
 futures = "0.3"
 log = "0.4.28"
+
 # Database
 mysql_async = "0.36.1"
 tokio = { version = "1", features = ["full"] }
 uuid = { version = "1.18.0", features = ["v4", "serde"] }
+
 # Crypto & Security
 aes-gcm = "0.10.3"
 secrecy = { version = "0.10.3", features = ["serde"] }
@@ -43,12 +54,13 @@ pqcrypto-mlkem = "0.1.1"
 unicode-normalization = "0.1.24"
 validator = "0.20"
 regex = "1.12.2"
-lru = "0.16.0"
+lru = "0.16.3"
 
 ## removed: once_cell, lazy_static (migrated to std::sync::LazyLock)
 cfg-if = "1.0.4"
 rand = "0.8.5"
 chrono = { version = "0.4", features = ["serde"] }
+
 # -------------------------------------------------------------------
 # Utilities (Config, logging, caching, errors)
 # -------------------------------------------------------------------
@@ -57,7 +69,7 @@ reqwest = { version = "0.12.23", default-features = false, features = ["json", "
 serde = { version = "1", features = ["derive"] }
 ## removed: serde_derive (serde derives provided by serde = { features = ["derive"] })
 thiserror = "2.0.17"
-maxminddb = { version = "0.26.0", features = ["mmap"] }
+maxminddb = { version = "0.27.0", features = ["mmap"] }
 pqcrypto-traits = "0.3.5"
 # governor = "0.6"  # أبقِ فقط governor إذا كنت تستخدمه فعليًا في الكود
 
