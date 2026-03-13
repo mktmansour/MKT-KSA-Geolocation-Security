@@ -1,0 +1,23 @@
+# Security and code quality ownership
+
+# Default owners
+* @mktmansour
+
+# Security-related files
+SECURITY.md @mktmansour
+AUDIT_REPORT.md @mktmansour
+.github/workflows/ @mktmansour
+.github/dependabot.yml @mktmansour
+
+# Dependency files
+Cargo.toml @mktmansour
+Cargo.lock @mktmansour
+
+# Configuration files
+rustfmt.toml @mktmansour
+.cargo/ @mktmansour
+rust-toolchain.toml @mktmansour
+
+# Documentation
+README.md @mktmansour
+docs/ @mktmansour
