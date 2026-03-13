@@ -178,6 +178,8 @@ async fn main() -> std::io::Result<()> {
         Arc::new(mkt_ksa_geo_sec::core::network_analyzer::DefaultAiNetworkAnalyzer),
     ));
 
+    // 5. إنشاء محرك التحقق المتقاطع (CrossValidationEngine)
+    // 5. Create the cross-validation engine
     let x_engine = Arc::new(CrossValidationEngine::new(
         Arc::clone(&geo_resolver),
         Arc::clone(&fp_engine),
@@ -188,8 +190,8 @@ async fn main() -> std::io::Result<()> {
         SecureBytes::new(b"a_very_secret_final_verdict_key".to_vec()),
     ));
 
-    // 5. إنشاء محرك التحقق المركب للمدن الذكية
-    // 5. Create the composite verifier for smart city access
+    // 6. إنشاء محرك التحقق المركب للمدن الذكية
+    // 6. Create the composite verifier for smart city access
     let composite_verifier = Arc::new(CompositeVerifier {
         geo: geo_resolver,
         behavior: behavior_engine,
@@ -197,7 +199,8 @@ async fn main() -> std::io::Result<()> {
         network: network_engine,
     });
 
-    // 6. تجميع كل الخدمات في الحالة المشتركة
+    // 7. تجميع كل الخدمات في الحالة المشتركة
+    // 7. Assemble all services into the shared application state
     let app_state = web::Data::new(AppState {
         x_engine: Arc::clone(&x_engine),
         composite_verifier,
