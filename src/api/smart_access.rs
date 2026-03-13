@@ -25,7 +25,6 @@
 use actix_web::{web, HttpResponse, Responder, post};
 use crate::AppState;
 use crate::core::behavior_bio::BehaviorInput;
-use uuid::Uuid;
 
 /// Arabic: نموذج الطلب لنقطة نهاية التحقق المركب
 /// English: Request model for the composite verification endpoint

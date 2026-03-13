@@ -34,7 +34,9 @@ pub mod jwt;
 // English: Security Policy module
 pub mod policy;
 
-// تم حذف pub mod ratelimit; لأن الملف لم يعد موجودًا
+// Arabic: وحدة تحديد معدل الطلبات
+// English: Rate limiting module
+pub mod ratelimit;
 
 // Arabic: وحدة التواقيع عالية الأمان بدون OpenSSL
 // English: High-security signing utilities (no OpenSSL)

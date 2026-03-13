@@ -45,6 +45,7 @@ pub mod device;
 pub mod geo;
 pub mod network;
 pub mod sensors;
+pub mod smart_access;
 pub mod weather;
 
 /// Extractor موحّد للحصول على Bearer token من هيدر Authorization
@@ -79,6 +80,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
             .service(network::analyze_network)
             .service(alerts::trigger_alert)
             .service(dashboard::dashboard_summary)
-            .service(weather::weather_summary), // TODO: Register other services from geo, device, etc. here
+            .service(weather::weather_summary)
+            .service(smart_access::smart_access_verify),
     );
 }
