@@ -16,6 +16,7 @@ Cargo.lock @mktmansour
 # Configuration files
 rustfmt.toml @mktmansour
 .cargo/ @mktmansour
+.cargo-home/ @mktmansour
 rust-toolchain.toml @mktmansour
 
 # Documentation
