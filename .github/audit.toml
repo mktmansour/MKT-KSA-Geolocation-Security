@@ -1,10 +1,4 @@
 [advisories]
 # نبقي الثغرات الحقيقية كفشل
-# ونتجاهل فقط التحذيراتclippy.yml`
-  - `codacy.yml`
-  - `release-binaries.yml`
-  - `rust-clippy.yml`
-  - `rust.yml`
-- أعلى الملف مكتوب: **11 lines (10 loc), 454 Bytes**.
-
-باختصار: الصورة تؤكد أنك فعّلت Dependabot لمكتبات Rust (Cargo) بتحديثات أسبوعية.
+# ونتجاهل فقط التحذيرات المعلوماتية (غير CVE)
+informational_warnings = ["unmaintained", "unsound", "notice"]
