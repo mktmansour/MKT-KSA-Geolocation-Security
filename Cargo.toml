@@ -9,6 +9,12 @@ readme = "README.md"
 repository = "https://github.com/mktmansour/MKT-KSA-Geolocation-Security"
 categories = ["network-programming", "authentication", "cryptography"]
 keywords = ["geolocation", "behavior", "device-fingerprint", "rate-limiting", "security"]
+exclude = [
+	".cargo-home/**",
+	"target/**",
+	".env",
+	".env.*",
+]
 
 [lib]
 name = "mkt_ksa_geo_sec"

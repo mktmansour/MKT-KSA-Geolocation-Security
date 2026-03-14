@@ -22,12 +22,12 @@
     - Provides a central point for advanced security verification in the project.
 ******************************************************************************************/
 
-use std::sync::Arc;
-use chrono::Timelike;
-use crate::core::geo_resolver::{GeoResolver, ResolveParams};
 use crate::core::behavior_bio::{BehaviorEngine, BehaviorInput};
 use crate::core::device_fp::AdaptiveFingerprintEngine;
+use crate::core::geo_resolver::{GeoResolver, ResolveParams};
 use crate::core::network_analyzer::NetworkAnalyzer;
+use chrono::Timelike;
+use std::sync::Arc;
 
 /// Arabic: هيكل التحقق المركب يجمع كل المحركات المتخصصة
 /// English: CompositeVerifier struct aggregates all specialized engines
@@ -51,20 +51,19 @@ impl CompositeVerifier {
     ) -> Result<bool, String> {
         // 1. تحقق جغرافي
         let geo_location = match &geo_input {
-            Some((ip, gps)) => {
-                self.geo
-                    .resolve(ResolveParams {
-                        ip: Some(*ip),
-                        gps: Some(*gps),
-                        sim_location: None,
-                        satellite_location: None,
-                        indoor_data: None,
-                        ar_data: None,
-                        mfa_token: None,
-                    })
-                    .await
-                    .map_err(|e| format!("Geo error: {e}"))?
-            },
+            Some((ip, gps)) => self
+                .geo
+                .resolve(ResolveParams {
+                    ip: Some(*ip),
+                    gps: Some(*gps),
+                    sim_location: None,
+                    satellite_location: None,
+                    indoor_data: None,
+                    ar_data: None,
+                    mfa_token: None,
+                })
+                .await
+                .map_err(|e| format!("Geo error: {e}"))?,
             None => return Err("Geo input missing".to_string()),
         };
         if let Some(city) = &geo_location.city {
@@ -81,12 +80,21 @@ impl CompositeVerifier {
             }
         }
         // 2. تحقق سلوكي
-        let behavior_result = self.behavior.process(behavior_input).await.map_err(|e| format!("Behavior error: {e}"))?;
-        if behavior_result.risk_level as u8 >= 3 { // Medium or higher
+        let behavior_result = self
+            .behavior
+            .process(behavior_input)
+            .await
+            .map_err(|e| format!("Behavior error: {e}"))?;
+        if behavior_result.risk_level as u8 >= 3 {
+            // Medium or higher
             return Err("Access denied: behavioral risk".to_string());
         }
         // 3. تحقق بصمة الجهاز
-        let device_fp = self.device_fp.generate_fingerprint(device_info.0, device_info.1, device_info.2).await.map_err(|e| format!("Device FP error: {e}"))?;
+        let device_fp = self
+            .device_fp
+            .generate_fingerprint(device_info.0, device_info.1, device_info.2)
+            .await
+            .map_err(|e| format!("Device FP error: {e}"))?;
         if device_fp.security_level < 5 {
             return Err("Access denied: device not trusted".to_string());
         }

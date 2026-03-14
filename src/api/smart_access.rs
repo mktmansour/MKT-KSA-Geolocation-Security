@@ -22,9 +22,9 @@
     - Allows easy customization of zone/time policies.
 ******************************************************************************************/
 
-use actix_web::{web, HttpResponse, Responder, post};
-use crate::AppState;
 use crate::core::behavior_bio::BehaviorInput;
+use crate::AppState;
+use actix_web::{post, web, HttpResponse, Responder};
 
 /// Arabic: نموذج الطلب لنقطة نهاية التحقق المركب
 /// English: Request model for the composite verification endpoint
@@ -48,13 +48,20 @@ pub async fn smart_access_verify(
     let allowed_zones = vec!["Riyadh".to_string(), "Jeddah".to_string()];
     let allowed_hours = Some((6, 18)); // من 6 صباحًا إلى 6 مساءً
 
-    let result = data.composite_verifier.verify_smart_access(
-        payload.geo_input,
-        payload.behavior_input.clone(),
-        (&payload.os_info, &payload.device_details, &payload.env_context),
-        &allowed_zones,
-        allowed_hours,
-    ).await;
+    let result = data
+        .composite_verifier
+        .verify_smart_access(
+            payload.geo_input,
+            payload.behavior_input.clone(),
+            (
+                &payload.os_info,
+                &payload.device_details,
+                &payload.env_context,
+            ),
+            &allowed_zones,
+            allowed_hours,
+        )
+        .await;
 
     match result {
         Ok(true) => HttpResponse::Ok().body("Access granted"),

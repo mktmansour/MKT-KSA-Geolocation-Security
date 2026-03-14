@@ -140,8 +140,10 @@ impl HistoryService {
         let since = Utc::now() - chrono::Duration::minutes(window_mins);
         // جلب كل السجلات في النافذة الزمنية (بدون ترقيم صفحات هنا لأن النافذة قصيرة)
         // Fetch all records in the time window (no pagination as the window is short)
-        let events = self.get_entity_history(entity_id, Some(since), 1000, 0).await?;
-        
+        let events = self
+            .get_entity_history(entity_id, Some(since), 1000, 0)
+            .await?;
+
         let mut counter: HashMap<String, usize> = HashMap::new();
         let mut anomalies = Vec::new();
 
@@ -168,7 +170,6 @@ impl HistoryService {
     }
 }
 
-
 /// ===================== الاختبارات الشاملة للوحدة =====================
 /// ===================== Comprehensive Unit Tests =====================
 #[cfg(test)]
@@ -184,7 +185,9 @@ mod tests {
             default_threshold: 2,
             ..AnomalyConfig::default()
         }; // عتبة افتراضية منخفضة للاختبار
-        config.per_type_thresholds.insert("CRITICAL_ERROR".to_string(), 0); // لا يسمح بأي تكرار
+        config
+            .per_type_thresholds
+            .insert("CRITICAL_ERROR".to_string(), 0); // لا يسمح بأي تكرار
         HistoryService::new(config)
     }
 
@@ -193,9 +196,27 @@ mod tests {
         let _service = create_mock_service();
         // لنفترض أن get_entity_history أعادت هذه الأحداث
         let _mock_events = [
-            HistoryEvent { id: 1, entity_id: "device123".into(), event_type: "LOGIN_SUCCESS".into(), timestamp: Utc::now(), meta: json!({}) },
-            HistoryEvent { id: 2, entity_id: "device123".into(), event_type: "LOGIN_SUCCESS".into(), timestamp: Utc::now(), meta: json!({}) },
-            HistoryEvent { id: 3, entity_id: "device123".into(), event_type: "LOGIN_SUCCESS".into(), timestamp: Utc::now(), meta: json!({}) },
+            HistoryEvent {
+                id: 1,
+                entity_id: "device123".into(),
+                event_type: "LOGIN_SUCCESS".into(),
+                timestamp: Utc::now(),
+                meta: json!({}),
+            },
+            HistoryEvent {
+                id: 2,
+                entity_id: "device123".into(),
+                event_type: "LOGIN_SUCCESS".into(),
+                timestamp: Utc::now(),
+                meta: json!({}),
+            },
+            HistoryEvent {
+                id: 3,
+                entity_id: "device123".into(),
+                event_type: "LOGIN_SUCCESS".into(),
+                timestamp: Utc::now(),
+                meta: json!({}),
+            },
         ];
         // Placeholder: anomaly logic would be tested against a real DB implementation
     }
@@ -205,8 +226,20 @@ mod tests {
         let _service = create_mock_service();
         // لنفترض أن get_entity_history أعادت هذه الأحداث
         let _mock_events = [
-            HistoryEvent { id: 1, entity_id: "device123".into(), event_type: "CRITICAL_ERROR".into(), timestamp: Utc::now(), meta: json!({}) },
-            HistoryEvent { id: 2, entity_id: "device123".into(), event_type: "CRITICAL_ERROR".into(), timestamp: Utc::now(), meta: json!({}) },
+            HistoryEvent {
+                id: 1,
+                entity_id: "device123".into(),
+                event_type: "CRITICAL_ERROR".into(),
+                timestamp: Utc::now(),
+                meta: json!({}),
+            },
+            HistoryEvent {
+                id: 2,
+                entity_id: "device123".into(),
+                event_type: "CRITICAL_ERROR".into(),
+                timestamp: Utc::now(),
+                meta: json!({}),
+            },
         ];
         // Placeholder: custom threshold logic would be tested against a real DB implementation
     }

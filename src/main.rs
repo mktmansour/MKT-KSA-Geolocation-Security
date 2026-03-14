@@ -58,6 +58,7 @@ compile_error!(
 use mkt_ksa_geo_sec::core::behavior_bio::{
     BehaviorEngine, DefaultAnomalyDetector, DefaultBehavioralModel,
 };
+use mkt_ksa_geo_sec::core::composite_verification::CompositeVerifier;
 use mkt_ksa_geo_sec::core::cross_location::{CrossValidationEngine, DefaultScoringStrategy};
 use mkt_ksa_geo_sec::core::device_fp::{
     AdaptiveFingerprintEngine, DefaultAiProcessor as FpAiProcessor, DefaultQuantumEngine,
@@ -68,7 +69,6 @@ use mkt_ksa_geo_sec::core::geo_resolver::{
 };
 use mkt_ksa_geo_sec::core::network_analyzer::NetworkAnalyzer;
 use mkt_ksa_geo_sec::core::sensors_analyzer::SensorsAnalyzerEngine;
-use mkt_ksa_geo_sec::core::composite_verification::CompositeVerifier;
 // إذا فعّلت النسخة من GitHub استخدم:
 // use crate::security::ratelimit::rate_limiter_dynamic;
 

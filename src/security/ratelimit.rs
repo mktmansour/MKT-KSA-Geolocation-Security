@@ -24,17 +24,17 @@ use std::collections::{HashMap, HashSet};
 use std::net::IpAddr;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use tokio::sync::RwLock;
 use thiserror::Error;
+use tokio::sync::RwLock;
 
 /// إعدادات تحديد المعدل (قابلة للتخصيص)
 /// Rate limiting settings (customizable)
 #[derive(Debug, Clone)]
 pub struct RateLimitConfig {
-    pub max_requests: u32,         // الحد الأقصى للطلبات
-    pub window: Duration,          // فترة السماح
-    pub whitelist: HashSet<IpAddr>,// قائمة بيضاء (مستثناة)
-    pub blacklist: HashSet<IpAddr>,// قائمة سوداء (محظورة)
+    pub max_requests: u32,          // الحد الأقصى للطلبات
+    pub window: Duration,           // فترة السماح
+    pub whitelist: HashSet<IpAddr>, // قائمة بيضاء (مستثناة)
+    pub blacklist: HashSet<IpAddr>, // قائمة سوداء (محظورة)
 }
 
 impl Default for RateLimitConfig {
