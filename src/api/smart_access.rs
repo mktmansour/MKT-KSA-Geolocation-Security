@@ -49,7 +49,7 @@ pub async fn smart_access_verify(
     let allowed_hours = Some((6, 18)); // من 6 صباحًا إلى 6 مساءً
 
     let result = data.composite_verifier.verify_smart_access(
-        payload.geo_input.clone(),
+        payload.geo_input,
         payload.behavior_input.clone(),
         (&payload.os_info, &payload.device_details, &payload.env_context),
         &allowed_zones,

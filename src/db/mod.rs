@@ -36,6 +36,7 @@
 
 // Arabic: الإعلان عن الوحدات الفرعية لوحدة قاعدة البيانات
 // English: Declare the sub-modules for the database module
+#[cfg(feature = "db-mysql")]
 pub mod crud;
 pub mod models;
 

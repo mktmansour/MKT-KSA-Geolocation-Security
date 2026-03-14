@@ -180,8 +180,10 @@ mod tests {
     // Note: These tests illustrate the module logic without a real database.
 
     fn create_mock_service() -> HistoryService {
-        let mut config = AnomalyConfig::default();
-        config.default_threshold = 2; // عتبة افتراضية منخفضة للاختبار
+        let mut config = AnomalyConfig {
+            default_threshold: 2,
+            ..AnomalyConfig::default()
+        }; // عتبة افتراضية منخفضة للاختبار
         config.per_type_thresholds.insert("CRITICAL_ERROR".to_string(), 0); // لا يسمح بأي تكرار
         HistoryService::new(config)
     }
@@ -190,7 +192,7 @@ mod tests {
     async fn test_anomaly_detection_with_default_threshold() {
         let _service = create_mock_service();
         // لنفترض أن get_entity_history أعادت هذه الأحداث
-        let _mock_events = vec![
+        let _mock_events = [
             HistoryEvent { id: 1, entity_id: "device123".into(), event_type: "LOGIN_SUCCESS".into(), timestamp: Utc::now(), meta: json!({}) },
             HistoryEvent { id: 2, entity_id: "device123".into(), event_type: "LOGIN_SUCCESS".into(), timestamp: Utc::now(), meta: json!({}) },
             HistoryEvent { id: 3, entity_id: "device123".into(), event_type: "LOGIN_SUCCESS".into(), timestamp: Utc::now(), meta: json!({}) },
@@ -202,7 +204,7 @@ mod tests {
     async fn test_anomaly_detection_with_custom_threshold() {
         let _service = create_mock_service();
         // لنفترض أن get_entity_history أعادت هذه الأحداث
-        let _mock_events = vec![
+        let _mock_events = [
             HistoryEvent { id: 1, entity_id: "device123".into(), event_type: "CRITICAL_ERROR".into(), timestamp: Utc::now(), meta: json!({}) },
             HistoryEvent { id: 2, entity_id: "device123".into(), event_type: "CRITICAL_ERROR".into(), timestamp: Utc::now(), meta: json!({}) },
         ];

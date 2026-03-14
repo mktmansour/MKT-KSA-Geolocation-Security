@@ -44,10 +44,14 @@ use config::Config;
 use config::Environment;
 use maxminddb::Reader;
 use mkt_ksa_geo_sec::security::secret::SecureBytes;
-use mysql_async::Pool;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+
+#[cfg(feature = "db-mysql")]
+compile_error!(
+    "Feature 'db-mysql' is temporarily disabled for security hardening until a non-vulnerable backend is integrated."
+);
 
 // --- استيراد شامل لجميع المحركات وتبعياتها ---
 // --- Comprehensive import of all engines and their dependencies ---
@@ -93,22 +97,13 @@ async fn main() -> std::io::Result<()> {
     // Arabic: محاولة الحصول على رابط قاعدة البيانات من متغيرات البيئة
     // English: Try to get the database URL from environment variables
     let database_url = std::env::var("DATABASE_URL").ok();
-    // Arabic: تهيئة اتصال قاعدة البيانات بشكل متكيف
-    // English: Adaptively initialize the database connection
-    let db_pool = database_url.map_or_else(
-        || {
-            println!(
-                "⚠️  لم يتم ضبط DATABASE_URL. سيعمل التطبيق في وضع التطوير (بدون قاعدة بيانات)."
-            );
-            None
-        },
-        |url| {
-            let opts = mysql_async::Opts::from_url(&url)
-                .map_err(|_| ())
-                .expect("Invalid DATABASE_URL format for mysql_async");
-            Some(Pool::new(opts))
-        },
-    );
+    let _ = database_url;
+    let db_pool: Option<mkt_ksa_geo_sec::app_state::DbPool> = {
+        println!(
+            "⚠️  ميزة db-mysql غير مفعلة. يعمل التطبيق الآن بدون اتصال قاعدة بيانات (وضع آمن افتراضي)."
+        );
+        None
+    };
 
     // Arabic: تهيئة المحركات والخدمات المشتركة فقط إذا كان التطبيق في وضع الإنتاج
     // English: Initialize engines/services only if not in development mode

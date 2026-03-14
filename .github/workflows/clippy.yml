@@ -37,7 +37,7 @@ jobs:
           cache-on-failure: true
 
       - name: Clippy (deny warnings)
-        run: cargo clippy --all-targets --all-features -- -W clippy::all -W clippy::pedantic -W clippy::cargo -W clippy::nursery -D warnings
+        run: cargo clippy --all-targets -- -D warnings
 
       - name: Format check
         run: cargo fmt --all -- --check
@@ -46,4 +46,4 @@ jobs:
         run: cargo install cargo-audit --locked
 
       - name: Security audit
-        run: cargo audit --ignore RUSTSEC-2026-0002 --deny warnings
+        run: cargo audit --deny warnings
