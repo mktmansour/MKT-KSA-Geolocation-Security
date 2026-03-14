@@ -57,7 +57,7 @@
 * [📦 استخدام المكتبة من Rust](#-استخدام-المكتبة-من-rust)
 * [🔗 الربط عبر C-ABI للغات الأخرى](#-الربط-عبر-c-abi-للغات-الأخرى)
 * [🌐 دعم جميع اللغات](#-دعم-جميع-اللغات)
-* [📝 ملاحظات الإصدار](#-ملاحظات-الإصدار-v102)
+* [📝 ملاحظات الإصدار](#-ملاحظات-الإصدار-v200)
 
 ---
 
@@ -562,7 +562,7 @@ if !access_granted {
 
 ```toml
 [dependencies]
-MKT_KSA_Geolocation_Security = "1.0.2" # اسم الاستدعاء داخل الشيفرة: mkt_ksa_geo_sec
+MKT_KSA_Geolocation_Security = "2.0.0" # اسم الاستدعاء داخل الشيفرة: mkt_ksa_geo_sec
 # أو من Git:
 # MKT_KSA_Geolocation_Security = { git = "https://github.com/mktmansour/MKT-KSA-Geolocation-Security" }
 ```
@@ -653,7 +653,7 @@ const lib = ffi.Library('mkt_ksa_geo_sec', { 'generate_adaptive_fingerprint': ['
 
 ---
 
-## 📝 ملاحظات الإصدار v1.0.2
+## 📝 ملاحظات الإصدار v2.0.0
 
 - **المستوى:** منخفض إلى متوسط - تحسينات جودة وكود وتنظيف لِنتر دون تغييرات سلوكية عامة.
 - **إصلاحات رئيسية:**

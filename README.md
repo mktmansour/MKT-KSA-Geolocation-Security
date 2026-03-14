@@ -49,7 +49,7 @@ Latest hardening and maintenance updates applied:
 * [⭐ Features](#-features)
 * [🧠 Developer Guide](#-developer-guide)
 * [📈 System State](#-system-state)
-* [📝 Release Notes v1.0.2](#-release-notes-v102)
+* [📝 Release Notes v2.0.0](#-release-notes-v200)
   * [🔧 Internal Signature Changes](#-internal-signature-changes-no-behaviorroute-changes)
   * [📑 Current Signatures (Reference)](#-current-signatures-reference)
   * [🧹 Formatting and Extra Checks](#-formatting-and-extra-checks)
@@ -541,7 +541,7 @@ toml
 
 ```toml
 [dependencies]
-MKT_KSA_Geolocation_Security = "1.0.2" # import path in Rust: mkt_ksa_geo_sec
+MKT_KSA_Geolocation_Security = "2.0.0" # import path in Rust: mkt_ksa_geo_sec
 # Or from Git:
 # MKT_KSA_Geolocation_Security = { git = "https://github.com/mktmansour/MKT-KSA-Geolocation-Security" }
 ```
@@ -635,7 +635,7 @@ const lib = ffi.Library('mkt_ksa_geo_sec', { 'generate_adaptive_fingerprint': ['
 
 ---
 
-## 📝 Release Notes v1.0.2
+## 📝 Release Notes v2.0.0
 
 - **Severity**: Low to Medium – code quality and linter cleanups, no public behavior changes.
 - **Key Fixes:**

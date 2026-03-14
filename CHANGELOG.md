@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.0] - 2026-03-14
+
+### Changed
+
+- **Versioning**: Bumped crate version to `2.0.0` to reflect breaking compatibility impact.
+- **Security Profile**: `db-mysql` path remains intentionally disabled in the hardened default profile.
+- **Documentation**: Updated `README.md` and `README_AR.md` release references and usage snippets to `2.0.0`.
+
+### Security
+
+- Enforced strict audit gate: `cargo audit --deny warnings`.
+- Hardened packaging excludes for cache/secrets paths remain active (`.cargo-home/**`, `target/**`, `.env`, `.env.*`).
+
+### Validation
+
+- `cargo fmt --check`: pass
+- `cargo clippy --workspace --all-targets -- -D warnings`: pass
+- `cargo test --workspace`: pass (39/39)
+
+### Breaking
+
+- Consumers relying on `db-mysql` runtime path must treat this release as a breaking update and remain on `1.x` until a secure backend path is reintroduced.
+
 ## [1.0.2] - 2026-03-13
 
 ### Fixed
