@@ -225,7 +225,7 @@ impl GeoReaderEnum {
         T: for<'de> serde::Deserialize<'de> + 'static,
     {
         match self {
-            Self::Real(reader) => reader.lookup(ip),
+            Self::Real(reader) => reader.lookup(ip)?.decode(),
             // في وضع التطوير: لا توجد قاعدة بيانات حقيقية
             Self::Mock(_mock) => Ok(None),
         }
@@ -241,7 +241,7 @@ impl GeoReaderEnum {
         ip: std::net::IpAddr,
     ) -> Result<Option<maxminddb::geoip2::City<'_>>, maxminddb::MaxMindDbError> {
         match self {
-            Self::Real(reader) => reader.lookup(ip),
+            Self::Real(reader) => reader.lookup(ip)?.decode(),
             Self::Mock(_) => Ok(None),
         }
     }

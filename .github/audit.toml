@@ -1,4 +1,0 @@
-[advisories]
-# نبقي الثغرات الحقيقية كفشل
-# ونتجاهل فقط التحذيرات المعلوماتية (غير CVE)
-informational_warnings = ["unmaintained", "unsound", "notice"]

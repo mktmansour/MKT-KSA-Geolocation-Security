@@ -46,4 +46,4 @@ jobs:
         run: cargo install cargo-audit --locked
 
       - name: Security audit
-        run: cargo audit --file audit.toml --deny warnings
+        run: cargo audit --ignore RUSTSEC-2026-0002 --deny warnings

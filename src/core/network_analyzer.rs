@@ -236,9 +236,9 @@ impl NetworkAnalyzer {
         let city_opt = self.geo_reader.lookup_city(*ip).ok()?;
         let city_data = city_opt?;
         Some(GeoLocation {
-            country_iso: city_data.country?.iso_code?.to_string(),
-            city: (*city_data.city?.names?.get("en")?).to_string(),
-            accuracy_radius_km: city_data.location?.accuracy_radius?,
+            country_iso: city_data.country.iso_code?.to_string(),
+            city: city_data.city.names.english?.to_string(),
+            accuracy_radius_km: city_data.location.accuracy_radius?,
         })
     }
 
