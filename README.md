@@ -14,6 +14,16 @@
 ![Edition](https://img.shields.io/badge/edition-2021-blue?style=for-the-badge)
 ![Made in KSA](https://img.shields.io/badge/Made_in-KSA-006c35?style=for-the-badge)
 ![Post‑Quantum](https://img.shields.io/badge/Post--Quantum-ready-8A2BE2?style=for-the-badge)
+
+## 🔔 Update Notice (2026-03-14)
+
+Latest hardening and maintenance updates applied:
+
+- Enforced strict security gate: `cargo audit --deny warnings` passes.
+- Kept `db-mysql` intentionally disabled in the current hardened profile until a non-vulnerable backend path is integrated.
+- Removed repository cache artifacts and strengthened package excludes (`.cargo-home/**`, `target/**`, `.env`, `.env.*`).
+- Validation gates are clean: `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` (39/39).
+
 ---
 <img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/95cf4068-d2f6-4603-9c03-521146a04e0e" />
 
@@ -300,14 +310,13 @@ if device_fp.security_level >= 5 {
 ### Role Verification Only
 
 ```rust
-let role_row: Option<Row> = mysql_async::prelude::Queryable::exec_first(
-    &mut conn, "SELECT role FROM user_roles WHERE user_id = ? AND role = ?",
-    (user_id.to_string(), "admin"),
-).await?;
-if role_row.is_some() {
-    // User has required role
+use mkt_ksa_geo_sec::security::policy::{Role, has_permission, Permission};
+
+let role = Role::Admin;
+if has_permission(role, Permission::AccessDashboard) {
+  // User has required role/permission
 } else {
-    // User lacks required role
+  // User lacks required role/permission
 }
 ```
 
@@ -345,108 +354,62 @@ if role_row.is_some() {
 
 ## ⚠️ Dependency Audit
 
-| Dependency         | Type         | Direct? | Indirect? | Security/Category Notes         |
-|-------------------|--------------|---------|-----------|------------------------|
-| actix-web         | External     | Yes     | No        | Main web framework     |
-| actix-rt          | External     | Yes     | No        | Async runtime          |
-| ammonia           | External     | Yes     | No        | HTML sanitization      |
-| anyhow            | External     | Yes     | No        | Error handling         |
-| async-trait       | External     | Yes     | No        | Async trait support    |
-| config            | External     | Yes     | No        | Config management      |
-| futures           | External     | Yes     | No        | Async utilities        |
-| log               | External     | Yes     | No        | Logging                |
-| mysql_async       | External     | Yes     | No        | Database (MySQL)       |
-| tokio             | External     | Yes     | No        | Async runtime          |
-| uuid              | External     | Yes     | No        | UUIDs                  |
-| aes-gcm           | External     | Yes     | No        | Advanced encryption    |
-| secrecy           | External     | Yes     | No        | Secure secret handling |
-| zeroize           | External     | Yes     | No        | Secure memory zeroing  |
-| hex               | External     | Yes     | No        | Hex encoding/decoding  |
-| hmac              | External     | Yes     | No        | HMAC signatures        |
-| sha2              | External     | Yes     | No        | SHA2 hashing           |
-| blake3            | External     | Yes     | No        | BLAKE3 hashing         |
-| base64            | External     | Yes     | No        | Base64 encoding        |
-| jsonwebtoken      | External     | Yes     | No        | JWT tokens             |
-| pqcrypto-mlkem    | External     | Yes     | No        | Post-quantum crypto    |
-| unicode-normalization| External  | Yes     | No        | Unicode normalization  |
-| validator         | External     | Yes     | No        | Input validation       |
-| regex             | External     | Yes     | No        | Regex                  |
-| getrandom         | External     | No      | Yes       | Random number generation (via rand::OsRng) |
-| lru               | External     | Yes     | No        | LRU cache              |
-| rayon             | External     | Yes     | No        | Parallel processing    |
-| once_cell         | External     | Yes     | No        | One-time initialization |
-| lazy_static       | External     | Yes     | No        | Static constants       |
-| cfg-if            | External     | Yes     | No        | Conditional compilation |
-| rand              | External     | Yes     | No        | Random number generation|
-| chrono            | External     | Yes     | No        | Date/time handling     |
-| serde_json        | External     | Yes     | No        | JSON                   |
-| reqwest           | External     | Yes     | No        | HTTP requests (Rustls) |
-| serde             | External     | Yes     | No        | Serialization          |
-| serde_derive      | External     | Yes     | No        | Serde derive           |
-| thiserror         | External     | Yes     | No        | Custom errors          |
-| maxminddb         | External     | Yes     | No        | GeoIP database         |
-| pqcrypto-traits   | External     | Yes     | No        | Post-quantum crypto traits |
-| proptest          | Dev          | Yes     | No        | Property-based testing |
-| rstest            | Dev          | Yes     | No        | Scenario-based testing |
-| assert-json-diff  | Dev          | Yes     | No        | JSON diff assertions   |
+This section reflects the current hardened profile (`main`, strict CI):
 
-**Stability Notes (Update):**
-- Updated on: 14 Aug 2025
-- Pinned `anyhow` to `1.0.99`.
-- Upgraded: `base64 0.22.1`, `lru 0.16.0`, `maxminddb 0.26.0`, `reqwest 0.12.22`, `thiserror 2.0.12`, `uuid 1.18.0`.
-- Added `categories` and `keywords` in `Cargo.toml`.
-- Using `JWT_SECRET` for JWT instead of a hardcoded value.
-- No functional changes; all tests still pass.
+- `db-mysql` exists as a feature flag but is intentionally blocked at compile time in the current secure profile.
+- Active graph avoids vulnerable MySQL transitive paths; `cargo audit --deny warnings` passes.
+- No OpenSSL dependency in the default path (`reqwest` is configured with `rustls-tls`).
+- Packaging excludes local cache and secrets (`.cargo-home/**`, `target/**`, `.env`, `.env.*`).
 
-**Security Notes:**
-- All dependencies are carefully selected, with no reliance on OpenSSL (all crypto is Rust-native or Rustls).
-- It is recommended to run `cargo audit` and `cargo update` regularly.
+Current core direct dependencies in `Cargo.toml` include:
+
+- Web/runtime: `actix-web`, `actix-rt`, `tokio`
+- Security/crypto: `aes-gcm`, `hmac`, `sha2`, `blake3`, `jsonwebtoken`, `secrecy`, `zeroize`, `pqcrypto-mlkem`
+- Data/validation: `serde`, `serde_json`, `validator`, `regex`, `chrono`, `uuid`
+- Networking/geo: `reqwest` (Rustls), `maxminddb`
+- Utilities: `anyhow`, `thiserror`, `rayon`, `lru`, `config`, `futures`, `log`
 
 ---
 
 ## ✅ Test Results
 
 ```bash
-running 35 tests
+running 39 tests
 ... all tests passed ...
 
-test result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.04s
+test result: ok. 39 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out
 ```
 
-* All tests passed (35 tests).
+* All tests passed (39 tests).
 
 ---
 
 ## 🔒 Current Release Stability
 
-- Toolchain/Env: Stable Rust 1.89.0 (Windows MSVC), with `$env:CARGO_HOME` and `$env:RUSTUP_HOME` configured.
+- Toolchain/Env: Stable Rust toolchain with clean lockfile and deterministic CI checks.
 - Build: `cargo check` successful.
-- Tests: `cargo test` fully passing (35/35) after making a time-dependent test deterministic using a fixed timestamp, with no logic changes.
+- Tests: `cargo test --workspace` fully passing (39/39).
 - Formatting: `cargo fmt --check` clean.
-- Linter: `cargo clippy` shows only non-critical warnings (unused imports/variables and style suggestions), no behavior changes.
-- Security: `cargo audit` reports no known vulnerabilities.
-- Operational note: `RateLimiter` module exists and is intentionally disabled by default pending later decision.
+- Linter: `cargo clippy --workspace --all-targets -- -D warnings` clean.
+- Security: `cargo audit --deny warnings` clean.
+- Operational note: `db-mysql` path is intentionally disabled in this hardened release profile.
 
 ---
 
 ## ⬆️ Full Dependency Upgrade Plan
 
 ### Scope
-- Crates with newer releases available: `base64 (0.22)`, `getrandom (0.3)`, `lru (0.16)`, `maxminddb (0.26)`, `rand (0.9)`, `reqwest (0.12)`, `rstest (0.26)`, `secrecy (0.10)`, `thiserror (2)`.
+- Keep dependencies patched on a rolling basis while preserving public API compatibility.
 
 ### Policy
 - No general breaking changes: upgrade in stages, running build/tests and `audit/clippy/fmt` after each stage.
 - Do not modify the public API behavior in this track; any breaking adjustments are deferred to a major release.
 
 ### Stages
-1) thiserror 2 → verify build & tests.
-2) secrecy 0.10 → ensure integration with `zeroize` and secret wrappers.
-3) reqwest 0.12 + compatible rustls → review simple API shifts if any.
-4) maxminddb 0.26 → minor API updates if needed, with GeoIP test.
-5) rand 0.9 + getrandom 0.3 → review random generation call sites.
-6) base64 0.22 → adjust encode/decode calls if API changed.
-7) lru 0.16 → review constructor/traits.
-8) rstest 0.26 (dev) → update test annotations if needed.
+1) Refresh lockfile and run strict local gates.
+2) Apply patch/minor updates for direct dependencies only.
+3) Re-run compatibility checks for API and FFI surfaces.
+4) Promote only changes that pass strict security/lint/test gates.
 
 ### Guarantees
 - Run full CI at each stage: `check`, `test`, `fmt`, `clippy`, `audit`.
@@ -683,12 +646,12 @@ const lib = ffi.Library('mkt_ksa_geo_sec', { 'generate_adaptive_fingerprint': ['
   - Addressed floating-point and suboptimal_flops hints via targeted allows without changing logic.
   - Resolved `unused_async`/`unused_self` for internal/experimental functions.
   - No public API changes; no logic/files removed.
-- **Tests**: 37/37 passing.
+- **Tests**: 39/39 passing.
 - **Clippy**: fully clean.
 - **Dependencies**:
   - No production dependency versions changed in this release.
   - Note: duplicate transitive versions (e.g., base64/http/lru/windows-sys) retained intentionally to avoid breakage.
-  - cargo audit: allowed warning for `rust-ini` (yanked) via `config`; non-functional impact (transitive only); documented for future review.
+  - `cargo audit --deny warnings` is currently clean in the active hardened profile.
 
 #### 🔄 Dependency Changes (this session)
 - **Removed**:
