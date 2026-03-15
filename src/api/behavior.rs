@@ -26,10 +26,10 @@
     The file is designed as a central point for any external system or user interface wishing to analyze user or device behavior.
 ******************************************************************************************/
 use crate::api::BearerToken;
+use crate::api::authorize_request;
 use crate::core::behavior_bio::BehaviorInput;
-use crate::security::jwt::JwtManager;
 use crate::AppState;
-use actix_web::{post, web, HttpResponse, Responder};
+use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
 use serde::Deserialize;
 
 /// نموذج الطلب لتحليل السلوك.
@@ -45,28 +45,13 @@ pub struct BehaviorAnalyzeRequest {
 #[post("/behavior/analyze")]
 pub async fn analyze_behavior(
     app_data: web::Data<AppState>,
+    req: HttpRequest,
     payload: web::Json<BehaviorAnalyzeRequest>, // بيانات الطلب (السلوك)
     // Request payload (behavior data)
     bearer: BearerToken,
 ) -> impl Responder {
-    // --- استخراج التوكن من الهيدر عبر extractor ---
-    let token = bearer.0;
-    if token.is_empty() {
-        return HttpResponse::Unauthorized().body("Missing Authorization token");
-    }
-
-    // --- تحقق JWT عبر security فقط ---
-    // JWT validation using the security module only
-    let jwt_manager = JwtManager::new(
-        &crate::security::secret::SecureString::new(
-            "a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string(),
-        ),
-        60,
-        "my_app".to_string(),
-        "user_service".to_string(),
-    );
-    if jwt_manager.decode_token(&token).is_err() {
-        return HttpResponse::Unauthorized().body("Invalid or expired token");
+    if let Err(resp) = authorize_request(&app_data, &req, &bearer).await {
+        return resp;
     }
 
     // --- تمرير الطلب لمحرك core ---

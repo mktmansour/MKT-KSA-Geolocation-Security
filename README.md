@@ -20,9 +20,11 @@
 Latest hardening and maintenance updates applied:
 
 - Enforced strict security gate: `cargo audit --deny warnings` passes.
-- Kept `db-mysql` intentionally disabled in the current hardened profile until a non-vulnerable backend path is integrated.
+- Replaced legacy MySQL path with hardened SQLite backend (`tokio-rusqlite` + schema bootstrap) in the active profile.
+- Unified JWT verification and rate limiting across API endpoints through centralized `AppState` security context.
+- Removed dummy endpoint behavior in `weather` and `alerts` by wiring real engine/DB logic.
 - Removed repository cache artifacts and strengthened package excludes (`.cargo-home/**`, `target/**`, `.env`, `.env.*`).
-- Validation gates are clean: `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` (39/39).
+- Validation gates are clean: `cargo fmt --check`, `cargo clippy --workspace --all-targets --all-features -- -D warnings`, and `cargo test --workspace` (39/39).
 
 ---
 <img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/95cf4068-d2f6-4603-9c03-521146a04e0e" />
@@ -94,7 +96,6 @@ Latest hardening and maintenance updates applied:
 | network.rs           | src/api/network.rs               | Network analysis endpoints                     |
 | sensors.rs           | src/api/sensors.rs               | Sensors endpoints                              |
 | weather.rs           | src/api/weather.rs               | Weather endpoints                              |
-| dashboard.rs         | src/api/dashboard.rs             | Dashboard endpoints                            |
 | smart_access.rs      | src/api/smart_access.rs          | Smart access endpoint                          |
 | mod.rs (api)         | src/api/mod.rs                   | API module index                               |
 | mod.rs (utils)       | src/utils/mod.rs                 | Utils module index                             |
@@ -191,7 +192,7 @@ Latest hardening and maintenance updates applied:
 | ------------- | ----------------------- | ----------------------------- |
 | API_KEY       | Main authentication key | API_KEY=your_secret_key       |
 | JWT_SECRET    | JWT signing/verification secret | JWT_SECRET=32+_chars_secret |
-| DATABASE_URL  | DB connection string    | DATABASE_URL=mysql://...      |
+| DATABASE_URL  | SQLite connection string    | DATABASE_URL=sqlite://data/app.db      |
 | LOG_LEVEL     | Logging verbosity       | LOG_LEVEL=debug               |
 | GEO_PROVIDER  | Geolocation provider    | GEO_PROVIDER=ipapi            |
 
@@ -201,17 +202,15 @@ Latest hardening and maintenance updates applied:
 
 | Path                  | Method | Role (English)                  | Defined In                 |
 | --------------------- | ------ | ------------------------------- | -------------------------- |
-| /api/auth/login       | POST   | User login                      | api/auth.rs                |
-| /api/auth/user        | GET    | Fetch user data                 | api/auth.rs                |
+| /api/users/{id}       | GET    | Fetch user data                 | api/auth.rs                |
 | /api/alerts/trigger   | POST   | Trigger security alert          | api/alerts.rs              |
 | /api/geo/resolve      | POST   | Geolocation resolve             | api/geo.rs                 |
 | /api/device/resolve   | POST   | Device resolve/register         | api/device.rs              |
 | /api/behavior/analyze | POST   | Behavior analysis               | api/behavior.rs            |
 | /api/network/analyze  | POST   | Network analysis                | api/network.rs             |
 | /api/sensors/analyze  | POST   | Sensors data analysis           | api/sensors.rs             |
-| /api/weather/summary  | GET    | Weather summary                 | api/weather.rs             |
-| /api/dashboard        | GET    | Dashboard summary               | api/dashboard.rs           |
-| /api/smart_access     | POST   | Smart composite access check    | api/smart_access.rs        |
+| /api/weather/summary  | POST   | Weather summary                 | api/weather.rs             |
+| /api/smart_access/verify | POST | Smart composite access check    | api/smart_access.rs        |
 
 ---
 
@@ -310,13 +309,25 @@ if device_fp.security_level >= 5 {
 ### Role Verification Only
 
 ```rust
-use mkt_ksa_geo_sec::security::policy::{Role, has_permission, Permission};
+use mkt_ksa_geo_sec::security::policy::{Action, PolicyContext, PolicyEngine, Role, UserStatus};
+use uuid::Uuid;
 
-let role = Role::Admin;
-if has_permission(role, Permission::AccessDashboard) {
-  // User has required role/permission
+let roles = vec![Role::Admin];
+let status = UserStatus::Active;
+let actor = Uuid::new_v4();
+let target = Uuid::new_v4();
+
+let context = PolicyContext {
+  user_id: actor,
+  roles: &roles,
+  status: &status,
+  trust_score: 90,
+};
+
+if PolicyEngine::can_execute(&context, &Action::ReadUserData { target_user_id: &target }).is_ok() {
+  // User has required role/action permission
 } else {
-  // User lacks required role/permission
+  // User lacks required role/action permission
 }
 ```
 
@@ -356,8 +367,8 @@ if has_permission(role, Permission::AccessDashboard) {
 
 This section reflects the current hardened profile (`main`, strict CI):
 
-- `db-mysql` exists as a feature flag but is intentionally blocked at compile time in the current secure profile.
-- Active graph avoids vulnerable MySQL transitive paths; `cargo audit --deny warnings` passes.
+- Primary DB backend is SQLite via `tokio-rusqlite` (`db-sqlite` default feature).
+- Vulnerable MySQL transitive path is removed from the active profile; `cargo audit --deny warnings` passes.
 - No OpenSSL dependency in the default path (`reqwest` is configured with `rustls-tls`).
 - Packaging excludes local cache and secrets (`.cargo-home/**`, `target/**`, `.env`, `.env.*`).
 
@@ -392,7 +403,7 @@ test result: ok. 39 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out
 - Formatting: `cargo fmt --check` clean.
 - Linter: `cargo clippy --workspace --all-targets -- -D warnings` clean.
 - Security: `cargo audit --deny warnings` clean.
-- Operational note: `db-mysql` path is intentionally disabled in this hardened release profile.
+- Operational note: only `sqlite://` is accepted by `DATABASE_URL` in this hardened release profile.
 
 ---
 
@@ -701,7 +712,6 @@ pub async fn analyze_behavior(
     bearer: BearerToken,
 ) -> impl Responder;
 
-pub async fn dashboard_summary(bearer: BearerToken) -> impl Responder;
 
 pub async fn resolve_device(
     app_data: web::Data<AppState>,

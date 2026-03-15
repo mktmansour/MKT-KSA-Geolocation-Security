@@ -27,9 +27,9 @@
     It can be integrated with a real weather engine or external service in the future.
 ******************************************************************************************/
 use crate::api::BearerToken;
-use crate::core::weather_val::WeatherData;
-use crate::security::jwt::JwtManager;
-use actix_web::{post, web, HttpResponse, Responder};
+use crate::api::authorize_request;
+use crate::AppState;
+use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
 use serde::Deserialize;
 
 /// نموذج الطلب لجلب بيانات الطقس.
@@ -46,47 +46,22 @@ pub struct WeatherSummaryRequest {
 /// Endpoint to get weather summary via POST /weather/summary
 #[post("/weather/summary")]
 pub async fn weather_summary(
-    _payload: web::Json<WeatherSummaryRequest>, // بيانات الطلب (إحداثيات الموقع)
+    app_data: web::Data<AppState>,
+    req: HttpRequest,
+    payload: web::Json<WeatherSummaryRequest>, // بيانات الطلب (إحداثيات الموقع)
     // Request payload (location coordinates)
     bearer: BearerToken,
 ) -> impl Responder {
-    // --- استخراج التوكن من الهيدر عبر extractor ---
-    let token = bearer.0;
-    if token.is_empty() {
-        return HttpResponse::Unauthorized().body("Missing Authorization token");
+    if let Err(resp) = authorize_request(&app_data, &req, &bearer).await {
+        return resp;
     }
 
-    // --- تحقق JWT عبر security فقط ---
-    // JWT validation using the security module only
-    let jwt_manager = JwtManager::new(
-        &crate::security::secret::SecureString::new(
-            "a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string(),
-        ),
-        60,
-        "my_app".to_string(),
-        "user_service".to_string(),
-    );
-    if jwt_manager.decode_token(&token).is_err() {
-        return HttpResponse::Unauthorized().body("Invalid or expired token");
+    match app_data
+        .weather_engine
+        .fetch_and_validate(payload.latitude, payload.longitude)
+        .await
+    {
+        Ok(weather) => HttpResponse::Ok().json(weather),
+        Err(e) => HttpResponse::BadGateway().json(e.to_string()),
     }
-
-    // --- منطق وهمي/اختباري لجلب بيانات الطقس (يمكن ربطه بمحرك الطقس لاحقًا) ---
-    // Dummy/test logic for fetching weather data (can be connected to a real weather engine later)
-    // في تطبيق حقيقي: استخدم state.x_engine.weather_engine.fetch_and_validate(...)
-    // In a real application: use state.x_engine.weather_engine.fetch_and_validate(...)
-    let weather = WeatherData {
-        temperature_celsius: 23.5, // درجة الحرارة الحالية (مئوية)
-        // Current temperature (Celsius)
-        humidity_percent: 55.0, // نسبة الرطوبة
-        // Humidity percentage
-        wind_speed_kmh: 12.0, // سرعة الرياح (كم/س)
-        // Wind speed (km/h)
-        precipitation_mm: 0.0, // كمية الهطول (ملم)
-        // Precipitation (mm)
-        weather_code: 1, // كود حالة الطقس
-                         // Weather condition code
-    };
-
-    HttpResponse::Ok().json(weather) // إعادة بيانات الطقس بنجاح
-                                     // Return weather data on success
 }

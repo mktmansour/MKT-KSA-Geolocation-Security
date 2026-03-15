@@ -26,11 +26,11 @@
     The file is designed as a central point for any external system or user interface wishing to validate location or detect geolocation fraud.
 ******************************************************************************************/
 use crate::api::BearerToken;
+use crate::api::authorize_request;
 use crate::core::behavior_bio::BehaviorInput;
 use crate::core::cross_location::CrossValidationInput;
-use crate::security::jwt::JwtManager;
 use crate::AppState;
-use actix_web::{post, web, HttpResponse, Responder};
+use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
 use serde::Deserialize;
 use std::net::IpAddr;
 
@@ -60,29 +60,13 @@ pub struct GeoResolveRequest {
 #[post("/geo/resolve")]
 pub async fn resolve_geo(
     app_data: web::Data<AppState>,
+    req: HttpRequest,
     payload: web::Json<GeoResolveRequest>, // بيانات الطلب (التحقق الجغرافي)
     // Request payload (geolocation validation data)
     bearer: BearerToken,
 ) -> impl Responder {
-    // --- استخراج التوكن من الهيدر عبر extractor ---
-    let token = bearer.0;
-    if token.is_empty() {
-        return HttpResponse::Unauthorized().body("Missing Authorization token");
-    }
-
-    // --- تحقق JWT عبر security فقط ---
-    // JWT validation using the security module only
-    let jwt_manager = JwtManager::new(
-        &crate::security::secret::SecureString::new(
-            "a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string(),
-        ),
-        60,
-        "my_app".to_string(),
-        "user_service".to_string(),
-    );
-    match jwt_manager.decode_token(&token) {
-        Ok(_) => {}
-        Err(_) => return HttpResponse::Unauthorized().body("Invalid or expired token"),
+    if let Err(resp) = authorize_request(&app_data, &req, &bearer).await {
+        return resp;
     }
 
     // --- تجميع المدخلات من الطلب ---

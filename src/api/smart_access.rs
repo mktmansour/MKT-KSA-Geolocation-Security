@@ -22,9 +22,11 @@
     - Allows easy customization of zone/time policies.
 ******************************************************************************************/
 
+use crate::api::authorize_request;
+use crate::api::BearerToken;
 use crate::core::behavior_bio::BehaviorInput;
 use crate::AppState;
-use actix_web::{post, web, HttpResponse, Responder};
+use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
 
 /// Arabic: نموذج الطلب لنقطة نهاية التحقق المركب
 /// English: Request model for the composite verification endpoint
@@ -42,8 +44,14 @@ pub struct SmartAccessRequest {
 #[post("/smart_access/verify")]
 pub async fn smart_access_verify(
     data: web::Data<AppState>,
+    req: HttpRequest,
     payload: web::Json<SmartAccessRequest>,
+    bearer: BearerToken,
 ) -> impl Responder {
+    if let Err(resp) = authorize_request(&data, &req, &bearer).await {
+        return resp;
+    }
+
     // سياسات المناطق والأوقات (مثال، يمكن تخصيصها)
     let allowed_zones = vec!["Riyadh".to_string(), "Jeddah".to_string()];
     let allowed_hours = Some((6, 18)); // من 6 صباحًا إلى 6 مساءً

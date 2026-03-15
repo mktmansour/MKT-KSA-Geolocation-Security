@@ -20,7 +20,9 @@
 
 **أبرز ما تم تحديثه:**
 - اعتماد وضع أمني صارم: `cargo audit --deny warnings` ناجح.
-- تعطيل مسار `db-mysql` عمدًا في البروفايل الحالي حتى دمج بديل غير متأثر بالثغرات.
+- استبدال مسار MySQL القديم بقاعدة SQLite محصنة (`tokio-rusqlite`) في البروفايل التشغيلي الحالي.
+- توحيد التحقق JWT وتحديد المعدل على مستوى مركزي عبر `AppState` لجميع المسارات.
+- إزالة المسارات الوهمية وربط `weather` و`alerts` بمنطق فعلي (محرك/قاعدة بيانات).
 - تنظيف المستودع من ملفات الكاش غير الضرورية وإيقاف تضمينها في التغليف.
 - توحيد نتائج التحقق الحديثة: `fmt`, `clippy -D warnings`, `test` (39/39) كلها ناجحة.
 
@@ -99,7 +101,6 @@
 | api/network.rs               | network.rs           | src/api/network.rs               | src/api/network.rs               | نقاط نهاية تحليل الشبكة        | نقاط نهاية تحليل الشبكة                     |
 | api/sensors.rs               | sensors.rs           | src/api/sensors.rs               | src/api/sensors.rs               | نقاط نهاية الحساسات           | نقاط نهاية الحساسات                              |
 | api/weather.rs               | weather.rs           | src/api/weather.rs               | src/api/weather.rs               | نقاط نهاية الطقس              | نقاط نهاية الطقس                              |
-| api/dashboard.rs             | dashboard.rs         | src/api/dashboard.rs             | src/api/dashboard.rs             | لوحة التحكم                   | نقاط نهاية لوحة التحكم                            |
 | api/smart_access.rs          | smart_access.rs      | src/api/smart_access.rs          | src/api/smart_access.rs          | نقطة وصول التحقق الذكي         | نقطة نهاية الوصول الذكي                          |
 | api/mod.rs                   | mod.rs               | src/api/mod.rs                   | src/api/mod.rs                   | فهرس وحدة API                 | فهرس وحدة API                               |
 | utils/mod.rs                 | mod.rs               | src/utils/mod.rs                 | src/utils/mod.rs                 | فهرس وحدة الأدوات المساعدة     | فهرس وحدة الأدوات المساعدة                             |
@@ -194,7 +195,7 @@
 | ------------- | ------------- | ---------------------- | ----------------------- | -------------------------- | ------- |
 | API_KEY      | API_KEY      | مفتاح المصادقة الرئيسي | مفتاح المصادقة الرئيسي | API_KEY=your_secret_key |         |
 | JWT_SECRET   | JWT_SECRET   | سر توقيع/تحقق JWT      | سر توقيع/تحقق JWT | JWT_SECRET=32+_chars_secret |         |
-| DATABASE_URL | DATABASE_URL | رابط قاعدة البيانات    | رابط قاعدة البيانات    | DATABASE_URL=mysql://...  |         |
+| DATABASE_URL | DATABASE_URL | رابط SQLite    | رابط قاعدة البيانات    | DATABASE_URL=sqlite://data/app.db  |         |
 | LOG_LEVEL    | LOG_LEVEL    | مستوى السجلات          | مستوى السجلات       | LOG_LEVEL=debug           |         |
 | GEO_PROVIDER | GEO_PROVIDER | مزود الموقع (اختياري)  | مزود الموقع الجغرافي    | GEO_PROVIDER=ipapi        |         |
 
@@ -204,17 +205,15 @@
 
 | المسار              | المسار البرمجي        | نوع الطلب | الطريقة | الدور                          | الوصف                           | مكان التعريف                 |
 | ------------------- | --------------------- | --------- | ------ | ----------------------------- | ------------------------------- | ---------------------------- |
-| /api/auth/login     | /api/auth/login       | POST      | POST   | تسجيل دخول                    | تسجيل دخول                      | src/api/auth.rs              |
-| /api/auth/user      | /api/auth/user        | GET       | GET    | جلب بيانات مستخدم             | جلب بيانات مستخدم                 | src/api/auth.rs              |
+| /api/users/{id}     | /api/users/{id}       | GET       | GET    | جلب بيانات مستخدم             | جلب بيانات مستخدم                 | src/api/auth.rs              |
 | /api/alerts/trigger | /api/alerts/trigger   | POST      | POST   | إطلاق تنبيه أمني              | إطلاق تنبيه أمني          | src/api/alerts.rs            |
 | /api/geo/resolve    | /api/geo/resolve      | POST      | POST   | تحليل الموقع الجغرافي         | تحليل الموقع الجغرافي             | src/api/geo.rs               |
 | /api/device/resolve | /api/device/resolve   | POST      | POST   | تحليل/تسجيل الجهاز            | تحليل/تسجيل الجهاز         | src/api/device.rs            |
 | /api/behavior/analyze| /api/behavior/analyze| POST      | POST   | تحليل السلوك                   | تحليل السلوك               | src/api/behavior.rs          |
 | /api/network/analyze| /api/network/analyze  | POST      | POST   | تحليل الشبكة                   | تحليل الشبكة                | src/api/network.rs           |
 | /api/sensors/analyze| /api/sensors/analyze  | POST      | POST   | تحليل بيانات الحساسات          | تحليل بيانات الحساسات           | src/api/sensors.rs           |
-| /api/weather/summary| /api/weather/summary  | GET       | GET    | ملخص بيانات الطقس              | ملخص بيانات الطقس                 | src/api/weather.rs           |
-| /api/dashboard      | /api/dashboard        | GET       | GET    | ملخص لوحة التحكم               | ملخص لوحة التحكم               | src/api/dashboard.rs         |
-| /api/smart_access   | /api/smart_access     | POST      | POST   | تحقق وصول ذكي مركب             | تحقق وصول ذكي مركب    | src/api/smart_access.rs      |
+| /api/weather/summary| /api/weather/summary  | POST      | POST   | ملخص بيانات الطقس              | ملخص بيانات الطقس                 | src/api/weather.rs           |
+| /api/smart_access/verify| /api/smart_access/verify| POST| POST   | تحقق وصول ذكي مركب             | تحقق وصول ذكي مركب    | src/api/smart_access.rs      |
 
 ---
 
@@ -316,13 +315,25 @@ if device_fp.security_level >= 5 {
 ### تحقق من الصلاحيات فقط
 
 ```rust
-use mkt_ksa_geo_sec::security::policy::{Role, has_permission, Permission};
+use mkt_ksa_geo_sec::security::policy::{Action, PolicyContext, PolicyEngine, Role, UserStatus};
+use uuid::Uuid;
 
-let role = Role::Admin;
-if has_permission(role, Permission::AccessDashboard) {
-  // للمستخدم الصلاحية المطلوبة | User has required role/permission
+let roles = vec![Role::Admin];
+let status = UserStatus::Active;
+let actor = Uuid::new_v4();
+let target = Uuid::new_v4();
+
+let context = PolicyContext {
+  user_id: actor,
+  roles: &roles,
+  status: &status,
+  trust_score: 90,
+};
+
+if PolicyEngine::can_execute(&context, &Action::ReadUserData { target_user_id: &target }).is_ok() {
+  // للمستخدم الصلاحية المطلوبة | User has required role/action permission
 } else {
-  // ليس لديه الصلاحية | User lacks required role/permission
+  // ليس لديه الصلاحية | User lacks required role/action permission
 }
 ```
 
@@ -366,8 +377,8 @@ if has_permission(role, Permission::AccessDashboard) {
 
 هذه الحالة تعكس الوضع الحالي الصارم على `main`:
 
-- ميزة `db-mysql` موجودة كـ feature لكنها محجوبة عمدًا في ملف التشغيل ضمن ملف التعزيز الأمني الحالي.
-- مسار الاعتمادات الفعلي لا يمر عبر سلسلة MySQL الضعيفة؛ `cargo audit --deny warnings` ناجح.
+- قاعدة البيانات الأساسية الآن SQLite عبر `tokio-rusqlite` (الميزة الافتراضية `db-sqlite`).
+- تم إزالة المسار الانتقالي الضعيف المرتبط بـ MySQL من البروفايل الفعلي؛ `cargo audit --deny warnings` ناجح.
 - المسار الافتراضي لا يعتمد على OpenSSL، و`reqwest` يعمل مع `rustls-tls`.
 - التغليف يستبعد ملفات الكاش/البيئة الحساسة: `.cargo-home/**`, `target/**`, `.env`, `.env.*`.
 
@@ -402,7 +413,7 @@ test result: ok. 39 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out
 - **التنسيق:** `cargo fmt --check` نظيف.
 - **اللينتر:** `cargo clippy --workspace --all-targets -- -D warnings` نظيف.
 - **الأمان:** `cargo audit --deny warnings` نظيف.
-- **الملاحظة التشغيلية:** مسار `db-mysql` معطّل عمدًا ضمن هذا البروفايل الصارم.
+- **الملاحظة التشغيلية:** يتم قبول `sqlite://` فقط في `DATABASE_URL` ضمن هذا البروفايل الصارم.
 
 ---
 
@@ -714,7 +725,6 @@ pub async fn analyze_behavior(
     bearer: BearerToken,
 ) -> impl Responder;
 
-pub async fn dashboard_summary(bearer: BearerToken) -> impl Responder;
 
 pub async fn resolve_device(
     app_data: web::Data<AppState>,

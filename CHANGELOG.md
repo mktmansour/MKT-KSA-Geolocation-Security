@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.1] - 2026-03-15
+
+### Security
+
+- Replaced legacy MySQL runtime posture with hardened SQLite backend (`tokio-rusqlite`) in active profile.
+- Unified JWT verification into centralized API path and removed hardcoded secrets from handlers.
+- Enforced per-IP rate limiting uniformly through shared API authorization flow.
+- Closed unauthenticated access on `smart_access_verify` endpoint.
+
+### Fixed
+
+- Removed dashboard endpoint/module completely from API surface and routing.
+- Removed duplicated bearer extractor implementation from sensors route.
+- Replaced dummy endpoint logic in weather/alerts with real engine and DB-backed behavior.
+- Reworked `/users/{id}` endpoint to use strict claim checks (subject or admin role) and SQLite user fetch.
+- Added bounded in-memory alert store to cap runtime memory usage.
+- Replaced inline DB bootstrap with versioned SQL migration runner.
+- Added integration API test covering Auth + Rate Limit + DB in one executable test file.
+- Added strict burst integration test validating hard rate-limit behavior under high request pressure.
+
+### Validation
+
+- `cargo check --all-targets`: pass
+- `cargo clippy --all-targets -- -D warnings`: pass
+- `cargo clippy --all-targets --all-features -- -D warnings`: pass
+- `cargo test --all`: pass (39/39)
+
+### Docs
+
+- Added hardening report: `docs/SECURITY_HARDENING_2026-03-15.md`.
+- Added advanced GitHub scan report: `docs/GITHUB_ADVANCED_SCAN_2026-03-15.md`.
+
+---
+
 ## [2.0.0] - 2026-03-14
 
 ### Changed
@@ -99,6 +133,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AES-GCM and HMAC-SHA512 signing utilities.
 - Input validation and sanitisation helpers (HTML stripping via Ammonia).
 - Actix-web HTTP API with endpoints for geo, device, behaviour, sensors, network,
-  alerts, dashboard, weather, and smart-city access verification.
+  alerts, weather, and smart-city access verification.
 - MySQL Async database layer with optional connection pool.
 - C-ABI compatible `cdylib`/`staticlib` crate types for FFI.

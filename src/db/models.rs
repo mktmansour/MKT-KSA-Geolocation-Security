@@ -112,4 +112,4 @@ pub struct SecurityAlert {
     pub created_at: chrono::NaiveDateTime,
 }
 
-// سيتم إعادة بناء هذا الملف لاحقًا باستخدام Structs متوافقة مع mysql_async فقط.
+// Models are backend-agnostic and currently used by the hardened SQLite path.

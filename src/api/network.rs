@@ -26,10 +26,10 @@
 ******************************************************************************************/
 
 use crate::api::BearerToken;
+use crate::api::authorize_request;
 use crate::core::network_analyzer::{ConnectionType, NetworkInfoProvider};
-use crate::security::jwt::JwtManager;
 use crate::AppState;
-use actix_web::{post, web, HttpResponse, Responder};
+use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
 use serde::Deserialize;
 use std::net::IpAddr;
 
@@ -63,28 +63,13 @@ pub struct NetworkAnalyzeRequest {
 #[post("/network/analyze")]
 pub async fn analyze_network(
     app_data: web::Data<AppState>,
+    req: HttpRequest,
     payload: web::Json<NetworkAnalyzeRequest>, // بيانات الطلب (تحليل الشبكة)
     // Request payload (network analysis data)
     bearer: BearerToken,
 ) -> impl Responder {
-    // --- استخراج التوكن من الهيدر عبر extractor ---
-    let token = bearer.0;
-    if token.is_empty() {
-        return HttpResponse::Unauthorized().body("Missing Authorization token");
-    }
-
-    // --- تحقق JWT عبر security فقط ---
-    // JWT validation using the security module only
-    let jwt_manager = JwtManager::new(
-        &crate::security::secret::SecureString::new(
-            "a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string(),
-        ),
-        60,
-        "my_app".to_string(),
-        "user_service".to_string(),
-    );
-    if jwt_manager.decode_token(&token).is_err() {
-        return HttpResponse::Unauthorized().body("Invalid or expired token");
+    if let Err(resp) = authorize_request(&app_data, &req, &bearer).await {
+        return resp;
     }
 
     // --- تمرير الطلب لمحرك core ---

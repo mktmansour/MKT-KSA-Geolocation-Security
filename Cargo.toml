@@ -62,6 +62,8 @@ serde = { version = "1", features = ["derive"] }
 thiserror = "2.0.17"
 maxminddb = { version = "0.27.0", features = ["mmap"] }
 pqcrypto-traits = "0.3.5"
+tokio-rusqlite = "0.6.0"
+rusqlite = "0.37.0"
 
 [dev-dependencies]
 proptest = "1.7.0"
@@ -69,8 +71,8 @@ rstest = "0.26.1"
 assert-json-diff = "2.0"
 
 [features]
-default = []
-db-mysql = []
+default = ["db-sqlite"]
+db-sqlite = []
 v1_1 = []
 v2_0 = []
 v3_0 = []

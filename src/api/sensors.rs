@@ -25,13 +25,12 @@
     It verifies user authorization via JWT before performing the analysis, ensuring every analysis operation is secure and reliable.
     The file is designed as a central point for any external system or user interface wishing to analyze or monitor sensor data (such as motion, temperature, humidity, etc.).
 ******************************************************************************************/
+use crate::api::authorize_request;
+use crate::api::BearerToken;
 use crate::core::sensors_analyzer::SensorReading;
-use crate::security::jwt::JwtManager;
 use crate::AppState;
-use actix_web::{dev::Payload, FromRequest};
 use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
 use serde::Deserialize;
-use std::future::{ready, Ready};
 
 /// نموذج الطلب لتحليل بيانات الحساسات.
 /// Request model for sensor data analysis.
@@ -43,50 +42,17 @@ pub struct SensorsAnalyzeRequest {
                                      // History of previous sensor readings
 }
 
-// Extractor to obtain Bearer token from Authorization header without capturing HttpRequest in handler
-pub struct BearerToken(pub String);
-
-impl FromRequest for BearerToken {
-    type Error = actix_web::Error;
-    type Future = Ready<Result<Self, Self::Error>>;
-
-    fn from_request(req: &HttpRequest, _payload: &mut Payload) -> Self::Future {
-        let token = req
-            .headers()
-            .get("Authorization")
-            .and_then(|hv| hv.to_str().ok())
-            .map(|s| s.trim_start_matches("Bearer ").to_string())
-            .unwrap_or_default();
-        ready(Ok(Self(token)))
-    }
-}
-
 /// نقطة نهاية لتحليل بيانات الحساسات عبر POST /sensors/analyze
 /// Endpoint to analyze sensor data via POST /sensors/analyze
 #[post("/sensors/analyze")]
 pub async fn analyze_sensors(
     app_data: web::Data<AppState>,
+    req: HttpRequest,
     payload: web::Json<SensorsAnalyzeRequest>,
     bearer: BearerToken,
 ) -> impl Responder {
-    // --- استخراج التوكن من الهيدر عبر extractor ---
-    let token = bearer.0;
-    if token.is_empty() {
-        return HttpResponse::Unauthorized().body("Missing Authorization token");
-    }
-
-    // --- تحقق JWT عبر security فقط ---
-    // JWT validation using the security module only
-    let jwt_manager = JwtManager::new(
-        &crate::security::secret::SecureString::new(
-            "a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string(),
-        ),
-        60,
-        "my_app".to_string(),
-        "user_service".to_string(),
-    );
-    if jwt_manager.decode_token(&token).is_err() {
-        return HttpResponse::Unauthorized().body("Invalid or expired token");
+    if let Err(resp) = authorize_request(&app_data, &req, &bearer).await {
+        return resp;
     }
 
     // --- تمرير الطلب لمحرك core ---

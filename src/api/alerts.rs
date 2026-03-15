@@ -26,9 +26,11 @@
     The file is designed as a central point for managing security alerts, and can be integrated with a database or external notification systems in the future.
 ******************************************************************************************/
 use crate::api::BearerToken;
+use crate::api::authorize_request;
+use crate::db::crud;
 use crate::db::models::SecurityAlert;
-use crate::security::jwt::JwtManager;
-use actix_web::{post, web, HttpResponse, Responder};
+use crate::AppState;
+use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
 use serde::Deserialize;
 use serde_json::json;
 use uuid::Uuid;
@@ -52,30 +54,14 @@ pub struct AlertTriggerRequest {
 /// نقطة نهاية لإطلاق التنبيه الأمني عبر POST /alerts/trigger
 #[post("/alerts/trigger")]
 pub async fn trigger_alert(
+    app_data: web::Data<AppState>,
+    req: HttpRequest,
     payload: web::Json<AlertTriggerRequest>, // بيانات الطلب (التنبيه)
     // Request payload (alert data)
     bearer: BearerToken,
 ) -> impl Responder {
-    // --- استخراج التوكن من الهيدر عبر extractor ---
-    let token = bearer.0;
-    if token.is_empty() {
-        return HttpResponse::Unauthorized().body("Missing Authorization token");
-    }
-
-    // --- تحقق JWT عبر security فقط ---
-    // JWT validation using the security module only
-    // استخدام سر JWT من متغير البيئة مع قيمة افتراضية لضمان عدم كسر السلوك
-    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
-        "a_very_secure_and_long_secret_key_that_is_at_least_32_bytes_long".to_string()
-    });
-    let jwt_manager = JwtManager::new(
-        &crate::security::secret::SecureString::new(jwt_secret),
-        60,
-        "my_app".to_string(),
-        "user_service".to_string(),
-    );
-    if jwt_manager.decode_token(&token).is_err() {
-        return HttpResponse::Unauthorized().body("Invalid or expired token");
+    if let Err(resp) = authorize_request(&app_data, &req, &bearer).await {
+        return resp;
     }
 
     // --- بناء نموذج التنبيه ---
@@ -86,16 +72,22 @@ pub async fn trigger_alert(
         // Related entity ID
         alert_type: payload.alert_type.clone(), // نوع التنبيه
         // Alert type
-        alert_data: payload.details.clone(), // تفاصيل إضافية
+        alert_data: json!({
+            "entity_type": payload.entity_type,
+            "severity": payload.severity,
+            "details": payload.details,
+        }), // تفاصيل إضافية
         // Additional details
         created_at: chrono::Utc::now().naive_utc(), // وقت الإنشاء
                                                     // Creation time
     };
 
-    // --- منطق وهمي لحفظ التنبيه (يمكن استبداله بـ db::crud لاحقًا) ---
-    // Dummy logic to save the alert (can be replaced with db::crud later)
-    // TODO: استبدال هذا بمنطق حقيقي عند تفعيل دوال CRUD
-    // TODO: Replace this with real logic when CRUD functions are enabled
+    app_data.alert_memory.push(alert.alert_type.clone()).await;
+    if let Some(pool) = &app_data.db_pool {
+        if let Err(e) = crud::create_security_alert(pool, &alert).await {
+            return HttpResponse::InternalServerError().json(format!("Failed to persist alert: {e}"));
+        }
+    }
     // --- إرجاع استجابة JSON موحدة ---
     // Return a unified JSON response
     HttpResponse::Ok().json(json!({

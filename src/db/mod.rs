@@ -36,8 +36,8 @@
 
 // Arabic: الإعلان عن الوحدات الفرعية لوحدة قاعدة البيانات
 // English: Declare the sub-modules for the database module
-#[cfg(feature = "db-mysql")]
 pub mod crud;
+pub mod migrations;
 pub mod models;
 
-// سيتم إعادة بناء هذا الملف لاحقًا ليكون نقطة دخول لطبقة mysql_async فقط.
+// SQLite is the primary hardened backend in the current profile.

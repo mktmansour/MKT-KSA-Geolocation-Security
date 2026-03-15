@@ -25,11 +25,12 @@
     The file is designed as part of the API layer that handles user-related operations, and can be extended in the future to include login, registration, and user data updates.
 ******************************************************************************************/
 
-use actix_web::{get, web, HttpResponse, Responder};
-// use sqlx::PgPool; // تم التعليق بعد التحويل إلى sea-orm
+use actix_web::{get, web, HttpRequest, HttpResponse, Responder};
 use uuid::Uuid;
 
-use crate::core::behavior_bio::UserService;
+use crate::api::authorize_request;
+use crate::db::crud;
+use crate::AppState;
 
 /// نقطة نهاية لجلب بيانات مستخدم معين بناءً على معرفه.
 /// Endpoint to fetch a specific user's data by their ID.
@@ -37,30 +38,34 @@ use crate::core::behavior_bio::UserService;
 /// Applies permission checks before returning data.
 #[get("/users/{id}")]
 pub async fn get_user(
+    app_data: web::Data<AppState>,
+    req: HttpRequest,
     path: web::Path<Uuid>, // معرف المستخدم المطلوب (من المسار)
                            // Target user ID (from the path)
+    bearer: crate::api::BearerToken,
                            // pool: web::Data<PgPool>,       // الاتصال بقاعدة البيانات
                            // Database connection
 ) -> impl Responder {
     let target_user_id = path.into_inner();
 
-    // ملاحظة: في التطبيق الحقيقي، يجب استخراج معرف المستخدم من توكن المصادقة (JWT)
-    // Note: In a real application, the user ID should be extracted from the authentication token (JWT)
-    let requester_id = target_user_id;
+    let claims = match authorize_request(&app_data, &req, &bearer).await {
+        Ok(c) => c,
+        Err(resp) => return resp,
+    };
 
-    // إنشاء خدمة المستخدمين مع قاعدة البيانات
-    // Create the user service with the database connection
-    let user_service = UserService::new();
+    let can_read = claims.sub == target_user_id || claims.roles.iter().any(|r| r == "admin");
+    if !can_read {
+        return HttpResponse::Forbidden().body("Insufficient permissions");
+    }
 
-    // محاولة جلب بيانات المستخدم مع فحص الصلاحيات
-    // Try to fetch the user profile data with permission checks
-    match user_service.get_user_profile_data(requester_id, target_user_id) {
-        Ok(user) => HttpResponse::Ok().json(user), // إعادة البيانات بنجاح
-        // Return user data on success
-        Err(e) => {
-            // معالجة الأخطاء بشكل بسيط (يفضل تحسينها مستقبلاً)
-            // Basic error handling (should be improved in the future)
-            HttpResponse::InternalServerError().body(e.to_string())
-        }
+    let Some(pool) = &app_data.db_pool else {
+        return HttpResponse::ServiceUnavailable()
+            .body("Database backend is disabled. Configure DATABASE_URL=sqlite://...");
+    };
+
+    match crud::get_user_by_id(pool, &target_user_id).await {
+        Ok(Some(user)) => HttpResponse::Ok().json(user),
+        Ok(None) => HttpResponse::NotFound().body("User not found"),
+        Err(e) => HttpResponse::InternalServerError().body(format!("DB error: {e}")),
     }
 }

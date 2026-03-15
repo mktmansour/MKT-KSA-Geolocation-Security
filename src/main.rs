@@ -43,15 +43,18 @@ use actix_web::{web, App, HttpServer};
 use config::Config;
 use config::Environment;
 use maxminddb::Reader;
+use mkt_ksa_geo_sec::core::weather_val::{OpenMeteoProvider, WeatherEngine, WeatherProvider};
+use mkt_ksa_geo_sec::db::crud;
+use mkt_ksa_geo_sec::db::models::User;
+use mkt_ksa_geo_sec::security::jwt::JwtManager;
+use mkt_ksa_geo_sec::security::ratelimit::RateLimitConfig;
+use mkt_ksa_geo_sec::security::ratelimit::RateLimiter;
+use mkt_ksa_geo_sec::security::secret::SecureString;
 use mkt_ksa_geo_sec::security::secret::SecureBytes;
+use std::collections::HashSet;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-
-#[cfg(feature = "db-mysql")]
-compile_error!(
-    "Feature 'db-mysql' is temporarily disabled for security hardening until a non-vulnerable backend is integrated."
-);
 
 // --- استيراد شامل لجميع المحركات وتبعياتها ---
 // --- Comprehensive import of all engines and their dependencies ---
@@ -89,6 +92,14 @@ async fn main() -> std::io::Result<()> {
         .build()
         .expect("Failed to build configuration from environment");
     let _api_key: String = settings.get_string("API_KEY").expect("API_KEY not set");
+    let jwt_secret = settings
+        .get_string("JWT_SECRET")
+        .expect("JWT_SECRET must be set and at least 32 bytes")
+        .trim()
+        .to_string();
+    if jwt_secret.len() < 32 {
+        panic!("JWT_SECRET must be at least 32 bytes");
+    }
 
     // Arabic: إعداد نظام تسجيل الأحداث (سيتم تفعيله بالكامل لاحقًا في utils/logger.rs)
     // English: Setup logging system (will be fully enabled later in utils/logger.rs)
@@ -96,12 +107,33 @@ async fn main() -> std::io::Result<()> {
 
     // Arabic: محاولة الحصول على رابط قاعدة البيانات من متغيرات البيئة
     // English: Try to get the database URL from environment variables
-    let database_url = std::env::var("DATABASE_URL").ok();
-    let _ = database_url;
-    let db_pool: Option<mkt_ksa_geo_sec::app_state::DbPool> = {
-        println!(
-            "⚠️  ميزة db-mysql غير مفعلة. يعمل التطبيق الآن بدون اتصال قاعدة بيانات (وضع آمن افتراضي)."
-        );
+    let db_pool: Option<mkt_ksa_geo_sec::app_state::DbPool> = if let Ok(database_url) = std::env::var("DATABASE_URL") {
+        if !database_url.starts_with("sqlite:") {
+            panic!("Only SQLite is allowed in hardened profile. Set DATABASE_URL like sqlite://data/app.db");
+        }
+        let sqlite_path = database_url.trim_start_matches("sqlite://");
+        let pool = tokio_rusqlite::Connection::open(sqlite_path)
+            .await
+            .expect("Failed to connect to SQLite database");
+
+        crud::init_schema(&pool)
+            .await
+            .expect("Failed to initialize SQLite schema");
+
+        let seeded_user = User {
+            id: uuid::Uuid::new_v4(),
+            username: "bootstrap-admin".to_string(),
+            email: "admin@example.local".to_string(),
+            password_hash: "REPLACE_ME_WITH_HASH".to_string(),
+            status: "active".to_string(),
+            created_at: chrono::Utc::now().naive_utc(),
+            last_login_at: Some(chrono::Utc::now().naive_utc()),
+        };
+        let _ = crud::upsert_user(&pool, &seeded_user).await;
+
+        Some(pool)
+    } else {
+        println!("⚠️  DATABASE_URL غير محدد. بعض المسارات التي تتطلب قاعدة بيانات ستعيد 503.");
         None
     };
 
@@ -173,6 +205,23 @@ async fn main() -> std::io::Result<()> {
         Arc::new(mkt_ksa_geo_sec::core::network_analyzer::DefaultAiNetworkAnalyzer),
     ));
 
+    let weather_providers: Vec<Arc<dyn WeatherProvider>> = vec![Arc::new(OpenMeteoProvider::new())];
+    let weather_engine = Arc::new(WeatherEngine::new(weather_providers));
+
+    let jwt_manager = Arc::new(JwtManager::new(
+        &SecureString::new(jwt_secret),
+        900,
+        "mkt_ksa_geo_sec".to_string(),
+        "api_clients".to_string(),
+    ));
+
+    let rate_limiter = RateLimiter::new(RateLimitConfig {
+        max_requests: 120,
+        window: std::time::Duration::from_secs(60),
+        whitelist: HashSet::new(),
+        blacklist: HashSet::new(),
+    });
+
     // 5. إنشاء محرك التحقق المتقاطع (CrossValidationEngine)
     // 5. Create the cross-validation engine
     let x_engine = Arc::new(CrossValidationEngine::new(
@@ -199,6 +248,10 @@ async fn main() -> std::io::Result<()> {
     let app_state = web::Data::new(AppState {
         x_engine: Arc::clone(&x_engine),
         composite_verifier,
+        weather_engine,
+        jwt_manager,
+        rate_limiter,
+        alert_memory: Arc::new(mkt_ksa_geo_sec::app_state::AlertMemoryStore::new(256)),
         db_pool,
     });
 
