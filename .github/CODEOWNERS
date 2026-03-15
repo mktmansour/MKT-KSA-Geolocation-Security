@@ -1,3 +1,6 @@
+# Default ownership
+* @mktmansour
+
 # Security governance and policy
 SECURITY.md @mktmansour
 AUDIT_REPORT.md @mktmansour
@@ -21,6 +24,3 @@ src/security/ @mktmansour
 src/api/ @mktmansour
 src/db/ @mktmansour
 tests/ @mktmansour
-
-# Default ownership
-* @mktmansour
