@@ -11,25 +11,26 @@ Advanced GitHub-level verification for CI health and repository security surface
 5. Secret Scanning alerts API.
 
 ## Results
-- `gh auth status`: authenticated as `mktmansour`.
+- `gh auth status`: authenticated as `mktmansour` using stored GitHub CLI credentials.
 - Repository visibility and default branch confirmed (`PUBLIC`, `main`).
-- Recent workflows mostly green (`Rust`, `Clippy`, `rust-clippy analyze`) with latest runs successful.
-- Code Scanning, Dependabot, and Secret Scanning APIs returned `403 Resource not accessible by integration` for the current token scope.
+- Recent workflow runs are mostly successful, with one recent `Clippy` workflow failure (`run id: 23102059602`, job: `clippy`).
+- Code Scanning API is accessible and returns `8` open alerts:
+	- `6` alerts with rule `cpp/weak-cryptographic-algorithm` (severity: `error`).
+	- `2` alerts with rule `actions/missing-workflow-permissions` (severity: `warning`).
+- Dependabot alerts API is accessible and returns `NONE` (no open alerts).
+- Secret Scanning alerts API returns `404` because Secret Scanning is disabled for this repository.
 
 ## Security Interpretation
-- CI health signal is positive from recent completed successful workflows.
-- Security-alert APIs are not readable with current integration token; this is a permissions limitation, not necessarily zero-alert proof.
+- CI health is generally good, but there is an unresolved recent `Clippy` failure that should be reviewed.
+- Dependency vulnerability posture is currently clean at GitHub level (no open Dependabot alerts).
+- The dominant open GitHub security risk is in Code Scanning alerts and should be triaged as priority.
+- Secret leak detection at GitHub level is currently inactive because Secret Scanning is disabled.
 
-## Recommended GitHub Permission Upgrade
-Grant token scopes/repo permissions for:
-- Code scanning alerts (read)
-- Dependabot alerts (read)
-- Secret scanning alerts (read)
-
-After permission update, re-run:
-- `gh api repos/<owner>/<repo>/code-scanning/alerts`
-- `gh api repos/<owner>/<repo>/dependabot/alerts`
-- `gh api repos/<owner>/<repo>/secret-scanning/alerts`
+## Recommended GitHub Actions
+1. Triage and remediate Code Scanning alerts `#1` to `#8`.
+2. Add explicit workflow permissions where needed to close `actions/missing-workflow-permissions` warnings.
+3. Enable Secret Scanning in repository Security settings to activate leaked-secret detection.
+4. Re-run failed `Clippy` workflow and enforce passing status on `main`.
 
 ## Local Compensating Controls Executed
 - `cargo audit --deny warnings`
@@ -37,4 +38,4 @@ After permission update, re-run:
 - Full integration tests including strict API security surface checks and burst rate-limit behavior.
 
 ## Conclusion
-The project passed strict local security and integration gates. GitHub advanced security APIs require elevated read permissions for complete remote alert visibility.
+The project passes strict local security and integration gates, with clean Dependabot status. Remaining GitHub-side gaps are the open Code Scanning findings, one recent Clippy CI failure, and disabled Secret Scanning coverage.
