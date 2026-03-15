@@ -35,16 +35,19 @@ Production-grade geolocation and behavioral security system for Rust services an
 
 ## Contents
 
-- [1. What This Project Does](#1-what-this-project-does)
-- [2. Runtime and Security Posture](#2-runtime-and-security-posture)
-- [3. Complete Repository Role Map](#3-complete-repository-role-map)
-- [4. Module Interactions and Control Flow](#4-module-interactions-and-control-flow)
-- [5. API Reference and Invocation](#5-api-reference-and-invocation)
-- [6. Environment Variables](#6-environment-variables)
-- [7. Build, Run, and Validate](#7-build-run-and-validate)
-- [8. Current Hardening and Fix History](#8-current-hardening-and-fix-history)
-- [9. Library Integration and C-ABI](#9-library-integration-and-c-abi)
-- [10. Detailed Folder and File Responsibilities](#10-detailed-folder-and-file-responsibilities)
+- 🧭 [1. What This Project Does](#1-what-this-project-does)
+- 🎯 [1.1 Project Goal](#11-project-goal)
+- ⭐ [1.2 Key Features](#12-key-features)
+- 🏛️ [1.3 Target Audiences](#13-target-audiences)
+- 🛡️ [2. Runtime and Security Posture](#2-runtime-and-security-posture)
+- 🗂️ [3. Complete Repository Role Map](#3-complete-repository-role-map)
+- 🔄 [4. Module Interactions and Control Flow](#4-module-interactions-and-control-flow)
+- 🌐 [5. API Reference and Invocation](#5-api-reference-and-invocation)
+- 🔐 [6. Environment Variables](#6-environment-variables)
+- ✅ [7. Build, Run, and Validate](#7-build-run-and-validate)
+- 🧱 [8. Current Hardening and Fix History](#8-current-hardening-and-fix-history)
+- 🔌 [9. Library Integration and C-ABI](#9-library-integration-and-c-abi)
+- 📚 [10. Detailed Folder and File Responsibilities](#10-detailed-folder-and-file-responsibilities)
 
 ## 1. What This Project Does
 
@@ -61,6 +64,28 @@ Production-grade geolocation and behavioral security system for Rust services an
 - Smart composite access verification
 
 The API layer is served through Actix Web, while core engines are reusable as a Rust library.
+
+### 1.1 Project Goal
+
+- Provide a strict, engineering-grade geolocation security core for sovereign and enterprise workloads.
+- Reduce fraud risk by combining multiple signals into one verifiable trust decision.
+- Maintain a deterministic and auditable security posture under production pressure.
+
+### 1.2 Key Features
+
+- Multi-signal trust evaluation: location, behavior, device, network, sensors, weather.
+- Centralized authorization controls: JWT validation + per-IP rate limiting.
+- Hardened runtime policy: SQLite-only profile with migration-managed schema.
+- Security-safe secret handling and runtime-generated internal engine keys.
+- API + library dual usage model for service integration and internal embedding.
+
+### 1.3 Target Audiences
+
+- Sovereign and government entities.
+- Financial institutions and digital payment systems.
+- Critical infrastructure operators (energy, transport, utilities).
+- Healthcare and identity-sensitive platforms.
+- Security engineering teams building smart-city and fraud-resilient services.
 
 ## 2. Runtime and Security Posture
 

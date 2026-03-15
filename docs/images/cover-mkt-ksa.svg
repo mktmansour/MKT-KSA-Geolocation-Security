@@ -1,39 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="620" viewBox="0 0 1600 620" role="img" aria-label="MKT KSA Integrated Cyber Defense Platform cover">
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="620" viewBox="0 0 1600 620" role="img" aria-label="MKT KSA Geolocation Security cover">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#031b16"/>
-      <stop offset="55%" stop-color="#06362d"/>
-      <stop offset="100%" stop-color="#0b5848"/>
+      <stop offset="0%" stop-color="#04143d"/>
+      <stop offset="60%" stop-color="#0a3f85"/>
+      <stop offset="100%" stop-color="#0f65c5"/>
     </linearGradient>
-    <linearGradient id="neon" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#49f7a0"/>
-      <stop offset="100%" stop-color="#8bffcf"/>
-    </linearGradient>
-    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#d4b168"/>
-      <stop offset="100%" stop-color="#9f7a2f"/>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#16d2ff"/>
+      <stop offset="100%" stop-color="#5db2ff"/>
     </linearGradient>
   </defs>
   <rect width="1600" height="620" fill="url(#bg)"/>
-  <g stroke="#79ffd0" stroke-opacity="0.2" stroke-width="1" fill="none">
-    <path d="M0 520 L1600 520"/>
-    <path d="M0 560 L1600 560"/>
-    <path d="M0 600 L1600 600"/>
-    <path d="M200 420 L200 620"/><path d="M360 420 L360 620"/><path d="M520 420 L520 620"/>
-    <path d="M680 420 L680 620"/><path d="M840 420 L840 620"/><path d="M1000 420 L1000 620"/>
-    <path d="M1160 420 L1160 620"/><path d="M1320 420 L1320 620"/><path d="M1480 420 L1480 620"/>
+  <g fill="#0c3472" fill-opacity="0.5">
+    <rect x="840" y="250" width="62" height="260" rx="8"/><rect x="918" y="220" width="74" height="290" rx="8"/>
+    <rect x="1010" y="270" width="68" height="240" rx="8"/><rect x="1095" y="190" width="92" height="320" rx="8"/>
+    <rect x="1210" y="240" width="72" height="270" rx="8"/><rect x="1300" y="200" width="86" height="310" rx="8"/>
   </g>
-  <circle cx="800" cy="130" r="240" fill="#84ffd5" fill-opacity="0.08"/>
-  <circle cx="800" cy="130" r="300" fill="none" stroke="#8bffcf" stroke-opacity="0.18" stroke-width="2"/>
-  <g transform="translate(655,70)">
-    <path d="M145 16 L255 48 V176 C255 272 196 350 145 377 C94 350 35 272 35 176 V48 Z" fill="#0d3f34" stroke="url(#gold)" stroke-width="10"/>
-    <path d="M145 46 L227 70 V172 C227 246 182 309 145 331 C108 309 63 246 63 172 V70 Z" fill="none" stroke="#79ffd0" stroke-opacity="0.5" stroke-width="3"/>
-    <path d="M95 190 L129 225 L204 144" fill="none" stroke="#79ffd0" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="1395" cy="120" r="180" fill="#ffffff" fill-opacity="0.06"/>
+  <path d="M0 470 C 350 430, 700 520, 980 460 C 1240 410, 1450 500, 1600 460 L1600 620 L0 620 Z" fill="#0b2c61" fill-opacity="0.68"/>
+  <g transform="translate(74,95)">
+    <path d="M90 18 L150 35 V105 C150 160 117 203 90 218 C63 203 30 160 30 105 V35 Z" fill="none" stroke="#ffffff" stroke-width="12"/>
+    <path d="M58 108 L81 130 L124 84" fill="none" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
-  <rect x="230" y="210" width="1140" height="115" rx="14" fill="#000000" fill-opacity="0.35"/>
-  <text x="800" y="258" text-anchor="middle" fill="#ffffff" font-size="58" font-weight="700" font-family="Segoe UI, Tahoma, sans-serif">MKT KSA INTEGRATED</text>
-  <text x="800" y="315" text-anchor="middle" fill="#ffffff" font-size="58" font-weight="700" font-family="Segoe UI, Tahoma, sans-serif">CYBER DEFENSE PLATFORM</text>
-  <text x="800" y="355" text-anchor="middle" fill="#cbffe9" font-size="30" font-family="Segoe UI, Tahoma, sans-serif">Engineering Reference: Sovereign Security Architecture (Core + Security)</text>
-  <text x="800" y="418" text-anchor="middle" fill="#f2f8f6" font-size="50" font-weight="700" font-family="Segoe UI, Tahoma, sans-serif">COMING SOON 2026</text>
-  <rect x="300" y="448" width="1000" height="8" rx="4" fill="url(#neon)"/>
+  <text x="250" y="190" fill="#ffffff" font-size="82" font-weight="700" font-family="Segoe UI, Tahoma, sans-serif">MKT KSA</text>
+  <text x="250" y="275" fill="#e9f6ff" font-size="74" font-weight="700" font-family="Segoe UI, Tahoma, sans-serif">Geolocation</text>
+  <text x="250" y="355" fill="#e9f6ff" font-size="74" font-weight="700" font-family="Segoe UI, Tahoma, sans-serif">Security</text>
+  <rect x="250" y="395" width="760" height="8" rx="4" fill="url(#line)"/>
 </svg>
