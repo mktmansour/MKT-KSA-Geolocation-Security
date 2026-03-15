@@ -24,7 +24,8 @@ Production-grade geolocation and behavioral security system for Rust services an
 - This repository is now in **security-maintenance mode**.
 - **No new feature development is planned** in this repository.
 - Future updates here will be limited to security fixes and critical stability corrections.
-- A new, more sovereign successor project (with fewer external dependencies) is being prepared and will be announced soon.
+- A new sovereign successor platform is under development and planned for announcement in 2026.
+- The successor project is being built from scratch with **zero external dependencies** and sovereign internal packages.
 
 ## Community Note
 

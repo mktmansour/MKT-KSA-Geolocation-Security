@@ -1,24 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="320" viewBox="0 0 1600 320" role="img" aria-label="Section 06 - Environment Variables banner">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#04173a"/>
-      <stop offset="100%" stop-color="#0a4f9d"/>
+      <stop offset="0%" stop-color="#031b16"/>
+      <stop offset="100%" stop-color="#0a4a3c"/>
     </linearGradient>
-    <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#10d6c5"/>
-      <stop offset="100%" stop-color="#2e8fff"/>
+    <linearGradient id="neon" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#49f7a0"/>
+      <stop offset="100%" stop-color="#9bffd7"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#d7b76f"/>
+      <stop offset="100%" stop-color="#987225"/>
     </linearGradient>
   </defs>
   <rect width="1600" height="320" fill="url(#bg)"/>
-  <circle cx="1370" cy="75" r="170" fill="#ffffff" fill-opacity="0.06"/>
-  <g fill="#0c3c77" fill-opacity="0.55">
-    <rect x="1180" y="120" width="55" height="150" rx="8"/>
-    <rect x="1248" y="85" width="70" height="185" rx="8"/>
-    <rect x="1332" y="105" width="62" height="165" rx="8"/>
-    <rect x="1408" y="75" width="78" height="195" rx="8"/>
+  <circle cx="1320" cy="68" r="150" fill="#90ffd8" fill-opacity="0.08"/>
+  <g stroke="#8bffcf" stroke-opacity="0.18" stroke-width="1" fill="none">
+    <path d="M0 256 L1600 256"/><path d="M0 288 L1600 288"/>
+    <path d="M980 130 L980 320"/><path d="M1120 130 L1120 320"/><path d="M1260 130 L1260 320"/><path d="M1400 130 L1400 320"/>
   </g>
-  <path d="M0 248 C 250 214, 560 292, 850 248 C 1130 206, 1380 286, 1600 242 L1600 320 L0 320 Z" fill="#0b376f" fill-opacity="0.7"/>
-  <rect x="72" y="62" width="12" height="192" rx="6" fill="url(#line)"/>
-  <text x="112" y="125" fill="#cdeafd" font-size="26" font-family="Segoe UI, Tahoma, sans-serif" letter-spacing="1.2">MKT KSA GEO SECURITY</text>
-  <text x="112" y="198" fill="#ffffff" font-size="52" font-family="Segoe UI, Tahoma, sans-serif" font-weight="700">Section 06 - Environment Variables</text>
+  <g transform="translate(70,56)">
+    <path d="M62 10 L108 24 V80 C108 124 81 159 62 173 C43 159 16 124 16 80 V24 Z" fill="#0c3c32" stroke="url(#gold)" stroke-width="5"/>
+    <path d="M42 83 L56 97 L83 66" fill="none" stroke="#9bffd7" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <rect x="190" y="60" width="8" height="200" rx="4" fill="url(#neon)"/>
+  <text x="222" y="120" fill="#cfffe9" font-size="24" font-family="Segoe UI, Tahoma, sans-serif" letter-spacing="1.2">MKT KSA INTEGRATED CYBER DEFENSE</text>
+  <text x="222" y="188" fill="#ffffff" font-size="46" font-family="Segoe UI, Tahoma, sans-serif" font-weight="700">Section 06 - Environment Variables</text>
 </svg>
