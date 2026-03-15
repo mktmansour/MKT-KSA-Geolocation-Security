@@ -8,7 +8,7 @@ Production-grade geolocation and behavioral security system for Rust services an
 [![Docs.rs](https://img.shields.io/docsrs/MKT_KSA_Geolocation_Security?style=for-the-badge)](https://docs.rs/MKT_KSA_Geolocation_Security)
 [![Downloads](https://img.shields.io/crates/d/MKT_KSA_Geolocation_Security.svg?style=for-the-badge)](https://crates.io/crates/MKT_KSA_Geolocation_Security)
 
-![MKT KSA Geolocation Security Cover](docs/images/cover-mkt-ksa.svg)
+![MKT KSA Geolocation Security Cover](docs/images/mkt_ksa.png)
 
 ## Latest Status and Strategic Notice (2026-03-15)
 
@@ -26,6 +26,10 @@ Production-grade geolocation and behavioral security system for Rust services an
 - Future updates here will be limited to security fixes and critical stability corrections.
 - A new sovereign successor platform is under development and planned for announcement in 2026.
 - The successor project is being built from scratch with **zero external dependencies** and sovereign internal packages.
+
+### Successor Program Announcement
+
+![MKT KSA Integrated Cyber Defense Platform Announcement](docs/images/2026mkt.png)
 
 ## Community Note
 

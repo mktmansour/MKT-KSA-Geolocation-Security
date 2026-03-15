@@ -8,7 +8,7 @@
 [![Docs.rs](https://img.shields.io/docsrs/MKT_KSA_Geolocation_Security?style=for-the-badge)](https://docs.rs/MKT_KSA_Geolocation_Security)
 [![Downloads](https://img.shields.io/crates/d/MKT_KSA_Geolocation_Security.svg?style=for-the-badge)](https://crates.io/crates/MKT_KSA_Geolocation_Security)
 
-![MKT KSA Geolocation Security Cover](docs/images/cover-mkt-ksa.svg)
+![MKT KSA Geolocation Security Cover](docs/images/mkt_ksa.png)
 
 ## آخر التحديثات والتنبيه الاستراتيجي (2026-03-15)
 
@@ -26,6 +26,10 @@
 - التحديثات القادمة هنا ستكون فقط: إصلاحات أمنية وتصحيحات استقرار حرجة.
 - يجري تطوير مشروع خليفة سيادي جديد وسيتم الإعلان عنه في 2026.
 - المشروع الخليفة يُبنى من الصفر بالكامل مع **صفر تبعيات خارجية** وحزم سيادية داخلية.
+
+### إعلان برنامج المشروع الخليفة
+
+![إعلان MKT KSA Integrated Cyber Defense Platform](docs/images/2026mkt.png)
 
 ## ملاحظة مجتمعية
 
