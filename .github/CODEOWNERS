@@ -3,7 +3,6 @@
 
 # Security governance and policy
 SECURITY.md @mktmansour
-AUDIT_REPORT.md @mktmansour
 docs/SECURITY_HARDENING_*.md @mktmansour
 docs/GITHUB_ADVANCED_SCAN_*.md @mktmansour
 

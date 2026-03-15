@@ -50,6 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added hardening report: `docs/SECURITY_HARDENING_2026-03-15.md`.
 - Added advanced GitHub scan report: `docs/GITHUB_ADVANCED_SCAN_2026-03-15.md`.
+- Removed outdated legacy documentation (`AUDIT_REPORT.md`, `EVALUATION.md`, `docs/QA_Audit_Clippy_and_Dependencies.md`) to eliminate stale architecture/security claims.
+- Added active repository file-role map: `docs/REPOSITORY_FILE_ROLES_2026-03-15.md`.
 
 ---
 
