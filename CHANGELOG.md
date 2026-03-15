@@ -16,17 +16,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Constrained CodeQL scanning to repository-relevant scope and eliminated stale false-positive alert noise.
 - Updated SECURITY.md to a strict language-agnostic security baseline with enforceable CI and incident controls.
 - Hardened Dockerfile to run as a non-root user to eliminate container privilege risk.
-- Upgraded `jsonwebtoken` to `10.3.0` with explicit `rust_crypto` provider to remediate `CVE-2026-25537`.
+- Upgraded `jsonwebtoken` to `10.3.0` with explicit crypto provider to remediate `CVE-2026-25537`.
 - Enabled GitHub Secret Scanning and Push Protection at repository level.
 - Hardened default-branch ruleset: zero bypass actors, required review approval, squash-only merge, required signatures, and enforced code-owner review.
 - Strengthened CODEOWNERS mapping for security-critical paths and added strict PR security checklist template.
 
-### Security
+### Security (Runtime)
 
 - Replaced legacy MySQL runtime posture with hardened SQLite backend (`tokio-rusqlite`) in active profile.
 - Unified JWT verification into centralized API path and removed hardcoded secrets from handlers.
 - Enforced per-IP rate limiting uniformly through shared API authorization flow.
 - Closed unauthenticated access on `smart_access_verify` endpoint.
+- Removed hardcoded runtime engine secret literals from startup path and switched to secure OS-random secret generation.
+- Made bootstrap admin seed opt-in using `BOOTSTRAP_ADMIN_PASSWORD_HASH` only.
 
 ### Fixed
 
@@ -52,6 +54,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added advanced GitHub scan report: `docs/GITHUB_ADVANCED_SCAN_2026-03-15.md`.
 - Removed outdated legacy documentation (`AUDIT_REPORT.md`, `EVALUATION.md`, `docs/QA_Audit_Clippy_and_Dependencies.md`) to eliminate stale architecture/security claims.
 - Added active repository file-role map: `docs/REPOSITORY_FILE_ROLES_2026-03-15.md`.
+- Rebuilt `README.md` and `README_AR.md` with strict sectioned engineering structure.
+- Added section-level visual SVG banners under `docs/images/banners/` for professional documentation layout.
 
 ---
 

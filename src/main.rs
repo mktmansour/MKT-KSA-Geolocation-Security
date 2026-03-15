@@ -51,6 +51,7 @@ use mkt_ksa_geo_sec::security::ratelimit::RateLimitConfig;
 use mkt_ksa_geo_sec::security::ratelimit::RateLimiter;
 use mkt_ksa_geo_sec::security::secret::SecureBytes;
 use mkt_ksa_geo_sec::security::secret::SecureString;
+use rand::RngCore;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::sync::Arc;
@@ -81,6 +82,12 @@ use mkt_ksa_geo_sec::core::sensors_analyzer::SensorsAnalyzerEngine;
 // Arabic: تعريف الحالة المشتركة للتطبيق مع اتصال قاعدة البيانات اختياري
 // English: Shared application state with optional database connection
 use mkt_ksa_geo_sec::AppState;
+
+fn random_secret_bytes(len: usize) -> SecureBytes {
+    let mut bytes = vec![0_u8; len];
+    rand::rngs::OsRng.fill_bytes(&mut bytes);
+    SecureBytes::new(bytes)
+}
 
 // Arabic: نقطة الدخول الرئيسية للتطبيق
 // English: Main entry point for the application
@@ -122,16 +129,24 @@ async fn main() -> std::io::Result<()> {
             .await
             .expect("Failed to initialize SQLite schema");
 
-        let seeded_user = User {
-            id: uuid::Uuid::new_v4(),
-            username: "bootstrap-admin".to_string(),
-            email: "admin@example.local".to_string(),
-            password_hash: "REPLACE_ME_WITH_HASH".to_string(),
-            status: "active".to_string(),
-            created_at: chrono::Utc::now().naive_utc(),
-            last_login_at: Some(chrono::Utc::now().naive_utc()),
-        };
-        let _ = crud::upsert_user(&pool, &seeded_user).await;
+        if let Ok(bootstrap_hash) = std::env::var("BOOTSTRAP_ADMIN_PASSWORD_HASH") {
+            if !bootstrap_hash.trim().is_empty() {
+                let seeded_user = User {
+                    id: uuid::Uuid::new_v4(),
+                    username: "bootstrap-admin".to_string(),
+                    email: "admin@example.local".to_string(),
+                    password_hash: bootstrap_hash,
+                    status: "active".to_string(),
+                    created_at: chrono::Utc::now().naive_utc(),
+                    last_login_at: Some(chrono::Utc::now().naive_utc()),
+                };
+                let _ = crud::upsert_user(&pool, &seeded_user).await;
+            } else {
+                println!(
+                    "⚠️  BOOTSTRAP_ADMIN_PASSWORD_HASH is empty. Skipping bootstrap admin seed."
+                );
+            }
+        }
 
         Some(pool)
     } else {
@@ -160,7 +175,7 @@ async fn main() -> std::io::Result<()> {
     };
 
     let geo_resolver = Arc::new(GeoResolver::new(
-        SecureBytes::new(vec![1; 32]),
+        random_secret_bytes(32),
         Arc::new(GeoAiModel),
         Arc::new(DefaultBlockchain),
         true,
@@ -193,7 +208,7 @@ async fn main() -> std::io::Result<()> {
     });
 
     let sensors_engine = Arc::new(SensorsAnalyzerEngine::new(
-        SecureBytes::new(vec![42; 48]),
+        random_secret_bytes(48),
         Arc::new(mkt_ksa_geo_sec::core::sensors_analyzer::DefaultSensorAnomalyDetector::default()),
     ));
 
@@ -201,7 +216,7 @@ async fn main() -> std::io::Result<()> {
         mkt_ksa_geo_sec::core::network_analyzer::ProxyDatabase::default(),
     ));
     let network_engine = Arc::new(NetworkAnalyzer::new(
-        SecureBytes::new(vec![42; 32]),
+        random_secret_bytes(32),
         proxy_db,
         geo_reader.clone(),
         Arc::new(mkt_ksa_geo_sec::core::network_analyzer::DefaultAiNetworkAnalyzer),
@@ -233,7 +248,7 @@ async fn main() -> std::io::Result<()> {
         Arc::clone(&sensors_engine),
         Arc::clone(&network_engine),
         scoring_strategy,
-        SecureBytes::new(b"a_very_secret_final_verdict_key".to_vec()),
+        random_secret_bytes(32),
     ));
 
     // 6. إنشاء محرك التحقق المركب للمدن الذكية
