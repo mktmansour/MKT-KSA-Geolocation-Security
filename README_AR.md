@@ -7,6 +7,10 @@
 [![Crates.io](https://img.shields.io/crates/v/MKT_KSA_Geolocation_Security.svg?style=for-the-badge)](https://crates.io/crates/MKT_KSA_Geolocation_Security)
 [![Docs.rs](https://img.shields.io/docsrs/MKT_KSA_Geolocation_Security?style=for-the-badge)](https://docs.rs/MKT_KSA_Geolocation_Security)
 [![Downloads](https://img.shields.io/crates/d/MKT_KSA_Geolocation_Security.svg?style=for-the-badge)](https://crates.io/crates/MKT_KSA_Geolocation_Security)
+[![CodeQL](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/codeql.yml/badge.svg?branch=main&event=push)](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/codeql.yml)
+[![Security Gates](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/security-gates.yml/badge.svg?branch=main&event=push)](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/security-gates.yml)
+![License](https://img.shields.io/badge/license-Apache--2.0-blue?style=for-the-badge)
+![Edition](https://img.shields.io/badge/edition-2021-0A66C2?style=for-the-badge)
 
 ![MKT KSA Geolocation Security Cover](docs/images/mkt_ksa.png)
 
@@ -39,20 +43,20 @@
 
 ## المحتويات
 
-- 🧭 [1. وظيفة المشروع](#1-وظيفة-المشروع)
-- 🎯 [1.1 هدف المشروع](#11-هدف-المشروع)
-- ⭐ [1.2 مميزات المشروع](#12-مميزات-المشروع)
-- 🏛️ [1.3 الجهات المستهدفة](#13-الجهات-المستهدفة)
-- 🛡️ [2. الوضع التشغيلي والأمني](#2-الوضع-التشغيلي-والأمني)
-- 🗂️ [3. خريطة أدوار المستودع كاملة](#3-خريطة-أدوار-المستودع-كاملة)
-- 🔄 [4. الترابط وتدفق التحكم](#4-الترابط-وتدفق-التحكم)
-- 🏗️ [4.1 مخطط هيكلة المشروع](#41-مخطط-هيكلة-المشروع)
-- 🌐 [5. مرجع API وطرق الاستدعاء](#5-مرجع-api-وطرق-الاستدعاء)
-- 🔐 [6. متغيرات البيئة](#6-متغيرات-البيئة)
-- ✅ [7. البناء والتشغيل والتحقق](#7-البناء-والتشغيل-والتحقق)
-- 🧱 [8. آخر الإصلاحات والتقويات](#8-آخر-الإصلاحات-والتقويات)
-- 🔌 [9. الاستخدام كمكتبة و C-ABI](#9-الاستخدام-كمكتبة-و-c-abi)
-- 📚 [10. تفاصيل مسؤوليات المجلدات والملفات](#10-تفاصيل-مسؤوليات-المجلدات-والملفات)
+- ◈ [1. وظيفة المشروع](#1-وظيفة-المشروع)
+- ◈ [1.1 هدف المشروع](#11-هدف-المشروع)
+- ◈ [1.2 مميزات المشروع](#12-مميزات-المشروع)
+- ◈ [1.3 الجهات المستهدفة](#13-الجهات-المستهدفة)
+- ◈ [2. الوضع التشغيلي والأمني](#2-الوضع-التشغيلي-والأمني)
+- ◈ [3. خريطة أدوار المستودع كاملة](#3-خريطة-أدوار-المستودع-كاملة)
+- ◈ [4. الترابط وتدفق التحكم](#4-الترابط-وتدفق-التحكم)
+- ◈ [4.1 مخطط هيكلة المشروع](#41-مخطط-هيكلة-المشروع)
+- ◈ [5. مرجع API وطرق الاستدعاء](#5-مرجع-api-وطرق-الاستدعاء)
+- ◈ [6. متغيرات البيئة](#6-متغيرات-البيئة)
+- ◈ [7. البناء والتشغيل والتحقق](#7-البناء-والتشغيل-والتحقق)
+- ◈ [8. آخر الإصلاحات والتقويات](#8-آخر-الإصلاحات-والتقويات)
+- ◈ [9. الاستخدام كمكتبة و C-ABI](#9-الاستخدام-كمكتبة-و-c-abi)
+- ◈ [10. تفاصيل مسؤوليات المجلدات والملفات](#10-تفاصيل-مسؤوليات-المجلدات-والملفات)
 
 ## 1. وظيفة المشروع
 
@@ -177,6 +181,16 @@
 ![مخطط هيكلة المشروع](docs/images/project-architecture.svg)
 
 هذا المخطط يمثل البنية الفعلية للمستودع من طبقة الدخول وواجهات API حتى طبقات الأمان والمحركات الأساسية ووحدات البيانات والمساندة.
+
+```mermaid
+flowchart LR
+  A[src/main.rs + src/api/mod.rs] --> B[src/api/* handlers]
+  B --> C[src/security/*]
+  B --> D[src/core/*]
+  D --> E[src/db/*]
+  D --> F[src/utils/*]
+  E --> G[SQLite + migrations]
+```
 
 ## 5. مرجع API وطرق الاستدعاء
 

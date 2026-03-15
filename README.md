@@ -7,6 +7,10 @@ Production-grade geolocation and behavioral security system for Rust services an
 [![Crates.io](https://img.shields.io/crates/v/MKT_KSA_Geolocation_Security.svg?style=for-the-badge)](https://crates.io/crates/MKT_KSA_Geolocation_Security)
 [![Docs.rs](https://img.shields.io/docsrs/MKT_KSA_Geolocation_Security?style=for-the-badge)](https://docs.rs/MKT_KSA_Geolocation_Security)
 [![Downloads](https://img.shields.io/crates/d/MKT_KSA_Geolocation_Security.svg?style=for-the-badge)](https://crates.io/crates/MKT_KSA_Geolocation_Security)
+[![CodeQL](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/codeql.yml/badge.svg?branch=main&event=push)](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/codeql.yml)
+[![Security Gates](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/security-gates.yml/badge.svg?branch=main&event=push)](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/security-gates.yml)
+![License](https://img.shields.io/badge/license-Apache--2.0-blue?style=for-the-badge)
+![Edition](https://img.shields.io/badge/edition-2021-0A66C2?style=for-the-badge)
 
 ![MKT KSA Geolocation Security Cover](docs/images/mkt_ksa.png)
 
@@ -39,20 +43,20 @@ Production-grade geolocation and behavioral security system for Rust services an
 
 ## Contents
 
-- 🧭 [1. What This Project Does](#1-what-this-project-does)
-- 🎯 [1.1 Project Goal](#11-project-goal)
-- ⭐ [1.2 Key Features](#12-key-features)
-- 🏛️ [1.3 Target Audiences](#13-target-audiences)
-- 🛡️ [2. Runtime and Security Posture](#2-runtime-and-security-posture)
-- 🗂️ [3. Complete Repository Role Map](#3-complete-repository-role-map)
-- 🔄 [4. Module Interactions and Control Flow](#4-module-interactions-and-control-flow)
-- 🏗️ [4.1 Project Architecture Diagram](#41-project-architecture-diagram)
-- 🌐 [5. API Reference and Invocation](#5-api-reference-and-invocation)
-- 🔐 [6. Environment Variables](#6-environment-variables)
-- ✅ [7. Build, Run, and Validate](#7-build-run-and-validate)
-- 🧱 [8. Current Hardening and Fix History](#8-current-hardening-and-fix-history)
-- 🔌 [9. Library Integration and C-ABI](#9-library-integration-and-c-abi)
-- 📚 [10. Detailed Folder and File Responsibilities](#10-detailed-folder-and-file-responsibilities)
+- ◈ [1. What This Project Does](#1-what-this-project-does)
+- ◈ [1.1 Project Goal](#11-project-goal)
+- ◈ [1.2 Key Features](#12-key-features)
+- ◈ [1.3 Target Audiences](#13-target-audiences)
+- ◈ [2. Runtime and Security Posture](#2-runtime-and-security-posture)
+- ◈ [3. Complete Repository Role Map](#3-complete-repository-role-map)
+- ◈ [4. Module Interactions and Control Flow](#4-module-interactions-and-control-flow)
+- ◈ [4.1 Project Architecture Diagram](#41-project-architecture-diagram)
+- ◈ [5. API Reference and Invocation](#5-api-reference-and-invocation)
+- ◈ [6. Environment Variables](#6-environment-variables)
+- ◈ [7. Build, Run, and Validate](#7-build-run-and-validate)
+- ◈ [8. Current Hardening and Fix History](#8-current-hardening-and-fix-history)
+- ◈ [9. Library Integration and C-ABI](#9-library-integration-and-c-abi)
+- ◈ [10. Detailed Folder and File Responsibilities](#10-detailed-folder-and-file-responsibilities)
 
 ## 1. What This Project Does
 
@@ -177,6 +181,16 @@ The API layer is served through Actix Web, while core engines are reusable as a 
 ![Project Architecture Diagram](docs/images/project-architecture.svg)
 
 The diagram maps real repository structure from entry and API layers to security controls, core engines, and data/support modules.
+
+```mermaid
+flowchart LR
+  A[src/main.rs + src/api/mod.rs] --> B[src/api/* handlers]
+  B --> C[src/security/*]
+  B --> D[src/core/*]
+  D --> E[src/db/*]
+  D --> F[src/utils/*]
+  E --> G[SQLite + migrations]
+```
 
 ## 5. API Reference and Invocation
 
