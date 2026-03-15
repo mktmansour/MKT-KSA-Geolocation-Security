@@ -1,19 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="320" viewBox="0 0 1600 320" role="img" aria-label="Documentation section banner">
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="320" viewBox="0 0 1600 320" role="img" aria-label="Section 02 - Runtime and Security Posture banner">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0b1f2a"/>
-      <stop offset="100%" stop-color="#124559"/>
+      <stop offset="0%" stop-color="#04173a"/>
+      <stop offset="100%" stop-color="#0a4f9d"/>
     </linearGradient>
-    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#00c2a8"/>
-      <stop offset="100%" stop-color="#2f80ed"/>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#10d6c5"/>
+      <stop offset="100%" stop-color="#2e8fff"/>
     </linearGradient>
   </defs>
   <rect width="1600" height="320" fill="url(#bg)"/>
-  <rect x="0" y="0" width="1600" height="8" fill="url(#accent)"/>
-  <circle cx="1360" cy="80" r="220" fill="#ffffff" fill-opacity="0.06"/>
-  <circle cx="1240" cy="260" r="180" fill="#ffffff" fill-opacity="0.04"/>
-  <path d="M0 250 C 300 210, 500 280, 900 220 C 1200 180, 1400 260, 1600 220 L1600 320 L0 320 Z" fill="#ffffff" fill-opacity="0.06"/>
-  <text x="84" y="140" fill="#cdeffd" font-size="28" font-family="Segoe UI, Tahoma, sans-serif" letter-spacing="1.5">MKT KSA GEO SECURITY</text>
-  <text x="84" y="208" fill="#ffffff" font-size="52" font-family="Segoe UI, Tahoma, sans-serif" font-weight="700">Section 02</text>
+  <circle cx="1370" cy="75" r="170" fill="#ffffff" fill-opacity="0.06"/>
+  <g fill="#0c3c77" fill-opacity="0.55">
+    <rect x="1180" y="120" width="55" height="150" rx="8"/>
+    <rect x="1248" y="85" width="70" height="185" rx="8"/>
+    <rect x="1332" y="105" width="62" height="165" rx="8"/>
+    <rect x="1408" y="75" width="78" height="195" rx="8"/>
+  </g>
+  <path d="M0 248 C 250 214, 560 292, 850 248 C 1130 206, 1380 286, 1600 242 L1600 320 L0 320 Z" fill="#0b376f" fill-opacity="0.7"/>
+  <rect x="72" y="62" width="12" height="192" rx="6" fill="url(#line)"/>
+  <text x="112" y="125" fill="#cdeafd" font-size="26" font-family="Segoe UI, Tahoma, sans-serif" letter-spacing="1.2">MKT KSA GEO SECURITY</text>
+  <text x="112" y="198" fill="#ffffff" font-size="52" font-family="Segoe UI, Tahoma, sans-serif" font-weight="700">Section 02 - Runtime and Security Posture</text>
 </svg>
