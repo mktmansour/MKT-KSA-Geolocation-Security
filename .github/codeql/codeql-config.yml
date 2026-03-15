@@ -1,0 +1,7 @@
+name: secure-scan-scope
+
+paths-ignore:
+  - .cargo-home/**
+  - target/**
+  - package/**
+  - tests/tmp/**
