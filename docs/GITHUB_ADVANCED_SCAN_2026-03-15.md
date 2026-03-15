@@ -18,19 +18,23 @@ Advanced GitHub-level verification for CI health and repository security surface
 	- Added dedicated `CodeQL` workflow constrained to repository-relevant scope.
 - Code Scanning API now returns `NONE` for open alerts.
 - Previously open legacy C/C++ alerts (`#3`..`#8`) were dismissed as `false positive` with recorded rationale because they originated from dependency cache paths (`.cargo-home`) rather than first-party source.
+- Newly detected alerts from strict gates were remediated:
+	- `dockerfile.security.missing-user.missing-user` fixed by enforcing non-root execution in `Dockerfile`.
+	- `CVE-2026-25537` fixed by upgrading `jsonwebtoken` to `10.3.0` with explicit `rust_crypto` provider.
 - Dependabot alerts API is accessible and returns `NONE` (no open alerts).
-- Secret Scanning alerts API returns `404` because Secret Scanning is disabled for this repository.
+- Secret Scanning is enabled and Push Protection is enabled.
+- Secret Scanning alerts API returns `NONE` for open alerts.
 
 ## Security Interpretation
 - Code Scanning and Dependabot are currently clean at open-alert level.
 - CI quality still depends on keeping `Clippy` passing on each push.
-- Secret leak detection at GitHub level is currently inactive because Secret Scanning is disabled.
+- Secret leak detection is active at GitHub level through Secret Scanning and Push Protection.
 
 ## Recommended GitHub Actions
-1. Enable Secret Scanning in repository Security settings to activate leaked-secret detection.
-2. Keep strict workflow permissions (`contents: read` minimum, add only required scopes per job).
-3. Keep CodeQL scope focused on first-party repository code to avoid dependency-cache noise.
-4. Re-run failed `Clippy` workflow and enforce passing status on `main`.
+1. Keep strict workflow permissions (`contents: read` minimum, add only required scopes per job).
+2. Keep CodeQL scope focused on first-party repository code to avoid dependency-cache noise.
+3. Keep Security Gates (`Semgrep`, `Gitleaks`, `Trivy`) as required checks before merge.
+4. Enforce PR-only merges and signed commits for protected branches.
 
 ## Local Compensating Controls Executed
 - `cargo audit --deny warnings`
@@ -38,4 +42,4 @@ Advanced GitHub-level verification for CI health and repository security surface
 - Full integration tests including strict API security surface checks and burst rate-limit behavior.
 
 ## Conclusion
-The project passes strict local security and integration gates, and GitHub open alerts are clean for Code Scanning and Dependabot. Remaining GitHub-side gap is disabled Secret Scanning coverage and maintaining continuous CI pass discipline.
+The project passes strict local security and integration gates, with zero open alerts across Code Scanning, Dependabot, and Secret Scanning at report time. The primary remaining discipline is to keep required checks enforced for every merge.
