@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added hardened reusable CI action for secure workspace preparation to remove duplicated workflow logic.
 - Constrained CodeQL scanning to repository-relevant scope and eliminated stale false-positive alert noise.
 - Updated SECURITY.md to a strict language-agnostic security baseline with enforceable CI and incident controls.
+- Hardened Dockerfile to run as a non-root user to eliminate container privilege risk.
+- Upgraded `jsonwebtoken` to `10.3.0` with explicit `rust_crypto` provider to remediate `CVE-2026-25537`.
+- Enabled GitHub Secret Scanning and Push Protection at repository level.
 
 ### Security
 
