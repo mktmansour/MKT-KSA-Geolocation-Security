@@ -1,7 +1,9 @@
 use actix_web::web;
 use mkt_ksa_geo_sec::app_state::AlertMemoryStore;
 use mkt_ksa_geo_sec::app_state::AppState;
-use mkt_ksa_geo_sec::core::behavior_bio::{BehaviorEngine, DefaultAnomalyDetector, DefaultBehavioralModel};
+use mkt_ksa_geo_sec::core::behavior_bio::{
+    BehaviorEngine, DefaultAnomalyDetector, DefaultBehavioralModel,
+};
 use mkt_ksa_geo_sec::core::composite_verification::CompositeVerifier;
 use mkt_ksa_geo_sec::core::cross_location::{CrossValidationEngine, DefaultScoringStrategy};
 use mkt_ksa_geo_sec::core::device_fp::{
@@ -11,8 +13,12 @@ use mkt_ksa_geo_sec::core::device_fp::{
 use mkt_ksa_geo_sec::core::geo_resolver::{
     DefaultAiModel as GeoAiModel, DefaultBlockchain, GeoReaderEnum, GeoResolver, MockGeoReader,
 };
-use mkt_ksa_geo_sec::core::network_analyzer::{DefaultAiNetworkAnalyzer, NetworkAnalyzer, ProxyDatabase};
-use mkt_ksa_geo_sec::core::sensors_analyzer::{DefaultSensorAnomalyDetector, SensorsAnalyzerEngine};
+use mkt_ksa_geo_sec::core::network_analyzer::{
+    DefaultAiNetworkAnalyzer, NetworkAnalyzer, ProxyDatabase,
+};
+use mkt_ksa_geo_sec::core::sensors_analyzer::{
+    DefaultSensorAnomalyDetector, SensorsAnalyzerEngine,
+};
 use mkt_ksa_geo_sec::core::weather_val::{OpenMeteoProvider, WeatherEngine, WeatherProvider};
 use mkt_ksa_geo_sec::db::crud;
 use mkt_ksa_geo_sec::db::models::User;

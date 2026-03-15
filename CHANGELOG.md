@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hardened Dockerfile to run as a non-root user to eliminate container privilege risk.
 - Upgraded `jsonwebtoken` to `10.3.0` with explicit `rust_crypto` provider to remediate `CVE-2026-25537`.
 - Enabled GitHub Secret Scanning and Push Protection at repository level.
+- Hardened default-branch ruleset: zero bypass actors, required review approval, squash-only merge, required signatures, and enforced code-owner review.
+- Strengthened CODEOWNERS mapping for security-critical paths and added strict PR security checklist template.
 
 ### Security
 

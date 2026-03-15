@@ -25,8 +25,8 @@
     It verifies user authorization via JWT before performing the analysis, ensuring every analysis operation is secure and reliable.
     The file is designed as a central point for any external system or user interface wishing to analyze or verify device fingerprints.
 ******************************************************************************************/
-use crate::api::BearerToken;
 use crate::api::authorize_request;
+use crate::api::BearerToken;
 use crate::AppState;
 use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
 use serde::Deserialize;

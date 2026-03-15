@@ -25,8 +25,8 @@
     and returns a JSON response with the operation status and alert data.
     The file is designed as a central point for managing security alerts, and can be integrated with a database or external notification systems in the future.
 ******************************************************************************************/
-use crate::api::BearerToken;
 use crate::api::authorize_request;
+use crate::api::BearerToken;
 use crate::db::crud;
 use crate::db::models::SecurityAlert;
 use crate::AppState;
@@ -85,7 +85,8 @@ pub async fn trigger_alert(
     app_data.alert_memory.push(alert.alert_type.clone()).await;
     if let Some(pool) = &app_data.db_pool {
         if let Err(e) = crud::create_security_alert(pool, &alert).await {
-            return HttpResponse::InternalServerError().json(format!("Failed to persist alert: {e}"));
+            return HttpResponse::InternalServerError()
+                .json(format!("Failed to persist alert: {e}"));
         }
     }
     // --- إرجاع استجابة JSON موحدة ---

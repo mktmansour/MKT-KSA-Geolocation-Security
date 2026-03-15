@@ -25,8 +25,8 @@
     It verifies user authorization via JWT before performing the analysis, ensuring every validation operation is secure and reliable.
     The file is designed as a central point for any external system or user interface wishing to validate location or detect geolocation fraud.
 ******************************************************************************************/
-use crate::api::BearerToken;
 use crate::api::authorize_request;
+use crate::api::BearerToken;
 use crate::core::behavior_bio::BehaviorInput;
 use crate::core::cross_location::CrossValidationInput;
 use crate::AppState;

@@ -100,4 +100,3 @@ pub async fn create_security_alert(
     })
     .await
 }
-

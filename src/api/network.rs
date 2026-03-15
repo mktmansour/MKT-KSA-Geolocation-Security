@@ -25,8 +25,8 @@
     The file is designed as a central point for any external system or user interface wishing to analyze or monitor network status or detect proxies/VPNs.
 ******************************************************************************************/
 
-use crate::api::BearerToken;
 use crate::api::authorize_request;
+use crate::api::BearerToken;
 use crate::core::network_analyzer::{ConnectionType, NetworkInfoProvider};
 use crate::AppState;
 use actix_web::{post, web, HttpRequest, HttpResponse, Responder};

@@ -26,8 +26,8 @@
     The file is designed as a central point for any external system or user interface wishing to display or analyze weather data.
     It can be integrated with a real weather engine or external service in the future.
 ******************************************************************************************/
-use crate::api::BearerToken;
 use crate::api::authorize_request;
+use crate::api::BearerToken;
 use crate::AppState;
 use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
 use serde::Deserialize;
