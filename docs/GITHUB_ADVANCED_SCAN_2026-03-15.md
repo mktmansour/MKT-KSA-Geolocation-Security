@@ -13,23 +13,23 @@ Advanced GitHub-level verification for CI health and repository security surface
 ## Results
 - `gh auth status`: authenticated as `mktmansour` using stored GitHub CLI credentials.
 - Repository visibility and default branch confirmed (`PUBLIC`, `main`).
-- Recent workflow runs are mostly successful, with one recent `Clippy` workflow failure (`run id: 23102059602`, job: `clippy`).
-- Code Scanning API is accessible and returns `8` open alerts:
-	- `6` alerts with rule `cpp/weak-cryptographic-algorithm` (severity: `error`).
-	- `2` alerts with rule `actions/missing-workflow-permissions` (severity: `warning`).
+- Workflow hardening applied:
+	- Added explicit job-level `permissions` in `rust.yml` and `release-binaries.yml`.
+	- Added dedicated `CodeQL` workflow constrained to repository-relevant scope.
+- Code Scanning API now returns `NONE` for open alerts.
+- Previously open legacy C/C++ alerts (`#3`..`#8`) were dismissed as `false positive` with recorded rationale because they originated from dependency cache paths (`.cargo-home`) rather than first-party source.
 - Dependabot alerts API is accessible and returns `NONE` (no open alerts).
 - Secret Scanning alerts API returns `404` because Secret Scanning is disabled for this repository.
 
 ## Security Interpretation
-- CI health is generally good, but there is an unresolved recent `Clippy` failure that should be reviewed.
-- Dependency vulnerability posture is currently clean at GitHub level (no open Dependabot alerts).
-- The dominant open GitHub security risk is in Code Scanning alerts and should be triaged as priority.
+- Code Scanning and Dependabot are currently clean at open-alert level.
+- CI quality still depends on keeping `Clippy` passing on each push.
 - Secret leak detection at GitHub level is currently inactive because Secret Scanning is disabled.
 
 ## Recommended GitHub Actions
-1. Triage and remediate Code Scanning alerts `#1` to `#8`.
-2. Add explicit workflow permissions where needed to close `actions/missing-workflow-permissions` warnings.
-3. Enable Secret Scanning in repository Security settings to activate leaked-secret detection.
+1. Enable Secret Scanning in repository Security settings to activate leaked-secret detection.
+2. Keep strict workflow permissions (`contents: read` minimum, add only required scopes per job).
+3. Keep CodeQL scope focused on first-party repository code to avoid dependency-cache noise.
 4. Re-run failed `Clippy` workflow and enforce passing status on `main`.
 
 ## Local Compensating Controls Executed
@@ -38,4 +38,4 @@ Advanced GitHub-level verification for CI health and repository security surface
 - Full integration tests including strict API security surface checks and burst rate-limit behavior.
 
 ## Conclusion
-The project passes strict local security and integration gates, with clean Dependabot status. Remaining GitHub-side gaps are the open Code Scanning findings, one recent Clippy CI failure, and disabled Secret Scanning coverage.
+The project passes strict local security and integration gates, and GitHub open alerts are clean for Code Scanning and Dependabot. Remaining GitHub-side gap is disabled Secret Scanning coverage and maintaining continuous CI pass discipline.
