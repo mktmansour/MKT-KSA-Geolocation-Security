@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- Added strict multi-language security gate workflow with Semgrep, Gitleaks, and Trivy SARIF upload.
+- Added hardened reusable CI action for secure workspace preparation to remove duplicated workflow logic.
+- Constrained CodeQL scanning to repository-relevant scope and eliminated stale false-positive alert noise.
+- Updated SECURITY.md to a strict language-agnostic security baseline with enforceable CI and incident controls.
+
+### Security
+
 - Replaced legacy MySQL runtime posture with hardened SQLite backend (`tokio-rusqlite`) in active profile.
 - Unified JWT verification into centralized API path and removed hardcoded secrets from handlers.
 - Enforced per-IP rate limiting uniformly through shared API authorization flow.

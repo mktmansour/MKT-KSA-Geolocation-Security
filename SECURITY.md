@@ -1,56 +1,92 @@
-# 🛡️ Security Policy
+# Security Policy
 
-> **MKT_KSA_Geolocation_Security – Security and Vulnerability Management**
+This document defines strict engineering and operational security controls for this repository.
 
----
+## Supported Versions
 
-## ✅ Supported Versions
+| Version line | Security support |
+| --- | --- |
+| 2.x | Supported |
+| 1.x | Not supported |
 
-| Version | Status      | Notes              |
-| ------- | ----------- | ------------------ |
-| 1.0.2   | 🟢 Current   | Current stable release |
-| 1.0.x   | 🟢 Supported | First official line |
+Only the latest stable line receives security patches.
 
-- Only the **latest stable** and **LTS** branches receive security patches.
-- Old versions (< 4.0) are **not maintained** for security fixes.
+## Security Engineering Baseline
 
----
+These controls are mandatory for all code regardless of implementation language.
 
-## 📦 Released Versions | الإصدارات المنشورة
+1. Authentication and authorization
+- Centralized auth validation path only.
+- No endpoint-local hardcoded secrets.
+- Least-privilege claim checks.
 
-| Version | Arabic Highlights (مختصر) | English Highlights |
-| ------- | -------------------------- | ------------------ |
-| v1.0.2  | الإصدار الحالي؛ تنظيف Clippy بالكامل، تدقيق تبعيات، إضافة `security/signing.rs` و`utils/precision.rs`، تحديثات طفيفة؛ بدون OpenSSL | Current release; zero Clippy warnings, dependency audit, new `security/signing.rs` and `utils/precision.rs`, minor bumps; no OpenSSL |
-| v1.0.1  | تحسينات توثيق وCI/Docker واستقرار نقاط النهاية | Docs/CI/Docker improvements; API stabilization |
-| v1.0.0  | أول إصدار عام مستقر | First stable public release |
+2. Secrets and key management
+- No plaintext secrets in code, tests, or docs.
+- Secret scanning and push protection are required.
+- Exposed token or key must be revoked and rotated immediately.
 
-> للمواعيد الدقيقة والتغييرات التفصيلية، راجع وسوم Git وGitHub Releases و`README`.
+3. Dependency and supply chain
+- Lockfiles are required for deterministic builds.
+- Critical and high dependency findings fail CI.
+- Third-party caches and build artifacts must stay out of analysis scope and VCS tracking.
 
----
+4. CI and workflow security
+- Explicit workflow permissions are required.
+- Security workflows are required checks for main branch integration.
+- Direct pushes to protected branch must be disabled in repository settings.
 
-## 🛠️ Reporting a Vulnerability
+5. Cryptography
+- Only approved modern algorithms are allowed.
+- Weak or obsolete algorithms are prohibited.
+- Crypto behavior must be tested and centrally reviewed.
 
-If you discover a security vulnerability, please follow these steps:
+6. Logging and privacy
+- Security logs must not leak credentials or sensitive user data.
+- Structured logs are required for incident response.
 
-1. **Do NOT create a public GitHub issue for security vulnerabilities.**
-2. **Report privately** via email:  
-   📧 `mkt-edge@outlook.sa`  
-   _(or via GitHub Security Advisories if available)_
-3. Include:  
-   - **Description** of the vulnerability  
-   - Steps to reproduce  
-   - Potential impact  
-   - Your contact info
+## Multi-Language Security Coverage
 
-### 🔔 Response & Updates
+This repository enforces layered controls designed to stay valid as services are added in Rust, Go, Python, JavaScript, Java, or other languages.
 
-- You will **receive an initial reply within 2 business days**.
-- We aim to **resolve and release a patch within 7–14 days** of valid report.
-- Status updates will be sent until closure (Accepted/Declined/Patched).
-- Responsible disclosure is appreciated – **do not publish details** until a fix is available.
+1. Static analysis
+- CodeQL workflow for repository-relevant scope.
+- Semgrep multi-language SAST workflow.
 
----
+2. Secret detection
+- Gitleaks workflow for commit history and workspace leaks.
+- GitHub Secret Scanning must be enabled at repository level.
 
-**Thank you for helping keep our ecosystem secure!**  
-_MKT KSA Geolocation Security Team (Current: v1.0.2)_
+3. Dependency and filesystem risk
+- Trivy workflow for high and critical findings.
+- Language-specific advisories must be denied at CI gate.
+
+## Vulnerability Reporting
+
+Do not open public issues for vulnerabilities.
+
+Report privately using one of the following:
+- GitHub Security Advisory (preferred)
+- Email: mkt-edge@outlook.sa
+
+Include:
+- Clear vulnerability description
+- Reproduction steps
+- Expected vs actual secure behavior
+- Impact assessment
+- Optional proof of concept
+
+## Response SLA
+
+- Initial triage response: within 2 business days
+- Confirmed vulnerability remediation target: 7 to 14 days
+- Status updates continue until closure
+
+## Secure Change Requirements
+
+Every security-sensitive change must include:
+1. Threat-focused test coverage
+2. CI evidence with passing required checks
+3. Changelog entry documenting security impact
+4. Updated security documentation when control behavior changes
+
 

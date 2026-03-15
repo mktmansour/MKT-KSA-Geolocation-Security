@@ -1,0 +1,11 @@
+name: Secure Workspace Preparation
+description: Applies deterministic repository cleanup and safety defaults for CI jobs.
+
+runs:
+  using: composite
+  steps:
+    - name: Run workspace cleanup
+      shell: bash
+      run: |
+        chmod +x scripts/ci/cleanup_workspace.sh
+        scripts/ci/cleanup_workspace.sh

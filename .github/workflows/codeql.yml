@@ -29,6 +29,9 @@ jobs:
         with:
           submodules: false
 
+      - name: Prepare secure workspace
+        uses: ./.github/actions/secure-workspace
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:

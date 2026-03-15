@@ -12,6 +12,8 @@ permissions:
 jobs:
   clippy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,12 +21,8 @@ jobs:
           fetch-depth: 0
           submodules: false
 
-      - name: Cleanup stray advisory-db submodule residue
-        run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git submodule deinit -f --all || true
-          rm -rf .git/modules/cargo-home/advisory-db || true
-          rm -rf cargo-home/advisory-db || true
+      - name: Prepare secure workspace
+        uses: ./.github/actions/secure-workspace
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable

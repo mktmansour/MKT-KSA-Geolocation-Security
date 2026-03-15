@@ -25,13 +25,8 @@ jobs:
         with:
           submodules: false
 
-      - name: Cleanup stray advisory-db submodule residue
-        shell: bash
-        run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git submodule deinit -f --all || true
-          rm -rf .git/modules/cargo-home/advisory-db || true
-          rm -rf cargo-home/advisory-db || true
+      - name: Prepare secure workspace
+        uses: ./.github/actions/secure-workspace
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
