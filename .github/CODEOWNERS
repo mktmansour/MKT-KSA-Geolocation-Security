@@ -1,13 +1,26 @@
-* @mktmansour
+# Security governance and policy
 SECURITY.md @mktmansour
 AUDIT_REPORT.md @mktmansour
+docs/SECURITY_HARDENING_*.md @mktmansour
+docs/GITHUB_ADVANCED_SCAN_*.md @mktmansour
+
+# CI/CD and repository controls
 .github/workflows/ @mktmansour
+.github/actions/ @mktmansour
+.github/codeql/ @mktmansour
 .github/dependabot.yml @mktmansour
+
+# Build and dependency surface
 Cargo.toml @mktmansour
 Cargo.lock @mktmansour
-rustfmt.toml @mktmansour
-.cargo/ @mktmansour
-.cargo-home/ @mktmansour
 rust-toolchain.toml @mktmansour
-README.md @mktmansour
-docs/ @mktmansour
+Dockerfile @mktmansour
+
+# Security-sensitive implementation areas
+src/security/ @mktmansour
+src/api/ @mktmansour
+src/db/ @mktmansour
+tests/ @mktmansour
+
+# Default ownership
+* @mktmansour
