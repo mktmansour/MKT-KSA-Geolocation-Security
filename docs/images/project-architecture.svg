@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-label="Project architecture diagram">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#04143d"/>
+      <stop offset="100%" stop-color="#0d4f9d"/>
+    </linearGradient>
+    <linearGradient id="box" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f2f63"/>
+      <stop offset="100%" stop-color="#174f94"/>
+    </linearGradient>
+    <style>
+      .title { font: 700 44px 'Segoe UI', Tahoma, sans-serif; fill: #ffffff; }
+      .subtitle { font: 500 23px 'Segoe UI', Tahoma, sans-serif; fill: #cfe8ff; }
+      .h { font: 700 30px 'Segoe UI', Tahoma, sans-serif; fill: #ffffff; }
+      .t { font: 500 22px 'Segoe UI', Tahoma, sans-serif; fill: #d8eeff; }
+      .edge { stroke: #7cc4ff; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#7cc4ff"/>
+    </marker>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <text x="800" y="72" text-anchor="middle" class="title">MKT KSA Geolocation Security - Project Architecture</text>
+  <text x="800" y="112" text-anchor="middle" class="subtitle">API -> Security Controls -> Core Engines -> Persistence & Utilities</text>
+
+  <rect x="80" y="170" width="270" height="560" rx="14" fill="url(#box)" stroke="#7cc4ff" stroke-opacity="0.6"/>
+  <text x="215" y="220" text-anchor="middle" class="h">Entry Layer</text>
+  <text x="105" y="270" class="t">- src/main.rs</text>
+  <text x="105" y="305" class="t">- src/lib.rs</text>
+  <text x="105" y="340" class="t">- src/app_state.rs</text>
+  <text x="105" y="375" class="t">- src/api/mod.rs</text>
+
+  <rect x="390" y="170" width="320" height="560" rx="14" fill="url(#box)" stroke="#7cc4ff" stroke-opacity="0.6"/>
+  <text x="550" y="220" text-anchor="middle" class="h">API Surface</text>
+  <text x="415" y="270" class="t">- api/auth.rs</text>
+  <text x="415" y="305" class="t">- api/geo.rs</text>
+  <text x="415" y="340" class="t">- api/device.rs</text>
+  <text x="415" y="375" class="t">- api/behavior.rs</text>
+  <text x="415" y="410" class="t">- api/network.rs</text>
+  <text x="415" y="445" class="t">- api/sensors.rs</text>
+  <text x="415" y="480" class="t">- api/weather.rs</text>
+  <text x="415" y="515" class="t">- api/alerts.rs</text>
+  <text x="415" y="550" class="t">- api/smart_access.rs</text>
+
+  <rect x="750" y="170" width="350" height="270" rx="14" fill="url(#box)" stroke="#7cc4ff" stroke-opacity="0.6"/>
+  <text x="925" y="220" text-anchor="middle" class="h">Security Layer</text>
+  <text x="775" y="270" class="t">- security/jwt.rs</text>
+  <text x="775" y="305" class="t">- security/ratelimit.rs</text>
+  <text x="775" y="340" class="t">- security/policy.rs</text>
+  <text x="775" y="375" class="t">- security/input_validator.rs</text>
+
+  <rect x="750" y="460" width="350" height="270" rx="14" fill="url(#box)" stroke="#7cc4ff" stroke-opacity="0.6"/>
+  <text x="925" y="510" text-anchor="middle" class="h">Core Engines</text>
+  <text x="775" y="560" class="t">- core/cross_location.rs</text>
+  <text x="775" y="595" class="t">- core/behavior_bio.rs</text>
+  <text x="775" y="630" class="t">- core/device_fp.rs</text>
+  <text x="775" y="665" class="t">- core/network_analyzer.rs</text>
+  <text x="775" y="700" class="t">- core/sensors_analyzer.rs</text>
+
+  <rect x="1140" y="170" width="380" height="560" rx="14" fill="url(#box)" stroke="#7cc4ff" stroke-opacity="0.6"/>
+  <text x="1330" y="220" text-anchor="middle" class="h">Data and Support</text>
+  <text x="1165" y="270" class="t">- db/models.rs</text>
+  <text x="1165" y="305" class="t">- db/crud.rs</text>
+  <text x="1165" y="340" class="t">- db/migrations/*.sql</text>
+  <text x="1165" y="375" class="t">- utils/cache.rs</text>
+  <text x="1165" y="410" class="t">- utils/precision.rs</text>
+  <text x="1165" y="445" class="t">- tests/*</text>
+
+  <path d="M350 300 L390 300" class="edge"/>
+  <path d="M710 300 L750 300" class="edge"/>
+  <path d="M710 560 L750 560" class="edge"/>
+  <path d="M1100 300 L1140 300" class="edge"/>
+  <path d="M1100 560 L1140 560" class="edge"/>
+
+  <text x="800" y="850" text-anchor="middle" class="subtitle">Hardened profile: centralized authorization, runtime secrets, and strict CI validation.</text>
+</svg>

@@ -42,6 +42,7 @@ Production-grade geolocation and behavioral security system for Rust services an
 - 🛡️ [2. Runtime and Security Posture](#2-runtime-and-security-posture)
 - 🗂️ [3. Complete Repository Role Map](#3-complete-repository-role-map)
 - 🔄 [4. Module Interactions and Control Flow](#4-module-interactions-and-control-flow)
+- 🏗️ [4.1 Project Architecture Diagram](#41-project-architecture-diagram)
 - 🌐 [5. API Reference and Invocation](#5-api-reference-and-invocation)
 - 🔐 [6. Environment Variables](#6-environment-variables)
 - ✅ [7. Build, Run, and Validate](#7-build-run-and-validate)
@@ -166,6 +167,12 @@ The API layer is served through Actix Web, while core engines are reusable as a 
    - JWT decode/validation
 5. Handler calls the relevant core engine or DB layer.
 6. Response is returned as JSON (or HTTP error with strict status semantics).
+
+### 4.1 Project Architecture Diagram
+
+![Project Architecture Diagram](docs/images/project-architecture.svg)
+
+The diagram maps real repository structure from entry and API layers to security controls, core engines, and data/support modules.
 
 ## 5. API Reference and Invocation
 
