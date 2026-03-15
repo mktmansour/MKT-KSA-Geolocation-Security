@@ -32,8 +32,8 @@
 ******************************************************************************************/
 
 use actix_web::web;
-use actix_web::{dev::Payload, FromRequest, HttpRequest};
 use actix_web::HttpResponse;
+use actix_web::{dev::Payload, FromRequest, HttpRequest};
 use zeroize::Zeroize;
 
 use crate::security::jwt::Claims;

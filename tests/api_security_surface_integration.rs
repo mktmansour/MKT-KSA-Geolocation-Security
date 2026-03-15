@@ -30,7 +30,9 @@ async fn rejects_missing_and_invalid_token_across_api_surface() {
 
     let routes = vec![
         (
-            "/api/users/{id}".to_string().replace("{id}", &user_id.to_string()),
+            "/api/users/{id}"
+                .to_string()
+                .replace("{id}", &user_id.to_string()),
             "GET",
             None,
         ),
@@ -109,7 +111,10 @@ async fn rejects_missing_and_invalid_token_across_api_surface() {
     for (path, method, body) in &routes {
         let req = match (*method, body) {
             ("GET", _) => test::TestRequest::get().uri(path).to_request(),
-            ("POST", Some(payload)) => test::TestRequest::post().uri(path).set_json(payload).to_request(),
+            ("POST", Some(payload)) => test::TestRequest::post()
+                .uri(path)
+                .set_json(payload)
+                .to_request(),
             _ => unreachable!(),
         };
         let resp = test::call_service(&app, req).await;
@@ -198,6 +203,12 @@ async fn burst_requests_trigger_strict_rate_limit() {
         }
     }
 
-    assert!(ok_count <= 8, "OK responses must not exceed configured rate limit");
-    assert!(limited_count >= 32, "Most burst requests must be rate-limited");
+    assert!(
+        ok_count <= 8,
+        "OK responses must not exceed configured rate limit"
+    );
+    assert!(
+        limited_count >= 32,
+        "Most burst requests must be rate-limited"
+    );
 }

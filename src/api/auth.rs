@@ -41,10 +41,10 @@ pub async fn get_user(
     app_data: web::Data<AppState>,
     req: HttpRequest,
     path: web::Path<Uuid>, // معرف المستخدم المطلوب (من المسار)
-                           // Target user ID (from the path)
+    // Target user ID (from the path)
     bearer: crate::api::BearerToken,
-                           // pool: web::Data<PgPool>,       // الاتصال بقاعدة البيانات
-                           // Database connection
+    // pool: web::Data<PgPool>,       // الاتصال بقاعدة البيانات
+    // Database connection
 ) -> impl Responder {
     let target_user_id = path.into_inner();
 

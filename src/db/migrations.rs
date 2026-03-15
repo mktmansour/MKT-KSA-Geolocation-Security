@@ -24,8 +24,8 @@ pub async fn run_migrations(pool: &Connection) -> Result<(), tokio_rusqlite::Err
         let migration_sql = *sql;
         let should_apply = pool
             .call(move |conn| {
-                let mut stmt = conn
-                    .prepare("SELECT COUNT(1) FROM schema_migrations WHERE version = ?1")?;
+                let mut stmt =
+                    conn.prepare("SELECT COUNT(1) FROM schema_migrations WHERE version = ?1")?;
                 let count: i64 = stmt.query_row([version_value], |row| row.get(0))?;
                 Ok(count == 0)
             })

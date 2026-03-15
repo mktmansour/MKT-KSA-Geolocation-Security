@@ -9,12 +9,7 @@ use support::build_state_with_db;
 async fn auth_rate_limit_db_integration() {
     let (state, user_id, token, other_user_id) = build_state_with_db(3).await;
 
-    let app = test::init_service(
-        App::new()
-            .app_data(state.clone())
-            .service(auth::get_user),
-    )
-    .await;
+    let app = test::init_service(App::new().app_data(state.clone()).service(auth::get_user)).await;
 
     let req_ok_1 = test::TestRequest::get()
         .uri(&format!("/users/{user_id}"))

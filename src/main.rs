@@ -49,10 +49,10 @@ use mkt_ksa_geo_sec::db::models::User;
 use mkt_ksa_geo_sec::security::jwt::JwtManager;
 use mkt_ksa_geo_sec::security::ratelimit::RateLimitConfig;
 use mkt_ksa_geo_sec::security::ratelimit::RateLimiter;
-use mkt_ksa_geo_sec::security::secret::SecureString;
 use mkt_ksa_geo_sec::security::secret::SecureBytes;
-use std::collections::HashSet;
+use mkt_ksa_geo_sec::security::secret::SecureString;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -107,7 +107,9 @@ async fn main() -> std::io::Result<()> {
 
     // Arabic: محاولة الحصول على رابط قاعدة البيانات من متغيرات البيئة
     // English: Try to get the database URL from environment variables
-    let db_pool: Option<mkt_ksa_geo_sec::app_state::DbPool> = if let Ok(database_url) = std::env::var("DATABASE_URL") {
+    let db_pool: Option<mkt_ksa_geo_sec::app_state::DbPool> = if let Ok(database_url) =
+        std::env::var("DATABASE_URL")
+    {
         if !database_url.starts_with("sqlite:") {
             panic!("Only SQLite is allowed in hardened profile. Set DATABASE_URL like sqlite://data/app.db");
         }
