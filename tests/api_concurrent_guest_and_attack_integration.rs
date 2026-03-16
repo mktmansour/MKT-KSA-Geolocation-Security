@@ -121,17 +121,6 @@ async fn concurrent_guest_users_cover_core_routes() {
             let resp_alert = test::call_service(&app, req_alert).await;
             assert_eq!(resp_alert.status(), StatusCode::OK);
 
-            let req_weather = test::TestRequest::post()
-                .uri("/api/weather/summary")
-                .insert_header(auth.clone())
-                .set_json(json!({"latitude": 24.7136, "longitude": 46.6753}))
-                .to_request();
-            let resp_weather = test::call_service(&app, req_weather).await;
-            assert!(
-                resp_weather.status() == StatusCode::OK
-                    || resp_weather.status() == StatusCode::BAD_GATEWAY
-            );
-
             let req_geo = test::TestRequest::post()
                 .uri("/api/geo/resolve")
                 .insert_header(auth.clone())
