@@ -49,6 +49,77 @@ use mkt_ksa_geo_sec::db::models::User;
 use mkt_ksa_geo_sec::security::jwt::JwtManager;
 use mkt_ksa_geo_sec::security::ratelimit::RateLimitConfig;
 use mkt_ksa_geo_sec::security::ratelimit::RateLimiter;
+
+/// Build the default fingerprint environment profiles map.
+/// 
+/// This centralizes the default configuration for the different device
+/// categories (mobile, desktop, IoT, server) so that it can be reused
+/// consistently from a single place.
+fn build_default_fp_env_profiles(
+) -> std::collections::HashMap<
+    String,
+    mkt_ksa_geo_sec::core::device_fp::EnvironmentProfile,
+> {
+    let mut fp_env_profiles =
+        std::collections::HashMap::<
+            String,
+            mkt_ksa_geo_sec::core::device_fp::EnvironmentProfile,
+        >::new();
+
+    fp_env_profiles.insert(
+        "mobile".to_string(),
+        mkt_ksa_geo_sec::core::device_fp::EnvironmentProfile {
+            os_type: "Mobile".to_string(),
+            device_category: "Phone/Tablet".to_string(),
+            threat_level: 6,
+            resource_constraints: mkt_ksa_geo_sec::core::device_fp::ResourceConstraints {
+                max_memory_kb: 512,
+                max_processing_us: 5_000,
+            },
+        },
+    );
+
+    fp_env_profiles.insert(
+        "desktop".to_string(),
+        mkt_ksa_geo_sec::core::device_fp::EnvironmentProfile {
+            os_type: "Desktop".to_string(),
+            device_category: "PC/Workstation".to_string(),
+            threat_level: 4,
+            resource_constraints: mkt_ksa_geo_sec::core::device_fp::ResourceConstraints {
+                max_memory_kb: 2_048,
+                max_processing_us: 10_000,
+            },
+        },
+    );
+
+    fp_env_profiles.insert(
+        "iot".to_string(),
+        mkt_ksa_geo_sec::core::device_fp::EnvironmentProfile {
+            os_type: "IoT".to_string(),
+            device_category: "Embedded".to_string(),
+            threat_level: 7,
+            resource_constraints: mkt_ksa_geo_sec::core::device_fp::ResourceConstraints {
+                max_memory_kb: 256,
+                max_processing_us: 4_000,
+            },
+        },
+    );
+
+    fp_env_profiles.insert(
+        "server".to_string(),
+        mkt_ksa_geo_sec::core::device_fp::EnvironmentProfile {
+            os_type: "Server".to_string(),
+            device_category: "Datacenter Node".to_string(),
+            threat_level: 8,
+            resource_constraints: mkt_ksa_geo_sec::core::device_fp::ResourceConstraints {
+                max_memory_kb: 8_192,
+                max_processing_us: 15_000,
+            },
+        },
+    );
+
+    fp_env_profiles
+}
 use mkt_ksa_geo_sec::security::secret::SecureBytes;
 use mkt_ksa_geo_sec::security::secret::SecureString;
 use rand::RngCore;
@@ -206,54 +277,8 @@ async fn main() -> std::io::Result<()> {
     ));
 
     let mut fp_env_profiles = HashMap::new();
-    fp_env_profiles.insert(
-        "mobile".to_string(),
-        mkt_ksa_geo_sec::core::device_fp::EnvironmentProfile {
-            os_type: "Mobile".to_string(),
-            device_category: "Phone/Tablet".to_string(),
-            threat_level: 6,
-            resource_constraints: mkt_ksa_geo_sec::core::device_fp::ResourceConstraints {
-                max_memory_kb: 512,
-                max_processing_us: 5_000,
-            },
-        },
-    );
-    fp_env_profiles.insert(
-        "desktop".to_string(),
-        mkt_ksa_geo_sec::core::device_fp::EnvironmentProfile {
-            os_type: "Desktop".to_string(),
-            device_category: "PC/Workstation".to_string(),
-            threat_level: 4,
-            resource_constraints: mkt_ksa_geo_sec::core::device_fp::ResourceConstraints {
-                max_memory_kb: 2_048,
-                max_processing_us: 10_000,
-            },
-        },
-    );
-    fp_env_profiles.insert(
-        "iot".to_string(),
-        mkt_ksa_geo_sec::core::device_fp::EnvironmentProfile {
-            os_type: "IoT".to_string(),
-            device_category: "Embedded".to_string(),
-            threat_level: 7,
-            resource_constraints: mkt_ksa_geo_sec::core::device_fp::ResourceConstraints {
-                max_memory_kb: 256,
-                max_processing_us: 4_000,
-            },
-        },
-    );
-    fp_env_profiles.insert(
-        "server".to_string(),
-        mkt_ksa_geo_sec::core::device_fp::EnvironmentProfile {
-            os_type: "Server".to_string(),
-            device_category: "Datacenter Node".to_string(),
-            threat_level: 8,
-            resource_constraints: mkt_ksa_geo_sec::core::device_fp::ResourceConstraints {
-                max_memory_kb: 8_192,
-                max_processing_us: 15_000,
-            },
-        },
-    );
+    // Populate the fingerprint environment profiles from the centralized defaults.
+    fp_env_profiles.extend(build_default_fp_env_profiles());
 
     // 2. إنشاء محرك DeviceFPEngine
     let fp_engine = Arc::new(AdaptiveFingerprintEngine::new(
