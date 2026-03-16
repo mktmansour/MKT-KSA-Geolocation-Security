@@ -98,9 +98,14 @@ async fn main() -> std::io::Result<()> {
         .add_source(Environment::default())
         .build()
         .expect("Failed to build configuration from environment");
-    let _api_key: String = settings.get_string("API_KEY").expect("API_KEY not set");
-    let jwt_secret = settings
-        .get_string("JWT_SECRET")
+    // Prefer direct environment reads for runtime-critical secrets, then fallback to config map keys.
+    let _api_key: String = std::env::var("API_KEY")
+        .or_else(|_| settings.get_string("API_KEY"))
+        .or_else(|_| settings.get_string("api_key"))
+        .expect("API_KEY not set");
+    let jwt_secret = std::env::var("JWT_SECRET")
+        .or_else(|_| settings.get_string("JWT_SECRET"))
+        .or_else(|_| settings.get_string("jwt_secret"))
         .expect("JWT_SECRET must be set and at least 32 bytes")
         .trim()
         .to_string();
@@ -158,12 +163,29 @@ async fn main() -> std::io::Result<()> {
     // English: Initialize engines/services only if not in development mode
     println!("🔧 Initializing application engines...");
 
-    // Arabic: إذا كان التطبيق في وضع التطوير، استخدم كائن وهمي لقاعدة بيانات MaxMind عبر Enum موحد
-    // English: In development mode, use a mock geo DB reader via unified enum
+    // Arabic: في وضع قاعدة البيانات نُحمّل قاعدة GeoIP فعلية من ملف MMDB بشكل صارم
+    // English: In DB mode, strictly load a real GeoIP MMDB file
     let geo_reader: Arc<mkt_ksa_geo_sec::core::geo_resolver::GeoReaderEnum> = if db_pool.is_some() {
-        let geo_db_bytes = hex::decode("4d4d44425f434954590000000000000002000000000000000c000000636f756e747279000700000049534f5f434f44450000").expect("Failed to decode mock geo DB");
+        let geo_db_path = std::env::var("GEOIP_DB_PATH")
+            .or_else(|_| std::env::var("MAXMIND_DB_PATH"))
+            .unwrap_or_else(|_| "GeoLite2-City-Test.mmdb".to_string());
+
+        let geo_db_bytes = std::fs::read(&geo_db_path).unwrap_or_else(|e| {
+            panic!(
+                "Failed to read GeoIP MMDB file at '{}': {}. Set GEOIP_DB_PATH or MAXMIND_DB_PATH to a valid MaxMind DB.",
+                geo_db_path, e
+            )
+        });
+
+        let reader = Reader::from_source(geo_db_bytes).unwrap_or_else(|e| {
+            panic!(
+                "Failed to parse GeoIP MMDB file at '{}': {}. The file is not a valid MaxMind DB.",
+                geo_db_path, e
+            )
+        });
+
         Arc::new(mkt_ksa_geo_sec::core::geo_resolver::GeoReaderEnum::Real(
-            Reader::from_source(geo_db_bytes).expect("Failed to create geo DB reader"),
+            reader,
         ))
     } else {
         println!(

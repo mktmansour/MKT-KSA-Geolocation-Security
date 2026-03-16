@@ -45,12 +45,17 @@ pub struct SmartAccessRequest {
 pub async fn smart_access_verify(
     data: web::Data<AppState>,
     req: HttpRequest,
-    payload: web::Json<SmartAccessRequest>,
     bearer: BearerToken,
+    payload_bytes: web::Bytes,
 ) -> impl Responder {
     if let Err(resp) = authorize_request(&data, &req, &bearer).await {
         return resp;
     }
+
+    let payload: SmartAccessRequest = match serde_json::from_slice(&payload_bytes) {
+        Ok(v) => v,
+        Err(e) => return HttpResponse::BadRequest().body(format!("Invalid JSON payload: {e}")),
+    };
 
     // سياسات المناطق والأوقات (مثال، يمكن تخصيصها)
     let allowed_zones = vec!["Riyadh".to_string(), "Jeddah".to_string()];

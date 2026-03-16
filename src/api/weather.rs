@@ -48,13 +48,17 @@ pub struct WeatherSummaryRequest {
 pub async fn weather_summary(
     app_data: web::Data<AppState>,
     req: HttpRequest,
-    payload: web::Json<WeatherSummaryRequest>, // بيانات الطلب (إحداثيات الموقع)
-    // Request payload (location coordinates)
     bearer: BearerToken,
+    payload_bytes: web::Bytes,
 ) -> impl Responder {
     if let Err(resp) = authorize_request(&app_data, &req, &bearer).await {
         return resp;
     }
+
+    let payload: WeatherSummaryRequest = match serde_json::from_slice(&payload_bytes) {
+        Ok(v) => v,
+        Err(e) => return HttpResponse::BadRequest().body(format!("Invalid JSON payload: {e}")),
+    };
 
     match app_data
         .weather_engine

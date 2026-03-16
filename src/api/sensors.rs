@@ -48,12 +48,17 @@ pub struct SensorsAnalyzeRequest {
 pub async fn analyze_sensors(
     app_data: web::Data<AppState>,
     req: HttpRequest,
-    payload: web::Json<SensorsAnalyzeRequest>,
     bearer: BearerToken,
+    payload_bytes: web::Bytes,
 ) -> impl Responder {
     if let Err(resp) = authorize_request(&app_data, &req, &bearer).await {
         return resp;
     }
+
+    let payload: SensorsAnalyzeRequest = match serde_json::from_slice(&payload_bytes) {
+        Ok(v) => v,
+        Err(e) => return HttpResponse::BadRequest().body(format!("Invalid JSON payload: {e}")),
+    };
 
     // --- تمرير الطلب لمحرك core ---
     // Pass the request to the core sensor analysis engine

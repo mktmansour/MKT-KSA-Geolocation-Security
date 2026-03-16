@@ -61,13 +61,17 @@ pub struct GeoResolveRequest {
 pub async fn resolve_geo(
     app_data: web::Data<AppState>,
     req: HttpRequest,
-    payload: web::Json<GeoResolveRequest>, // بيانات الطلب (التحقق الجغرافي)
-    // Request payload (geolocation validation data)
     bearer: BearerToken,
+    payload_bytes: web::Bytes,
 ) -> impl Responder {
     if let Err(resp) = authorize_request(&app_data, &req, &bearer).await {
         return resp;
     }
+
+    let payload: GeoResolveRequest = match serde_json::from_slice(&payload_bytes) {
+        Ok(v) => v,
+        Err(e) => return HttpResponse::BadRequest().body(format!("Invalid JSON payload: {e}")),
+    };
 
     // --- تجميع المدخلات من الطلب ---
     // Collect inputs from the request

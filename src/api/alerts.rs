@@ -56,13 +56,17 @@ pub struct AlertTriggerRequest {
 pub async fn trigger_alert(
     app_data: web::Data<AppState>,
     req: HttpRequest,
-    payload: web::Json<AlertTriggerRequest>, // بيانات الطلب (التنبيه)
-    // Request payload (alert data)
     bearer: BearerToken,
+    payload_bytes: web::Bytes,
 ) -> impl Responder {
     if let Err(resp) = authorize_request(&app_data, &req, &bearer).await {
         return resp;
     }
+
+    let payload: AlertTriggerRequest = match serde_json::from_slice(&payload_bytes) {
+        Ok(v) => v,
+        Err(e) => return HttpResponse::BadRequest().body(format!("Invalid JSON payload: {e}")),
+    };
 
     // --- بناء نموذج التنبيه ---
     // Build the alert model
