@@ -28,6 +28,7 @@
 use crate::api::authorize_request;
 use crate::api::BearerToken;
 use crate::core::behavior_bio::BehaviorInput;
+use crate::core::cross_location::CrossValidationError;
 use crate::core::cross_location::CrossValidationInput;
 use crate::AppState;
 use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
@@ -96,6 +97,26 @@ pub async fn resolve_geo(
     match engine.validate(input).await {
         Ok(result) => HttpResponse::Ok().json(result), // إعادة نتيجة التحقق بنجاح
         // Return validation result on success
+        Err(CrossValidationError::GeoResolutionFailed(msg)) => {
+            // Treat expected lack-of-source scenarios as operational input issues (422), not server faults (500).
+            let no_sources = msg.contains("لا توجد مصادر متاحة")
+                || msg.to_lowercase().contains("no sources")
+                || msg.to_lowercase().contains("location lookup failed");
+
+            if no_sources {
+                HttpResponse::UnprocessableEntity().json(serde_json::json!({
+                    "code": "GEO_SOURCES_UNAVAILABLE",
+                    "status": "degraded",
+                    "message": msg,
+                    "hint": "Provide a valid gps_data or ensure GeoIP source availability"
+                }))
+            } else {
+                HttpResponse::BadGateway().json(serde_json::json!({
+                    "code": "GEO_RESOLUTION_FAILED",
+                    "message": msg
+                }))
+            }
+        }
         Err(e) => HttpResponse::InternalServerError().json(e.to_string()), // معالجة الخطأ وإرجاعه
                                                                            // Handle and return error
     }
