@@ -11,7 +11,12 @@ mod support;
 use support::build_state_with_db;
 
 fn issue_token_for_user(user_id: Uuid) -> String {
-    let jwt = JwtManager::default();
+    let jwt = JwtManager::new(
+        &SecureString::new("integration_test_jwt_secret_key_more_than_32".to_string()),
+        3600,
+        "mkt_ksa_geo_sec".to_string(),
+        "api_clients".to_string(),
+    );
     jwt.generate_token(user_id, vec!["guest".to_string()])
         .expect("token generation")
 }
@@ -115,6 +120,17 @@ async fn concurrent_guest_users_cover_core_routes() {
                 .to_request();
             let resp_alert = test::call_service(&app, req_alert).await;
             assert_eq!(resp_alert.status(), StatusCode::OK);
+
+            let req_weather = test::TestRequest::post()
+                .uri("/api/weather/summary")
+                .insert_header(auth.clone())
+                .set_json(json!({"latitude": 24.7136, "longitude": 46.6753}))
+                .to_request();
+            let resp_weather = test::call_service(&app, req_weather).await;
+            assert!(
+                resp_weather.status() == StatusCode::OK
+                    || resp_weather.status() == StatusCode::BAD_GATEWAY
+            );
 
             let req_geo = test::TestRequest::post()
                 .uri("/api/geo/resolve")

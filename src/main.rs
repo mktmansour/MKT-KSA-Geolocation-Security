@@ -51,20 +51,16 @@ use mkt_ksa_geo_sec::security::ratelimit::RateLimitConfig;
 use mkt_ksa_geo_sec::security::ratelimit::RateLimiter;
 
 /// Build the default fingerprint environment profiles map.
-/// 
+///
 /// This centralizes the default configuration for the different device
 /// categories (mobile, desktop, IoT, server) so that it can be reused
 /// consistently from a single place.
 fn build_default_fp_env_profiles(
-) -> std::collections::HashMap<
-    String,
-    mkt_ksa_geo_sec::core::device_fp::EnvironmentProfile,
-> {
-    let mut fp_env_profiles =
-        std::collections::HashMap::<
-            String,
-            mkt_ksa_geo_sec::core::device_fp::EnvironmentProfile,
-        >::new();
+) -> std::collections::HashMap<String, mkt_ksa_geo_sec::core::device_fp::EnvironmentProfile> {
+    let mut fp_env_profiles = std::collections::HashMap::<
+        String,
+        mkt_ksa_geo_sec::core::device_fp::EnvironmentProfile,
+    >::new();
 
     fp_env_profiles.insert(
         "mobile".to_string(),
