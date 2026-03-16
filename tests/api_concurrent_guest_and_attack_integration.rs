@@ -11,12 +11,7 @@ mod support;
 use support::build_state_with_db;
 
 fn issue_token_for_user(user_id: Uuid) -> String {
-    let jwt = JwtManager::new(
-        &SecureString::new("integration_test_jwt_secret_key_more_than_32".to_string()),
-        3600,
-        "mkt_ksa_geo_sec".to_string(),
-        "api_clients".to_string(),
-    );
+    let jwt = JwtManager::default();
     jwt.generate_token(user_id, vec!["guest".to_string()])
         .expect("token generation")
 }
