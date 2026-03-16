@@ -2,17 +2,65 @@
 
 Production-grade geolocation and behavioral security system for Rust services and smart-city access control.
 
-[![Rust](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/rust.yml/badge.svg?branch=main&event=push)](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/rust.yml)
-[![Clippy](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/clippy.yml/badge.svg?branch=main&event=push)](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/clippy.yml)
-[![Crates.io](https://img.shields.io/crates/v/MKT_KSA_Geolocation_Security.svg?style=for-the-badge)](https://crates.io/crates/MKT_KSA_Geolocation_Security)
-[![Docs.rs](https://img.shields.io/docsrs/MKT_KSA_Geolocation_Security?style=for-the-badge)](https://docs.rs/MKT_KSA_Geolocation_Security)
-[![Downloads](https://img.shields.io/crates/d/MKT_KSA_Geolocation_Security.svg?style=for-the-badge)](https://crates.io/crates/MKT_KSA_Geolocation_Security)
-[![CodeQL](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/codeql.yml/badge.svg?branch=main&event=push)](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/codeql.yml)
-[![Security Gates](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/security-gates.yml/badge.svg?branch=main&event=push)](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/security-gates.yml)
-![License](https://img.shields.io/badge/license-Apache--2.0-blue?style=for-the-badge)
-![Edition](https://img.shields.io/badge/edition-2021-0A66C2?style=for-the-badge)
+<p align="center">
+  <a href="https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/rust.yml">
+    <img alt="Rust" src="https://img.shields.io/github/actions/workflow/status/mktmansour/MKT-KSA-Geolocation-Security/rust.yml?branch=main&event=push&style=for-the-badge&label=Rust" />
+  </a>
+  <a href="https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/clippy.yml">
+    <img alt="Clippy" src="https://img.shields.io/github/actions/workflow/status/mktmansour/MKT-KSA-Geolocation-Security/clippy.yml?branch=main&event=push&style=for-the-badge&label=Clippy" />
+  </a>
+  <a href="https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/codeql.yml">
+    <img alt="CodeQL" src="https://img.shields.io/github/actions/workflow/status/mktmansour/MKT-KSA-Geolocation-Security/codeql.yml?branch=main&event=push&style=for-the-badge&label=CodeQL" />
+  </a>
+  <a href="https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/security-gates.yml">
+    <img alt="Security Gates" src="https://img.shields.io/github/actions/workflow/status/mktmansour/MKT-KSA-Geolocation-Security/security-gates.yml?branch=main&event=push&style=for-the-badge&label=Security%20Gates" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://crates.io/crates/MKT_KSA_Geolocation_Security">
+    <img alt="Crates.io" src="https://img.shields.io/crates/v/MKT_KSA_Geolocation_Security.svg?style=for-the-badge" />
+  </a>
+  <a href="https://docs.rs/MKT_KSA_Geolocation_Security">
+    <img alt="Docs.rs" src="https://img.shields.io/docsrs/MKT_KSA_Geolocation_Security?style=for-the-badge" />
+  </a>
+  <a href="https://crates.io/crates/MKT_KSA_Geolocation_Security">
+    <img alt="Downloads" src="https://img.shields.io/crates/d/MKT_KSA_Geolocation_Security.svg?style=for-the-badge" />
+  </a>
+  <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-0A66C2?style=for-the-badge" />
+  <img alt="Edition" src="https://img.shields.io/badge/edition-2021-0A66C2?style=for-the-badge" />
+</p>
 
 ![MKT KSA Geolocation Security Cover](docs/images/mkt_ksa.png)
+
+<table align="center">
+  <tr>
+    <td align="center">
+      <img alt="Documentation Style" src="https://img.shields.io/badge/Documentation-Engineering%20Grade-0A66C2?style=for-the-badge" />
+    </td>
+    <td align="center">
+      <img alt="Release Baseline" src="https://img.shields.io/badge/Stable_Baseline-v2.0.1-0077B6?style=for-the-badge" />
+    </td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2">
+      <img alt="Security Mode" src="https://img.shields.io/badge/Security-Maintenance%20Mode-005A8D?style=for-the-badge" />
+    </td>
+  </tr>
+</table>
+
+> [!WARNING]
+> **Security Release Advisory**
+> Version **2.0.0** is now considered deprecated for production use after final-stage operation exposed critical security findings.
+> The only approved stable release is **2.0.1**, which includes hardening, security corrections, and engineering stability improvements.
+> Do not deploy or keep version 2.0.0 in active environments.
+
+## 0. Release Safety Advisory
+
+- Version **2.0.0** has been retired from safe production recommendations due to critical security findings discovered after real operational usage.
+- Version **2.0.1** is the mandatory upgrade baseline and the most stable release in this repository line after hardening and cleanup.
+- Security verification for **2.0.1** includes strict local gates (`fmt`, `clippy -D warnings`, full tests, `cargo audit`) and GitHub security checks (Code Scanning, Dependabot, Secret Scanning).
+- Teams still running **2.0.0** should upgrade immediately to **2.0.1** and re-run post-upgrade validation.
 
 ## Latest Status and Strategic Notice (2026-03-15)
 
@@ -37,26 +85,32 @@ Production-grade geolocation and behavioral security system for Rust services an
 
 ## Community Note
 
+![Community Signal](https://img.shields.io/badge/Community-Feedback%20Loop-0A66C2?style=for-the-badge)
+
 - The crate has been downloaded thousands of times.
 - Engagement feedback (issues/comments/reactions) has been significantly lower than expected.
 - Constructive security and production feedback is highly encouraged.
 
 ## Contents
 
-- ◈ [1. What This Project Does](#1-what-this-project-does)
-- ◈ [1.1 Project Goal](#11-project-goal)
-- ◈ [1.2 Key Features](#12-key-features)
-- ◈ [1.3 Target Audiences](#13-target-audiences)
-- ◈ [2. Runtime and Security Posture](#2-runtime-and-security-posture)
-- ◈ [3. Complete Repository Role Map](#3-complete-repository-role-map)
-- ◈ [4. Module Interactions and Control Flow](#4-module-interactions-and-control-flow)
-- ◈ [4.1 Project Architecture Diagram](#41-project-architecture-diagram)
-- ◈ [5. API Reference and Invocation](#5-api-reference-and-invocation)
-- ◈ [6. Environment Variables](#6-environment-variables)
-- ◈ [7. Build, Run, and Validate](#7-build-run-and-validate)
-- ◈ [8. Current Hardening and Fix History](#8-current-hardening-and-fix-history)
-- ◈ [9. Library Integration and C-ABI](#9-library-integration-and-c-abi)
-- ◈ [10. Detailed Folder and File Responsibilities](#10-detailed-folder-and-file-responsibilities)
+- 🛡️ [0. Release Safety Advisory](#0-release-safety-advisory)
+- 🎯 [1. What This Project Does](#1-what-this-project-does)
+- 🧭 [1.1 Project Goal](#11-project-goal)
+- ✨ [1.2 Key Features](#12-key-features)
+- 🏛️ [1.3 Target Audiences](#13-target-audiences)
+- 🔐 [2. Runtime and Security Posture](#2-runtime-and-security-posture)
+- 🗂️ [3. Complete Repository Role Map](#3-complete-repository-role-map)
+- 🔄 [4. Module Interactions and Control Flow](#4-module-interactions-and-control-flow)
+- 🧱 [4.1 Project Architecture Diagram](#41-project-architecture-diagram)
+- 🌐 [5. API Reference and Invocation](#5-api-reference-and-invocation)
+- ⚙️ [6. Environment Variables](#6-environment-variables)
+- 🧪 [7. Build, Run, and Validate](#7-build-run-and-validate)
+- 🛠️ [8. Current Hardening and Fix History](#8-current-hardening-and-fix-history)
+- 🔌 [9. Library Integration and C-ABI](#9-library-integration-and-c-abi)
+- 📚 [10. Detailed Folder and File Responsibilities](#10-detailed-folder-and-file-responsibilities)
+- 🧠 [11. Deep SRC Engineering Review](#11-deep-src-engineering-review)
+- 👨‍💻 [12. Developer Guide](#12-developer-guide)
+- 🤖 [13. AI and Intelligence Role](#13-ai-and-intelligence-role)
 
 ## 1. What This Project Does
 
@@ -400,15 +454,54 @@ Recent security and maintenance milestones are documented in:
 
 ![Section 09 Banner](docs/images/banners/section-09.svg)
 
-Crate exports include:
+Build artifacts exported by this crate:
 
-- Rust library (`rlib`)
-- C-compatible dynamic library (`cdylib`)
-- C-compatible static library (`staticlib`)
+- Rust library (`rlib`) for native Rust projects.
+- C-compatible dynamic library (`cdylib`) for FFI integration.
+- C-compatible static library (`staticlib`) for static linking scenarios.
 
-This supports Rust-native usage and cross-language integration paths.
+### 9.1 Language support matrix (accurate scope)
+
+| Language | Support Level | How |
+|---|---|---|
+| Rust | Direct native support | Use crate API directly |
+| C / C++ | Direct via C-ABI | Use generated header + shared/static lib |
+| Python / Go / C# / Java / Node.js / others | Indirect via FFI bridge | Build language-specific bindings on top of C-ABI |
+
+Important: this project does **not** expose a full native SDK for every language out-of-the-box. Non-Rust languages are supported through C-ABI integration.
+
+### 9.2 Current exported C-ABI surface
+
+Current cbindgen export list is intentionally minimal and focused:
+
+- `generate_adaptive_fingerprint`
+- `free_fingerprint_string`
+
+These symbols are exported from `src/core/device_fp.rs` and declared by cbindgen policy in `cbindgen.toml`.
+
+### 9.3 C-ABI generation and invocation flow
+
+Generate header:
+
+```bash
+cbindgen --config cbindgen.toml --crate mkt_ksa_geo_sec --output mkt_ksa_geo_sec.h
+```
+
+Build shared library:
+
+```bash
+cargo build --release
+```
+
+Then consume the resulting library from C/C++ directly, or from other languages via their C-FFI layer (for example: Python `ctypes`, Go `cgo`, C# `DllImport`).
+
+### 9.4 Why this was not explicit before
+
+Earlier docs focused on architecture, API behavior, and security hardening tracks. This section now explicitly documents the language boundary and invocation method to remove ambiguity.
 
 ## 10. Detailed Folder and File Responsibilities
+
+![Section 10 Banner](docs/images/banners/section-10.svg)
 
 ### `.github/`
 
@@ -424,7 +517,7 @@ This supports Rust-native usage and cross-language integration paths.
 - `GITHUB_ADVANCED_SCAN_2026-03-15.md`: GitHub/code scanning summary and remediation trail.
 - `REPOSITORY_FILE_ROLES_2026-03-15.md`: source-of-truth for active repository file roles.
 - `images/cover-mkt-ksa.svg`: primary documentation hero visual.
-- `images/banners/section-01.svg` ... `section-09.svg`: section-level visual banners.
+- `images/banners/section-01.svg` ... `section-13.svg`: section-level visual banners.
 
 ### `scripts/`
 
@@ -505,6 +598,206 @@ This supports Rust-native usage and cross-language integration paths.
 - `audit.toml`: cargo-audit policy.
 - `cbindgen.toml`: C-ABI header generation config.
 - `GeoLite2-City-Test.mmdb`: test geo fixture used by geolocation-related paths.
+
+## 11. Deep SRC Engineering Review
+
+![Section 11 Banner](docs/images/banners/section-11.svg)
+
+This section provides an engineering-level review of every major unit under `src/`, not only `core/`.
+
+### 11.1 SRC responsibility map
+
+<div align="center">
+
+| SRC Unit | Primary Role | Security Impact | Runtime Impact |
+|---|---|---|---|
+| `src/main.rs` | Bootstraps services and server runtime | Enforces startup validation and secret policy | Defines process lifecycle |
+| `src/lib.rs` | Public crate exports | Limits exposed API surface | Enables library embedding |
+| `src/app_state.rs` | Shared runtime state container | Prevents scattered auth/security instances | Coordinates global engine access |
+| `src/api/` | HTTP entry points and route wiring | Applies centralized authorization gate | Handles external traffic path |
+| `src/core/` | Domain trust engines | Produces verification/risk outcomes | Core decision latency driver |
+| `src/db/` | SQLite models, CRUD, migrations | Protects persistence consistency | Controls storage reliability |
+| `src/security/` | JWT, policies, rate limiting, signing | Main enforcement boundary | Controls request acceptance |
+| `src/utils/` | Shared infrastructure helpers | Reduces duplicated unsafe patterns | Supports deterministic behavior |
+
+</div>
+
+### 11.2 `src/main.rs` and process orchestration
+
+- Loads critical environment variables.
+- Validates security-sensitive startup requirements.
+- Initializes analyzers, DB, and route graph.
+- Wires `AppState` and starts Actix server.
+
+```mermaid
+flowchart TD
+  A[main.rs startup] --> B[Load and validate env]
+  B --> C[Initialize DB and migrations]
+  C --> D[Initialize security and core engines]
+  D --> E[Build AppState]
+  E --> F[Register routes]
+  F --> G[Start Actix runtime]
+```
+
+### 11.3 `src/api/` request lifecycle
+
+![Request Processing Banner](docs/images/banners/section-11-request.svg)
+
+- Maps external endpoint contracts to internal engines.
+- Executes `authorize_request()` before endpoint logic.
+- Normalizes and forwards payload to domain modules.
+- Returns strict JSON + HTTP semantics.
+
+```mermaid
+flowchart LR
+  A[HTTP Request] --> B[src/api/mod.rs route]
+  B --> C[authorize_request]
+  C --> D[src/security checks]
+  D --> E[domain handler in src/api/*.rs]
+  E --> F[src/core or src/db]
+  F --> G[JSON response]
+```
+
+### 11.4 `src/core/` trust computation engines
+
+![Trust Engine Banner](docs/images/banners/section-11-trust.svg)
+
+- Hosts geolocation, behavior, device, sensor, network, weather, and composite verification logic.
+- Combines multi-signal evidence into deterministic decisions.
+- Serves both API execution and library usage paths.
+
+```mermaid
+flowchart LR
+  A[Input signals] --> B[geo_resolver]
+  A --> C[behavior_bio]
+  A --> D[device_fp]
+  A --> E[network_analyzer]
+  A --> F[sensors_analyzer]
+  A --> G[weather_val]
+  B --> H[composite_verification]
+  C --> H
+  D --> H
+  E --> H
+  F --> H
+  G --> H
+  H --> I[Trust decision]
+```
+
+### 11.5 `src/db/` persistence boundary
+
+![Storage Boundary Banner](docs/images/banners/section-11-storage.svg)
+
+- Owns schema evolution through migrations.
+- Implements async CRUD for runtime endpoints.
+- Isolated boundary for alert/user persistence behavior.
+
+```mermaid
+flowchart TD
+  A[src/api + src/core] --> B[src/db/crud.rs]
+  B --> C[src/db/models.rs]
+  B --> D[SQLite runtime]
+  D --> E[src/db/migrations/*.sql]
+```
+
+### 11.6 `src/security/` enforcement boundary
+
+![Security Workflow Banner](docs/images/banners/section-11-security.svg)
+
+- JWT generation/validation and claims checks.
+- Per-IP rate-limiting and abuse throttling.
+- Input validation/sanitization and policy guards.
+- Secret wrapping and signature verification.
+
+```mermaid
+flowchart LR
+  A[Request enters API] --> B[jwt.rs]
+  B --> C[policy.rs]
+  C --> D[ratelimit.rs]
+  D --> E[input_validator.rs]
+  E --> F[signing.rs + secret.rs]
+  F --> G[Authorized execution]
+```
+
+### 11.7 `src/utils/` deterministic support layer
+
+- Caching, precision helpers, logging wrappers, shared helpers.
+- Keeps cross-module behavior consistent and reusable.
+
+```mermaid
+flowchart LR
+  A[api/core/security/db] --> B[utils/cache]
+  A --> C[utils/precision]
+  A --> D[utils/logger]
+  A --> E[utils/helpers]
+```
+
+## 12. Developer Guide
+
+![Section 12 Banner](docs/images/banners/section-12.svg)
+
+### 12.1 Daily engineering flow
+
+1. Pull latest `main` and validate local toolchain.
+2. Implement change inside the narrowest possible module.
+3. Add or update tests in `tests/`.
+4. Run strict gates before any PR.
+5. Ensure docs and changelog reflect behavior changes.
+
+### 12.2 Mandatory local gates
+
+```bash
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+cargo test --workspace --all-targets --all-features
+cargo audit --deny warnings
+```
+
+### 12.3 How to add a new endpoint safely
+
+1. Add handler under `src/api/`.
+2. Register route in `src/api/mod.rs`.
+3. Reuse centralized auth path (`authorize_request`).
+4. Keep core logic in `src/core/`, not inside handler.
+5. Use `src/db/` through defined CRUD boundaries.
+6. Add integration test case in `tests/`.
+
+### 12.4 Security-first coding checklist
+
+- Never hardcode runtime secrets.
+- Keep auth, policy, and rate-limit centralized.
+- Validate/sanitize user-controlled input.
+- Prefer deterministic logic over hidden side effects.
+- Keep privileged operations auditable in logs and tests.
+
+## 13. AI and Intelligence Role
+
+![Section 13 Banner](docs/images/banners/section-13.svg)
+
+The current production architecture is deterministic and security-auditable. AI is treated as an intelligence augmentation layer, not an unbounded decision authority.
+
+### 13.1 Current state in 2.0.1
+
+- Security decisions are enforced by explicit policies and deterministic multi-signal logic.
+- Behavioral and anomaly analysis is implemented as transparent engine rules.
+- No opaque ML model is allowed to bypass security policy controls.
+
+### 13.2 AI-ready integration boundary
+
+```mermaid
+flowchart LR
+  A[Raw telemetry] --> B[Deterministic trust engines]
+  B --> C[Policy enforcement]
+  C --> D[Access decision]
+  B --> E[AI/ML advisory layer optional]
+  E --> F[Analyst insights and tuning]
+  F --> C
+```
+
+### 13.3 Recommended AI usage model
+
+- Use AI for risk explanation, analyst support, and threshold tuning recommendations.
+- Keep final enforcement under deterministic policies in `src/security/` and `src/core/`.
+- Log AI-assisted recommendations separately from hard enforcement outcomes.
 
 ## License
 

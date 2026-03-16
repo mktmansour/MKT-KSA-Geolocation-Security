@@ -2,17 +2,65 @@
 
 نظام تحقق جغرافي وأمني متقدم للإنتاج، مخصص لخدمات Rust ومنصات الوصول الذكي.
 
-[![Rust](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/rust.yml/badge.svg?branch=main&event=push)](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/rust.yml)
-[![Clippy](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/clippy.yml/badge.svg?branch=main&event=push)](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/clippy.yml)
-[![Crates.io](https://img.shields.io/crates/v/MKT_KSA_Geolocation_Security.svg?style=for-the-badge)](https://crates.io/crates/MKT_KSA_Geolocation_Security)
-[![Docs.rs](https://img.shields.io/docsrs/MKT_KSA_Geolocation_Security?style=for-the-badge)](https://docs.rs/MKT_KSA_Geolocation_Security)
-[![Downloads](https://img.shields.io/crates/d/MKT_KSA_Geolocation_Security.svg?style=for-the-badge)](https://crates.io/crates/MKT_KSA_Geolocation_Security)
-[![CodeQL](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/codeql.yml/badge.svg?branch=main&event=push)](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/codeql.yml)
-[![Security Gates](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/security-gates.yml/badge.svg?branch=main&event=push)](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/security-gates.yml)
-![License](https://img.shields.io/badge/license-Apache--2.0-blue?style=for-the-badge)
-![Edition](https://img.shields.io/badge/edition-2021-0A66C2?style=for-the-badge)
+<p align="center">
+  <a href="https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/rust.yml">
+    <img alt="Rust" src="https://img.shields.io/github/actions/workflow/status/mktmansour/MKT-KSA-Geolocation-Security/rust.yml?branch=main&event=push&style=for-the-badge&label=Rust" />
+  </a>
+  <a href="https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/clippy.yml">
+    <img alt="Clippy" src="https://img.shields.io/github/actions/workflow/status/mktmansour/MKT-KSA-Geolocation-Security/clippy.yml?branch=main&event=push&style=for-the-badge&label=Clippy" />
+  </a>
+  <a href="https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/codeql.yml">
+    <img alt="CodeQL" src="https://img.shields.io/github/actions/workflow/status/mktmansour/MKT-KSA-Geolocation-Security/codeql.yml?branch=main&event=push&style=for-the-badge&label=CodeQL" />
+  </a>
+  <a href="https://github.com/mktmansour/MKT-KSA-Geolocation-Security/actions/workflows/security-gates.yml">
+    <img alt="Security Gates" src="https://img.shields.io/github/actions/workflow/status/mktmansour/MKT-KSA-Geolocation-Security/security-gates.yml?branch=main&event=push&style=for-the-badge&label=Security%20Gates" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://crates.io/crates/MKT_KSA_Geolocation_Security">
+    <img alt="Crates.io" src="https://img.shields.io/crates/v/MKT_KSA_Geolocation_Security.svg?style=for-the-badge" />
+  </a>
+  <a href="https://docs.rs/MKT_KSA_Geolocation_Security">
+    <img alt="Docs.rs" src="https://img.shields.io/docsrs/MKT_KSA_Geolocation_Security?style=for-the-badge" />
+  </a>
+  <a href="https://crates.io/crates/MKT_KSA_Geolocation_Security">
+    <img alt="Downloads" src="https://img.shields.io/crates/d/MKT_KSA_Geolocation_Security.svg?style=for-the-badge" />
+  </a>
+  <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-0A66C2?style=for-the-badge" />
+  <img alt="Edition" src="https://img.shields.io/badge/edition-2021-0A66C2?style=for-the-badge" />
+</p>
 
 ![MKT KSA Geolocation Security Cover](docs/images/mkt_ksa.png)
+
+<table align="center">
+  <tr>
+    <td align="center">
+      <img alt="Documentation Style" src="https://img.shields.io/badge/Documentation-Engineering%20Grade-0A66C2?style=for-the-badge" />
+    </td>
+    <td align="center">
+      <img alt="Release Baseline" src="https://img.shields.io/badge/Stable_Baseline-v2.0.1-0077B6?style=for-the-badge" />
+    </td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2">
+      <img alt="Security Mode" src="https://img.shields.io/badge/Security-Maintenance%20Mode-005A8D?style=for-the-badge" />
+    </td>
+  </tr>
+</table>
+
+> [!WARNING]
+> **تنبيه أمني للإصدارات**
+> الإصدار **2.0.0** أصبح غير موصى به للإنتاج بعد ظهور ثغرات حرجة عند الاستخدام النهائي.
+> الإصدار المعتمد والمستقر حاليًا هو **2.0.1** بعد التقوية الأمنية والتعديلات الهندسية.
+> يمنع اعتماد الإصدار 2.0.0 في البيئات النشطة.
+
+## 0. تنبيه سلامة الإصدار
+
+- تم سحب التوصية التشغيلية للإصدار **2.0.0** بعد اكتشاف ثغرات حرجة في مرحلة الاستخدام النهائي.
+- الإصدار **2.0.1** هو خط الأساس الإلزامي للترقية، وهو الأكثر استقرارًا ضمن سلسلة هذا المستودع بعد أعمال التحصين والتنظيف.
+- تحقق أمان **2.0.1** تم عبر بوابات صارمة: (`fmt`, `clippy -D warnings`, اختبارات كاملة, `cargo audit`) إضافة إلى فحوص GitHub الأمنية (Code Scanning, Dependabot, Secret Scanning).
+- أي بيئة ما زالت على **2.0.0** يجب ترقيتها فورًا إلى **2.0.1** مع إعادة التحقق بعد الترقية.
 
 ## آخر التحديثات والتنبيه الاستراتيجي (2026-03-15)
 
@@ -37,26 +85,32 @@
 
 ## ملاحظة مجتمعية
 
+![Community Signal](https://img.shields.io/badge/Community-Feedback%20Loop-0A66C2?style=for-the-badge)
+
 - تم تحميل الحزمة آلاف المرات.
 - مستوى التفاعل (تعليقات/ردود/تقييمات) أقل بكثير من المتوقع.
 - الملاحظات التقنية الأمنية من المستخدمين مرحب بها بشكل كبير.
 
 ## المحتويات
 
-- ◈ [1. وظيفة المشروع](#1-وظيفة-المشروع)
-- ◈ [1.1 هدف المشروع](#11-هدف-المشروع)
-- ◈ [1.2 مميزات المشروع](#12-مميزات-المشروع)
-- ◈ [1.3 الجهات المستهدفة](#13-الجهات-المستهدفة)
-- ◈ [2. الوضع التشغيلي والأمني](#2-الوضع-التشغيلي-والأمني)
-- ◈ [3. خريطة أدوار المستودع كاملة](#3-خريطة-أدوار-المستودع-كاملة)
-- ◈ [4. الترابط وتدفق التحكم](#4-الترابط-وتدفق-التحكم)
-- ◈ [4.1 مخطط هيكلة المشروع](#41-مخطط-هيكلة-المشروع)
-- ◈ [5. مرجع API وطرق الاستدعاء](#5-مرجع-api-وطرق-الاستدعاء)
-- ◈ [6. متغيرات البيئة](#6-متغيرات-البيئة)
-- ◈ [7. البناء والتشغيل والتحقق](#7-البناء-والتشغيل-والتحقق)
-- ◈ [8. آخر الإصلاحات والتقويات](#8-آخر-الإصلاحات-والتقويات)
-- ◈ [9. الاستخدام كمكتبة و C-ABI](#9-الاستخدام-كمكتبة-و-c-abi)
-- ◈ [10. تفاصيل مسؤوليات المجلدات والملفات](#10-تفاصيل-مسؤوليات-المجلدات-والملفات)
+- 🛡️ [0. تنبيه سلامة الإصدار](#0-تنبيه-سلامة-الإصدار)
+- 🎯 [1. وظيفة المشروع](#1-وظيفة-المشروع)
+- 🧭 [1.1 هدف المشروع](#11-هدف-المشروع)
+- ✨ [1.2 مميزات المشروع](#12-مميزات-المشروع)
+- 🏛️ [1.3 الجهات المستهدفة](#13-الجهات-المستهدفة)
+- 🔐 [2. الوضع التشغيلي والأمني](#2-الوضع-التشغيلي-والأمني)
+- 🗂️ [3. خريطة أدوار المستودع كاملة](#3-خريطة-أدوار-المستودع-كاملة)
+- 🔄 [4. الترابط وتدفق التحكم](#4-الترابط-وتدفق-التحكم)
+- 🧱 [4.1 مخطط هيكلة المشروع](#41-مخطط-هيكلة-المشروع)
+- 🌐 [5. مرجع API وطرق الاستدعاء](#5-مرجع-api-وطرق-الاستدعاء)
+- ⚙️ [6. متغيرات البيئة](#6-متغيرات-البيئة)
+- 🧪 [7. البناء والتشغيل والتحقق](#7-البناء-والتشغيل-والتحقق)
+- 🛠️ [8. آخر الإصلاحات والتقويات](#8-آخر-الإصلاحات-والتقويات)
+- 🔌 [9. الاستخدام كمكتبة و C-ABI](#9-الاستخدام-كمكتبة-و-c-abi)
+- 📚 [10. تفاصيل مسؤوليات المجلدات والملفات](#10-تفاصيل-مسؤوليات-المجلدات-والملفات)
+- 🧠 [11. مراجعة هندسية عميقة لمجلد src](#11-مراجعة-هندسية-عميقة-لمجلد-src)
+- 👨‍💻 [12. دليل المطور](#12-دليل-المطور)
+- 🤖 [13. دور الذكاء الاصطناعي والاستخبارات](#13-دور-الذكاء-الاصطناعي-والاستخبارات)
 
 ## 1. وظيفة المشروع
 
@@ -353,15 +407,54 @@ cargo run
 
 ![Section 09 Banner](docs/images/banners/section-09.svg)
 
-أنواع التصدير المدعومة:
+مخرجات البناء التي يوفّرها المشروع:
 
-- `rlib` (استخدام Rust مباشر)
-- `cdylib` (مكتبة ديناميكية متوافقة C)
-- `staticlib` (مكتبة ثابتة متوافقة C)
+- `rlib` للاستخدام المباشر داخل Rust.
+- `cdylib` للتكامل عبر C-ABI.
+- `staticlib` للربط الثابت.
 
-وهذا يدعم التكامل المباشر مع Rust وكذلك الربط متعدد اللغات.
+### 9.1 مصفوفة دعم اللغات (النطاق الفعلي)
+
+| اللغة | مستوى الدعم | طريقة الاستخدام |
+|---|---|---|
+| Rust | دعم مباشر | استدعاء API الخاص بالحزمة مباشرة |
+| C / C++ | دعم مباشر عبر C-ABI | استخدام Header + مكتبة ديناميكية/ثابتة |
+| Python / Go / C# / Java / Node.js / غيرها | دعم غير مباشر عبر FFI | إنشاء Binding خاص باللغة فوق C-ABI |
+
+مهم: المشروع لا يوفّر SDK جاهزًا لكل لغة بشكل أصلي. دعم اللغات غير Rust يتم عبر طبقة C-ABI.
+
+### 9.2 واجهة C-ABI المصدّرة حاليًا
+
+الواجهة المصدّرة حاليًا مقصودة ومحدودة:
+
+- `generate_adaptive_fingerprint`
+- `free_fingerprint_string`
+
+وهذه الدوال موجودة في `src/core/device_fp.rs` ويتم إعلانها عبر سياسة `cbindgen.toml`.
+
+### 9.3 خطوات التوليد والاستدعاء
+
+توليد Header:
+
+```bash
+cbindgen --config cbindgen.toml --crate mkt_ksa_geo_sec --output mkt_ksa_geo_sec.h
+```
+
+بناء المكتبة:
+
+```bash
+cargo build --release
+```
+
+بعدها يمكن الاستدعاء مباشرة من C/C++، أو من اللغات الأخرى عبر طبقة C-FFI (مثل: Python `ctypes`، Go `cgo`، C# `DllImport`).
+
+### 9.4 لماذا لم يكن هذا واضحًا سابقًا
+
+التوثيق السابق كان مركزًا على المعمارية والأمان وسلوك API. تمت الآن إضافة هذا القسم لشرح حدود دعم اللغات وطريقة الاستدعاء بشكل صريح.
 
 ## 10. تفاصيل مسؤوليات المجلدات والملفات
+
+![Section 10 Banner](docs/images/banners/section-10.svg)
 
 ### `.github/`
 
@@ -377,7 +470,7 @@ cargo run
 - `GITHUB_ADVANCED_SCAN_2026-03-15.md`: ملخص الفحص المتقدم والمعالجات.
 - `REPOSITORY_FILE_ROLES_2026-03-15.md`: المرجع الرسمي لأدوار الملفات الحالية.
 - `images/cover-mkt-ksa.svg`: الصورة الرئيسية للتوثيق.
-- `images/banners/section-01.svg` ... `section-09.svg`: بنرات مخصصة لكل قسم.
+- `images/banners/section-01.svg` ... `section-13.svg`: بنرات مخصصة لكل قسم.
 
 ### `scripts/`
 
@@ -458,6 +551,205 @@ cargo run
 - `audit.toml`: إعدادات تدقيق التبعيات.
 - `cbindgen.toml`: إعدادات توليد واجهة C-ABI.
 - `GeoLite2-City-Test.mmdb`: ملف اختبار جغرافي مستخدم في مسارات مرتبطة بالتحقق الجغرافي.
+
+## 11. مراجعة هندسية عميقة لمجلد src
+
+![Section 11 Banner](docs/images/banners/section-11.svg)
+
+هذا القسم يراجع كل الوحدات الرئيسية تحت `src/` هندسيًا، وليس `core/` فقط.
+
+### 11.1 خريطة المسؤوليات داخل `src`
+
+<div align="center">
+
+| الوحدة | الدور الأساسي | التأثير الأمني | التأثير التشغيلي |
+|---|---|---|---|
+| `src/main.rs` | تهيئة الخدمات وتشغيل الخادم | يفرض تحقق الإقلاع وسياسة الأسرار | يحدد دورة حياة العملية |
+| `src/lib.rs` | تصدير واجهة المكتبة | يقلل سطح التعريض غير الضروري | يتيح الاستخدام كمكتبة |
+| `src/app_state.rs` | حاوية الحالة المشتركة | يمنع تشتت مكونات الأمان | ينسق الوصول للمحركات |
+| `src/api/` | واجهات HTTP وربط المسارات | يطبق التفويض المركزي | يدير مسار المرور الخارجي |
+| `src/core/` | محركات التحقق والتحليل | ينتج قرارات المخاطر والثقة | يقود زمن قرار النظام |
+| `src/db/` | النماذج والعمليات والترحيلات | يحفظ اتساق البيانات | يضمن موثوقية التخزين |
+| `src/security/` | JWT والسياسات وتحديد المعدل والتوقيع | خط الإنفاذ الأساسي | يتحكم بقبول/رفض الطلب |
+| `src/utils/` | أدوات الدعم المشتركة | يقلل الأنماط غير الآمنة المكررة | يدعم السلوك الحتمي |
+
+</div>
+
+### 11.2 `src/main.rs` وتنسيق الإقلاع
+
+- تحميل متغيرات البيئة الحرجة.
+- التحقق من إعدادات الأمن قبل التشغيل.
+- تهيئة المحركات وقاعدة البيانات والمسارات.
+- بناء `AppState` وبدء خادم Actix.
+
+```mermaid
+flowchart TD
+  A[main.rs startup] --> B[Load and validate env]
+  B --> C[Initialize DB and migrations]
+  C --> D[Initialize security and core engines]
+  D --> E[Build AppState]
+  E --> F[Register routes]
+  F --> G[Start Actix runtime]
+```
+
+### 11.3 `src/api/` دورة معالجة الطلب
+
+![Request Processing Banner](docs/images/banners/section-11-request.svg)
+
+- ترجمة عقود API الخارجية إلى استدعاءات داخلية.
+- تنفيذ `authorize_request()` قبل منطق المسار.
+- تمرير الحمولة للوحدة المناسبة مع استجابة HTTP واضحة.
+
+```mermaid
+flowchart LR
+  A[HTTP Request] --> B[src/api/mod.rs route]
+  B --> C[authorize_request]
+  C --> D[src/security checks]
+  D --> E[domain handler in src/api/*.rs]
+  E --> F[src/core or src/db]
+  F --> G[JSON response]
+```
+
+### 11.4 `src/core/` محركات الثقة متعددة الإشارات
+
+![Trust Engine Banner](docs/images/banners/section-11-trust.svg)
+
+- يحتوي منطق التحليل الجغرافي والسلوكي وبصمة الجهاز والشبكة والحساسات والطقس والتحقق المركب.
+- يدمج الإشارات لإخراج قرار حتمي قابل للتدقيق.
+
+```mermaid
+flowchart LR
+  A[Input signals] --> B[geo_resolver]
+  A --> C[behavior_bio]
+  A --> D[device_fp]
+  A --> E[network_analyzer]
+  A --> F[sensors_analyzer]
+  A --> G[weather_val]
+  B --> H[composite_verification]
+  C --> H
+  D --> H
+  E --> H
+  F --> H
+  G --> H
+  H --> I[Trust decision]
+```
+
+### 11.5 `src/db/` حدود التخزين
+
+![Storage Boundary Banner](docs/images/banners/section-11-storage.svg)
+
+- إدارة نسخة المخطط عبر migrations.
+- تنفيذ عمليات CRUD غير المتزامنة.
+- عزل طبقة التخزين عن واجهات API.
+
+```mermaid
+flowchart TD
+  A[src/api + src/core] --> B[src/db/crud.rs]
+  B --> C[src/db/models.rs]
+  B --> D[SQLite runtime]
+  D --> E[src/db/migrations/*.sql]
+```
+
+### 11.6 `src/security/` دور الأمن وطرق عمله
+
+![Security Workflow Banner](docs/images/banners/section-11-security.svg)
+
+- `jwt.rs`: إصدار/تحقق الرموز وفحص claims.
+- `policy.rs`: قواعد الصلاحيات والحالة الأمنية.
+- `ratelimit.rs`: منع الإساءة عبر الحد لكل IP.
+- `input_validator.rs`: تطبيع وتنقية المدخلات.
+- `secret.rs` و`signing.rs`: حماية القيم الحساسة والتوقيع/التحقق.
+
+```mermaid
+flowchart LR
+  A[Request enters API] --> B[jwt.rs]
+  B --> C[policy.rs]
+  C --> D[ratelimit.rs]
+  D --> E[input_validator.rs]
+  E --> F[signing.rs + secret.rs]
+  F --> G[Authorized execution]
+```
+
+### 11.7 `src/utils/` طبقة الدعم الحتمي
+
+- التخزين المؤقت والدقة الرياضية/الزمنية والسجلات والمساعدات العامة.
+- تخفيف التكرار وتحسين الاتساق عبر كل الوحدات.
+
+```mermaid
+flowchart LR
+  A[api/core/security/db] --> B[utils/cache]
+  A --> C[utils/precision]
+  A --> D[utils/logger]
+  A --> E[utils/helpers]
+```
+
+## 12. دليل المطور
+
+![Section 12 Banner](docs/images/banners/section-12.svg)
+
+### 12.1 سير العمل اليومي
+
+1. سحب آخر تحديث من `main` والتحقق من البيئة.
+2. تنفيذ التغيير ضمن أضيق وحدة ممكنة.
+3. إضافة/تحديث الاختبارات.
+4. تشغيل البوابات الصارمة قبل أي PR.
+5. تحديث التوثيق وCHANGELOG عند تغير السلوك.
+
+### 12.2 البوابات المحلية الإلزامية
+
+```bash
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+cargo test --workspace --all-targets --all-features
+cargo audit --deny warnings
+```
+
+### 12.3 إضافة Endpoint جديد بطريقة آمنة
+
+1. إنشاء handler داخل `src/api/`.
+2. تسجيل المسار في `src/api/mod.rs`.
+3. المرور عبر التفويض المركزي `authorize_request`.
+4. وضع منطق المجال داخل `src/core/` وليس داخل handler.
+5. استخدام `src/db/` عبر حدود CRUD المعتمدة.
+6. إضافة اختبار تكاملي في `tests/`.
+
+### 12.4 قائمة تحقق أمنية للمطور
+
+- عدم وضع أسرار ثابتة داخل الكود.
+- الإبقاء على JWT والسياسات وتحديد المعدل بشكل مركزي.
+- التحقق من المدخلات قبل أي معالجة حساسة.
+- تفضيل المنطق الحتمي القابل للتدقيق.
+- تسجيل العمليات الحساسة بشكل واضح وقابل للمراجعة.
+
+## 13. دور الذكاء الاصطناعي والاستخبارات
+
+![Section 13 Banner](docs/images/banners/section-13.svg)
+
+المعمارية الحالية في 2.0.1 حتمية وقابلة للتدقيق الأمني. دور الذكاء الاصطناعي هنا طبقة مساعدة تحليلية، وليس جهة إنفاذ مستقلة.
+
+### 13.1 الوضع الحالي في 2.0.1
+
+- قرارات الوصول والتنفيذ مبنية على سياسات صريحة ومحركات تحقق حتمية.
+- تحليل الشذوذ والسلوك يتم ضمن منطق واضح قابل للتتبع.
+- لا يسمح لأي مكون AI غامض بتجاوز سياسات الأمان.
+
+### 13.2 حدود دمج AI بشكل آمن
+
+```mermaid
+flowchart LR
+  A[Raw telemetry] --> B[Deterministic trust engines]
+  B --> C[Policy enforcement]
+  C --> D[Access decision]
+  B --> E[AI/ML advisory layer optional]
+  E --> F[Analyst insights and tuning]
+  F --> C
+```
+
+### 13.3 نموذج الاستخدام المقترح
+
+- استخدام AI لشرح المخاطر ودعم المحللين وتوصيات ضبط العتبات.
+- إبقاء الإنفاذ النهائي تحت `src/security/` و`src/core/`.
+- فصل تسجيل مخرجات AI الاستشارية عن مخرجات الإنفاذ الحتمي.
 
 ## الترخيص
 

@@ -1,6 +1,6 @@
 <svg width="1600" height="320" viewBox="0 0 1600 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
-  <title id="t">Section 05 - API Reference and Invocation</title>
-  <desc id="d">Unified cyber AI banner for Section 05</desc>
+  <title id="t">Section 11.4 - Trust Engine Orchestration</title>
+  <desc id="d">Unified cyber AI banner for Section 11.4</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#031225"/>
@@ -42,10 +42,10 @@
 
   <g transform="translate(66,64)" filter="url(#glow)">
     <rect x="0" y="0" width="96" height="96" rx="18" fill="none" stroke="url(#acc)" stroke-width="3"/>
-    <rect x="18" y="18" width="62" height="62" rx="10" fill="none" stroke="#95E6FF" stroke-width="5"/><path d="M32 34 H66 M32 50 H66 M32 66 H56" stroke="#95E6FF" stroke-width="4"/><circle cx="74" cy="34" r="3" fill="#95E6FF"/>
+    <circle cx="30" cy="50" r="10" fill="none" stroke="#95E6FF" stroke-width="4"/><circle cx="50" cy="30" r="8" fill="none" stroke="#95E6FF" stroke-width="4"/><circle cx="70" cy="50" r="10" fill="none" stroke="#95E6FF" stroke-width="4"/><path d="M39 42 L46 36 M39 58 L46 64 M58 36 L64 42" stroke="#95E6FF" stroke-width="4"/>
   </g>
 
-  <text x="208" y="96" fill="#CFEFFF" font-size="24" font-family="Segoe UI, Tahoma, sans-serif" letter-spacing="1.2">Section 05</text>
-  <text x="208" y="152" fill="#FFFFFF" font-size="44" font-family="Segoe UI, Tahoma, sans-serif" font-weight="700">API Reference and Invocation</text>
-  <text x="208" y="196" fill="#8ED9FF" font-size="24" font-family="Segoe UI, Tahoma, sans-serif">Endpoints, contracts, and usage</text>
+  <text x="208" y="96" fill="#CFEFFF" font-size="24" font-family="Segoe UI, Tahoma, sans-serif" letter-spacing="1.2">Section 11.4</text>
+  <text x="208" y="152" fill="#FFFFFF" font-size="44" font-family="Segoe UI, Tahoma, sans-serif" font-weight="700">Trust Engine Orchestration</text>
+  <text x="208" y="196" fill="#8ED9FF" font-size="24" font-family="Segoe UI, Tahoma, sans-serif">Signal fusion and deterministic decisioning</text>
 </svg>
