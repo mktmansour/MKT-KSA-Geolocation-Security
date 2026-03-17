@@ -67,11 +67,14 @@ struct ApiErrorBody {
 }
 
 pub fn api_error(status: StatusCode, code: &'static str, message: &'static str) -> HttpResponse {
-    HttpResponse::build(status).json(ApiErrorBody {
-        code,
-        message,
-        request_id: None,
-    })
+    let request_id = Uuid::new_v4().to_string();
+    HttpResponse::build(status)
+        .insert_header(("X-Request-ID", request_id.clone()))
+        .json(ApiErrorBody {
+            code,
+            message,
+            request_id: Some(request_id),
+        })
 }
 
 pub fn api_error_with_request_id(
