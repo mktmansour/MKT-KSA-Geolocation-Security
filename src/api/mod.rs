@@ -66,6 +66,10 @@ struct ApiErrorBody {
     request_id: Option<String>,
 }
 
+/// Newtype used to cache a stable request ID in `HttpRequest` extensions.
+#[derive(Clone)]
+struct RequestId(String);
+
 pub fn api_error(status: StatusCode, code: &'static str, message: &'static str) -> HttpResponse {
     let request_id = Uuid::new_v4().to_string();
     HttpResponse::build(status)
@@ -122,13 +126,23 @@ pub fn client_ip(req: &HttpRequest) -> IpAddr {
 }
 
 pub fn request_id(req: &HttpRequest) -> String {
-    req.headers()
+    // First, try to return a cached request id from the request extensions.
+    if let Some(existing) = req.extensions().get::<RequestId>() {
+        return existing.0.clone();
+    }
+
+    // Otherwise, derive it from the header or generate a new UUID, then cache it.
+    let id = req
+        .headers()
         .get("X-Request-ID")
         .and_then(|hv| hv.to_str().ok())
         .map(str::trim)
         .filter(|v| !v.is_empty() && v.len() <= 128)
         .map(ToString::to_string)
-        .unwrap_or_else(|| Uuid::new_v4().to_string())
+        .unwrap_or_else(|| Uuid::new_v4().to_string());
+
+    req.extensions_mut().insert(RequestId(id.clone()));
+    id
 }
 
 fn log_security_event(req_id: &str, ip: IpAddr, path: &str, code: &str, detail: &str) {
