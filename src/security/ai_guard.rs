@@ -148,57 +148,116 @@ impl RequestAiGuard {
         let mut map = self.ip_state.write().await;
         self.prune_if_needed(&mut map, now);
 
-        let state = map.entry(ip).or_insert_with(|| IpRiskState::new(now));
-        self.apply_decay(state, now);
+        {
+            let state = map.entry(ip).or_insert_with(|| IpRiskState::new(now));
+            self.apply_decay(state, now);
 
-        if let Some(until) = state.blocked_until {
-            if until > now {
-                let retry_after = (until - now).as_secs().max(1);
-                let mut assessment = self.assess(path, user_agent, payload);
-                assessment.reasons.push("temporary_ip_block_active");
-                assessment.score = assessment.score.max(self.config.block_threshold);
+            if let Some(until) = state.blocked_until {
+                if until > now {
+                    let retry_after = (until - now).as_secs().max(1);
+                    let mut assessment = self.assess(path, user_agent, payload);
+                    assessment.reasons.push("temporary_ip_block_active");
+                    assessment.score = assessment.score.max(self.config.block_threshold);
+
+                    // Enforce max_tracked_ips before returning, to avoid unbounded growth.
+                    if self.config.max_tracked_ips == 0 {
+                        map.clear();
+                    } else {
+                        while map.len() > self.config.max_tracked_ips {
+                            if let Some((&evict_ip, _)) = map
+                                .iter()
+                                .filter(|(existing_ip, _)| **existing_ip != ip)
+                                .min_by_key(|(_, state)| state.last_seen)
+                            {
+                                map.remove(&evict_ip);
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+
+                    return AiRiskDecision {
+                        assessment,
+                        blocked: true,
+                        retry_after_seconds: Some(retry_after),
+                    };
+                }
+                state.blocked_until = None;
+            }
+
+            let mut assessment = self.assess(path, user_agent, payload);
+            let reputation_boost = (state.reputation / 10).min(30) as u8;
+            if reputation_boost > 0 {
+                assessment.score = assessment
+                    .score
+                    .saturating_add(reputation_boost)
+                    .min(100);
+                assessment.reasons.push("ip_reputation_risk");
+            }
+
+            let blocked = assessment.is_blocked(self.config.block_threshold);
+            state.last_seen = now;
+
+            if blocked {
+                state.offense_count = state.offense_count.saturating_add(1);
+                state.reputation = state
+                    .reputation
+                    .saturating_add(assessment.score as u16);
+
+                let multiplier = u64::from(state.offense_count).min(10);
+                let block_seconds = (self.config.base_block_seconds * multiplier)
+                    .min(self.config.max_block_seconds)
+                    .max(self.config.base_block_seconds);
+                state.blocked_until = Some(now + Duration::from_secs(block_seconds));
+
+                // Enforce max_tracked_ips before returning, to avoid unbounded growth.
+                if self.config.max_tracked_ips == 0 {
+                    map.clear();
+                } else {
+                    while map.len() > self.config.max_tracked_ips {
+                        if let Some((&evict_ip, _)) = map
+                            .iter()
+                            .filter(|(existing_ip, _)| **existing_ip != ip)
+                            .min_by_key(|(_, state)| state.last_seen)
+                        {
+                            map.remove(&evict_ip);
+                        } else {
+                            break;
+                        }
+                    }
+                }
+
                 return AiRiskDecision {
                     assessment,
                     blocked: true,
-                    retry_after_seconds: Some(retry_after),
+                    retry_after_seconds: Some(block_seconds),
                 };
             }
-            state.blocked_until = None;
-        }
 
-        let mut assessment = self.assess(path, user_agent, payload);
-        let reputation_boost = (state.reputation / 10).min(30) as u8;
-        if reputation_boost > 0 {
-            assessment.score = assessment.score.saturating_add(reputation_boost).min(100);
-            assessment.reasons.push("ip_reputation_risk");
-        }
+            state.reputation = state.reputation.saturating_sub(2);
 
-        let blocked = assessment.is_blocked(self.config.block_threshold);
-        state.last_seen = now;
-
-        if blocked {
-            state.offense_count = state.offense_count.saturating_add(1);
-            state.reputation = state.reputation.saturating_add(assessment.score as u16);
-
-            let multiplier = u64::from(state.offense_count).min(10);
-            let block_seconds = (self.config.base_block_seconds * multiplier)
-                .min(self.config.max_block_seconds)
-                .max(self.config.base_block_seconds);
-            state.blocked_until = Some(now + Duration::from_secs(block_seconds));
+            // At this point, we have updated/inserted the current IP. Enforce max_tracked_ips.
+            if self.config.max_tracked_ips == 0 {
+                map.clear();
+            } else {
+                while map.len() > self.config.max_tracked_ips {
+                    if let Some((&evict_ip, _)) = map
+                        .iter()
+                        .filter(|(existing_ip, _)| **existing_ip != ip)
+                        .min_by_key(|(_, state)| state.last_seen)
+                    {
+                        map.remove(&evict_ip);
+                    } else {
+                        break;
+                    }
+                }
+            }
 
             return AiRiskDecision {
                 assessment,
-                blocked: true,
-                retry_after_seconds: Some(block_seconds),
+                blocked: false,
+                retry_after_seconds: None,
             };
-        }
-
-        state.reputation = state.reputation.saturating_sub(2);
-
-        AiRiskDecision {
-            assessment,
-            blocked: false,
-            retry_after_seconds: None,
         }
     }
 
