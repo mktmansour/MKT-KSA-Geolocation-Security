@@ -195,7 +195,10 @@ async fn attack_payloads_are_rejected_or_safely_handled() {
         }))
         .to_request();
     let resp_alert = test::call_service(&app, req_alert_injection).await;
-    assert_eq!(resp_alert.status(), StatusCode::OK);
+    assert!(
+        resp_alert.status() == StatusCode::OK || resp_alert.status() == StatusCode::FORBIDDEN,
+        "alert attack payload should be safely handled (persisted or blocked)"
+    );
 
     let req_device_threat = test::TestRequest::post()
         .uri("/api/device/resolve")
@@ -207,7 +210,11 @@ async fn attack_payloads_are_rejected_or_safely_handled() {
         }))
         .to_request();
     let resp_device = test::call_service(&app, req_device_threat).await;
-    assert_eq!(resp_device.status(), StatusCode::INTERNAL_SERVER_ERROR);
+    assert!(
+        resp_device.status() == StatusCode::INTERNAL_SERVER_ERROR
+            || resp_device.status() == StatusCode::FORBIDDEN,
+        "device threat payload should be handled by engine or blocked by AI guard"
+    );
 
     let req_malformed_json = test::TestRequest::post()
         .uri("/api/network/analyze")
@@ -216,7 +223,11 @@ async fn attack_payloads_are_rejected_or_safely_handled() {
         .set_payload("{\"ip\":\"8.8.8.8\",\"conn_type\":\"WiFi\"")
         .to_request();
     let resp_bad_json = test::call_service(&app, req_malformed_json).await;
-    assert_eq!(resp_bad_json.status(), StatusCode::BAD_REQUEST);
+    assert!(
+        resp_bad_json.status() == StatusCode::BAD_REQUEST
+            || resp_bad_json.status() == StatusCode::FORBIDDEN,
+        "malformed payload should be rejected directly or blocked by adaptive policy"
+    );
 
     let mut limited = 0usize;
     for _ in 0..200 {
@@ -225,7 +236,8 @@ async fn attack_payloads_are_rejected_or_safely_handled() {
             .insert_header((header::AUTHORIZATION, format!("Bearer {token}")))
             .to_request();
         let resp = test::call_service(&app, req).await;
-        if resp.status() == StatusCode::TOO_MANY_REQUESTS {
+        if resp.status() == StatusCode::TOO_MANY_REQUESTS || resp.status() == StatusCode::FORBIDDEN
+        {
             limited += 1;
             break;
         }

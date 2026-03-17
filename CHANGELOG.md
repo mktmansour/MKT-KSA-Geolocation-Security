@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.1] - 2026-03-17
+
+### Security
+
+- Enforced global request correlation with `X-Request-ID` propagation at middleware level.
+- Added strict adaptive AI gate response contract with `AI_RISK_BLOCKED` + `Retry-After` semantics.
+- Added centralized structured security event logging for denied/blocked authorization decisions.
+- Added request success audit logging with latency metrics (`request_audit outcome=success ... latency_ms=...`).
+
+### Changed
+
+- Standardized successful JSON responses with a strict trace envelope shape:
+  - `trace_id`
+  - `data`
+- Extended centralized API authorization flow to include request payload risk assessment.
+- Strengthened CI with security-profile matrix workflow checks for both `strict` and `ultra-strict` modes.
+
+### Testing
+
+- Added integration test for request-id propagation across multiple API endpoints.
+- Added integration test validating successful JSON response trace envelope.
+
+### Validation
+
+- `cargo fmt --all`: pass
+- `cargo clippy --all-targets -- -D warnings`: pass
+- `cargo test --all-targets`: pass
+- Live probes: verified `RATE_LIMIT_EXCEEDED` and `AI_RISK_BLOCKED` include `Retry-After` and request correlation.
+
+---
+
 ## [2.0.1] - 2026-03-15
 
 ### Security

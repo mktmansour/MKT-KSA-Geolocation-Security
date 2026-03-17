@@ -25,11 +25,15 @@
     It verifies user authorization via JWT before performing the analysis, ensuring every analysis operation is secure and reliable.
     The file is designed as a central point for any external system or user interface wishing to analyze user or device behavior.
 ******************************************************************************************/
+use crate::api::api_error;
 use crate::api::authorize_request;
+use crate::api::ok_json_with_trace;
+use crate::api::parse_json_payload;
 use crate::api::BearerToken;
 use crate::core::behavior_bio::BehaviorInput;
 use crate::AppState;
-use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
+use actix_web::http::StatusCode;
+use actix_web::{post, web, HttpRequest, Responder};
 use serde::Deserialize;
 
 /// نموذج الطلب لتحليل السلوك.
@@ -49,21 +53,24 @@ pub async fn analyze_behavior(
     bearer: BearerToken,
     payload_bytes: web::Bytes,
 ) -> impl Responder {
-    if let Err(resp) = authorize_request(&app_data, &req, &bearer).await {
+    if let Err(resp) = authorize_request(&app_data, &req, &bearer, &payload_bytes).await {
         return resp;
     }
 
-    let payload: BehaviorAnalyzeRequest = match serde_json::from_slice(&payload_bytes) {
+    let payload: BehaviorAnalyzeRequest = match parse_json_payload(&payload_bytes) {
         Ok(v) => v,
-        Err(e) => return HttpResponse::BadRequest().body(format!("Invalid JSON payload: {e}")),
+        Err(resp) => return resp,
     };
 
     // --- تمرير الطلب لمحرك core ---
     let engine = &app_data.x_engine.behavior_engine;
     match engine.process(payload.input.clone()).await {
-        Ok(result) => HttpResponse::Ok().json(result), // إعادة نتيجة التحليل بنجاح
+        Ok(result) => ok_json_with_trace(&req, result), // إعادة نتيجة التحليل بنجاح
         // Return analysis result on success
-        Err(e) => HttpResponse::InternalServerError().json(e.to_string()), // معالجة الخطأ وإرجاعه
-                                                                           // Handle and return error
+        Err(_) => api_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "BEHAVIOR_ANALYSIS_INTERNAL_ERROR",
+            "Internal error while analyzing behavior",
+        ),
     }
 }

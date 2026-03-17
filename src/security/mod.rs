@@ -45,3 +45,7 @@ pub mod signing;
 // Arabic: طبقة تغليف لوحدة الأسرار لتوحيد الاستدعاءات وعزل تغييرات الإصدارات
 // English: Secret wrapper layer to unify calls and isolate version changes
 pub mod secret;
+
+// Arabic: طبقة حراسة ذكية مدعومة بقواعد AI heuristic
+// English: AI-assisted adaptive request guard
+pub mod ai_guard;

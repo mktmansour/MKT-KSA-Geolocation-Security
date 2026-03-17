@@ -22,10 +22,13 @@
     - Allows easy customization of zone/time policies.
 ******************************************************************************************/
 
+use crate::api::api_error;
 use crate::api::authorize_request;
+use crate::api::parse_json_payload;
 use crate::api::BearerToken;
 use crate::core::behavior_bio::BehaviorInput;
 use crate::AppState;
+use actix_web::http::StatusCode;
 use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
 
 /// Arabic: نموذج الطلب لنقطة نهاية التحقق المركب
@@ -48,13 +51,13 @@ pub async fn smart_access_verify(
     bearer: BearerToken,
     payload_bytes: web::Bytes,
 ) -> impl Responder {
-    if let Err(resp) = authorize_request(&data, &req, &bearer).await {
+    if let Err(resp) = authorize_request(&data, &req, &bearer, &payload_bytes).await {
         return resp;
     }
 
-    let payload: SmartAccessRequest = match serde_json::from_slice(&payload_bytes) {
+    let payload: SmartAccessRequest = match parse_json_payload(&payload_bytes) {
         Ok(v) => v,
-        Err(e) => return HttpResponse::BadRequest().body(format!("Invalid JSON payload: {e}")),
+        Err(resp) => return resp,
     };
 
     // سياسات المناطق والأوقات (مثال، يمكن تخصيصها)
@@ -78,7 +81,15 @@ pub async fn smart_access_verify(
 
     match result {
         Ok(true) => HttpResponse::Ok().body("Access granted"),
-        Ok(false) => HttpResponse::Forbidden().body("Access denied"),
-        Err(e) => HttpResponse::Forbidden().body(format!("Access denied: {e}")),
+        Ok(false) => api_error(
+            StatusCode::FORBIDDEN,
+            "SMART_ACCESS_DENIED",
+            "Access denied",
+        ),
+        Err(_) => api_error(
+            StatusCode::FORBIDDEN,
+            "SMART_ACCESS_POLICY_DENIED",
+            "Access denied by policy",
+        ),
     }
 }

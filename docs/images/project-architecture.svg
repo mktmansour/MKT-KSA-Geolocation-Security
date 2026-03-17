@@ -22,7 +22,7 @@
 
   <rect width="1600" height="900" fill="url(#bg)"/>
   <text x="800" y="72" text-anchor="middle" class="title">MKT KSA Geolocation Security - Project Architecture</text>
-  <text x="800" y="112" text-anchor="middle" class="subtitle">API -> Security Controls -> Core Engines -> Persistence & Utilities</text>
+  <text x="800" y="112" text-anchor="middle" class="subtitle">API -> Security Controls + AI Guard -> Core Engines -> Persistence & Utilities</text>
 
   <rect x="80" y="170" width="270" height="560" rx="14" fill="url(#box)" stroke="#7cc4ff" stroke-opacity="0.6"/>
   <text x="215" y="220" text-anchor="middle" class="h">Entry Layer</text>
@@ -49,6 +49,7 @@
   <text x="775" y="305" class="t">- security/ratelimit.rs</text>
   <text x="775" y="340" class="t">- security/policy.rs</text>
   <text x="775" y="375" class="t">- security/input_validator.rs</text>
+  <text x="775" y="410" class="t">- security/ai_guard.rs</text>
 
   <rect x="750" y="460" width="350" height="270" rx="14" fill="url(#box)" stroke="#7cc4ff" stroke-opacity="0.6"/>
   <text x="925" y="510" text-anchor="middle" class="h">Core Engines</text>
@@ -66,6 +67,7 @@
   <text x="1165" y="375" class="t">- utils/cache.rs</text>
   <text x="1165" y="410" class="t">- utils/precision.rs</text>
   <text x="1165" y="445" class="t">- tests/*</text>
+  <text x="1165" y="480" class="t">- .github/workflows/security-profile-matrix.yml</text>
 
   <path d="M350 300 L390 300" class="edge"/>
   <path d="M710 300 L750 300" class="edge"/>
@@ -73,5 +75,5 @@
   <path d="M1100 300 L1140 300" class="edge"/>
   <path d="M1100 560 L1140 560" class="edge"/>
 
-  <text x="800" y="850" text-anchor="middle" class="subtitle">Hardened profile: centralized authorization, runtime secrets, and strict CI validation.</text>
+  <text x="800" y="850" text-anchor="middle" class="subtitle">Hardened profile: centralized authorization, AI guard, request tracing, and strict CI validation.</text>
 </svg>

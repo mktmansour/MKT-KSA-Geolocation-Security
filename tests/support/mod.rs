@@ -22,6 +22,7 @@ use mkt_ksa_geo_sec::core::sensors_analyzer::{
 use mkt_ksa_geo_sec::core::weather_val::{OpenMeteoProvider, WeatherEngine, WeatherProvider};
 use mkt_ksa_geo_sec::db::crud;
 use mkt_ksa_geo_sec::db::models::User;
+use mkt_ksa_geo_sec::security::ai_guard::RequestAiGuard;
 use mkt_ksa_geo_sec::security::jwt::JwtManager;
 use mkt_ksa_geo_sec::security::ratelimit::{RateLimitConfig, RateLimiter};
 use mkt_ksa_geo_sec::security::secret::{SecureBytes, SecureString};
@@ -187,6 +188,8 @@ pub async fn build_state_with_db(max_requests: u32) -> (web::Data<AppState>, Uui
         weather_engine,
         jwt_manager,
         rate_limiter,
+        ai_guard: Arc::new(RequestAiGuard::default()),
+        api_key: None,
         alert_memory: Arc::new(AlertMemoryStore::new(64)),
         db_pool: Some(db),
     });
