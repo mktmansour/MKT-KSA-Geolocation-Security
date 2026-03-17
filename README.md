@@ -62,7 +62,20 @@ Production-grade geolocation and behavioral security system for Rust services an
 - Security verification for **2.0.1** includes strict local gates (`fmt`, `clippy -D warnings`, full tests, `cargo audit`) and GitHub security checks (Code Scanning, Dependabot, Secret Scanning).
 - Teams still running **2.0.0** should upgrade immediately to **2.0.1** and re-run post-upgrade validation.
 
-## Latest Status and Strategic Notice (2026-03-15)
+## Latest Status and Strategic Notice (2026-03-17)
+
+![Section 00 Update Banner](docs/images/banners/section-08.svg)
+
+### Development and Update Summary (Today, Yesterday, and Day Before)
+
+- Release baseline remains **2.0.1** and all recent hardening work is tracked under this version line.
+- Added global `X-Request-ID` propagation and strict request trace continuity on both error and success paths.
+- Added adaptive AI security blocking with retry semantics and risk reason reporting for blocked traffic.
+- Added strict API key enforcement with constant-time comparison and unified structured API error envelopes.
+- Added security correlation logging for blocked/denied decisions and success audit lines with latency metadata.
+- Added profile-aware runtime hardening (`strict` / `ultra-strict`) with tighter defaults and startup validation controls.
+- Added CI profile matrix smoke checks for both `strict` and `ultra-strict`, including `Retry-After` validation.
+- Added integration coverage for request-id propagation across multiple endpoints and success JSON trace envelope checks.
 
 - Active release target is now **2.0.1** due to security and engineering fixes.
 - Security hardening and architecture cleanup have been completed on `main`.
@@ -160,6 +173,9 @@ The API layer is served through Actix Web, while core engines are reusable as a 
 - Active DB: SQLite only (`DATABASE_URL=sqlite://...`)
 - JWT: centralized decode/validation via `JwtManager`
 - Rate limiting: centralized per-IP checks before endpoint logic
+- Adaptive AI guard: centralized payload/path risk scoring with temporary IP lock and `Retry-After` signaling
+- Request correlation: global `X-Request-ID` propagation across error and success paths
+- Success trace envelope: JSON success responses include `trace_id` + `data`
 - Internal engine secrets: generated securely at runtime (no hardcoded secret literals)
 - Secret handling: `secrecy` + `zeroize`
 - Signing: HMAC-SHA512/HMAC-SHA384
@@ -199,6 +215,13 @@ The API layer is served through Actix Web, while core engines are reusable as a 
 | `tests/` | Integration and security surface tests |
 | `target/` | Local build artifacts (non-source) |
 
+### New Security Governance Files (2026-03-17)
+
+| Path | Role |
+|---|---|
+| `.github/workflows/security-profile-matrix.yml` | strict/ultra-strict runtime smoke and retry-header enforcement |
+| `tests/api_request_id_propagation_integration.rs` | request-id propagation and success-trace regression testing |
+
 ### `src/` detailed map
 
 | Path | Role | Interactions |
@@ -214,6 +237,7 @@ The API layer is served through Actix Web, while core engines are reusable as a 
 | `src/db/crud.rs` | SQLite DB operations | Called by auth/alerts and bootstrap |
 | `src/db/migrations.rs` + SQL files | Schema versioning and migration execution | Called on startup |
 | `src/security/*.rs` | JWT, policy, rate-limit, validation, secret/signing | Used across API and core |
+| `src/security/ai_guard.rs` | Adaptive AI request risk scoring and temporary block orchestration | Called by centralized authorization gateway |
 | `src/utils/*.rs` | Caching, precision math, helpers, logging | Shared utilities |
 
 ## 4. Module Interactions and Control Flow
@@ -226,6 +250,8 @@ The API layer is served through Actix Web, while core engines are reusable as a 
 4. `authorize_request()` enforces:
    - Authorization header presence
    - Rate limit policy
+  - API key checks (when configured)
+  - Adaptive AI guard risk checks
    - JWT decode/validation
 5. Handler calls the relevant core engine or DB layer.
 6. Response is returned as JSON (or HTTP error with strict status semantics).
@@ -239,11 +265,12 @@ The diagram maps real repository structure from entry and API layers to security
 ```mermaid
 flowchart LR
   A[src/main.rs + src/api/mod.rs] --> B[src/api/* handlers]
-  B --> C[src/security/*]
+  B --> C[src/security/* + security/ai_guard.rs]
   B --> D[src/core/*]
   D --> E[src/db/*]
   D --> F[src/utils/*]
   E --> G[SQLite + migrations]
+  B --> H[Trace Envelope + Request ID]
 ```
 
 ## 5. API Reference and Invocation

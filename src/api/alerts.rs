@@ -25,12 +25,16 @@
     and returns a JSON response with the operation status and alert data.
     The file is designed as a central point for managing security alerts, and can be integrated with a database or external notification systems in the future.
 ******************************************************************************************/
+use crate::api::api_error;
 use crate::api::authorize_request;
+use crate::api::ok_json_with_trace;
+use crate::api::parse_json_payload;
 use crate::api::BearerToken;
 use crate::db::crud;
 use crate::db::models::SecurityAlert;
 use crate::AppState;
-use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
+use actix_web::http::StatusCode;
+use actix_web::{post, web, HttpRequest, Responder};
 use serde::Deserialize;
 use serde_json::json;
 use uuid::Uuid;
@@ -59,13 +63,13 @@ pub async fn trigger_alert(
     bearer: BearerToken,
     payload_bytes: web::Bytes,
 ) -> impl Responder {
-    if let Err(resp) = authorize_request(&app_data, &req, &bearer).await {
+    if let Err(resp) = authorize_request(&app_data, &req, &bearer, &payload_bytes).await {
         return resp;
     }
 
-    let payload: AlertTriggerRequest = match serde_json::from_slice(&payload_bytes) {
+    let payload: AlertTriggerRequest = match parse_json_payload(&payload_bytes) {
         Ok(v) => v,
-        Err(e) => return HttpResponse::BadRequest().body(format!("Invalid JSON payload: {e}")),
+        Err(resp) => return resp,
     };
 
     // --- بناء نموذج التنبيه ---
@@ -88,15 +92,21 @@ pub async fn trigger_alert(
 
     app_data.alert_memory.push(alert.alert_type.clone()).await;
     if let Some(pool) = &app_data.db_pool {
-        if let Err(e) = crud::create_security_alert(pool, &alert).await {
-            return HttpResponse::InternalServerError()
-                .json(format!("Failed to persist alert: {e}"));
+        if crud::create_security_alert(pool, &alert).await.is_err() {
+            return api_error(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "ALERT_PERSISTENCE_FAILED",
+                "Failed to persist alert",
+            );
         }
     }
     // --- إرجاع استجابة JSON موحدة ---
     // Return a unified JSON response
-    HttpResponse::Ok().json(json!({
-        "status": "alert_triggered",
-        "alert": alert
-    }))
+    ok_json_with_trace(
+        &req,
+        json!({
+            "status": "alert_triggered",
+            "alert": alert
+        }),
+    )
 }

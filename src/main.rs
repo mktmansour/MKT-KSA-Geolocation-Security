@@ -39,22 +39,99 @@
 // English: Use library modules instead of re-declaring them in the bin target
 use mkt_ksa_geo_sec::api;
 
-use actix_web::{web, App, HttpServer};
+use actix_web::{
+    dev::Service,
+    http::header::{HeaderName, HeaderValue},
+    middleware::DefaultHeaders,
+    web, App, HttpServer,
+};
 use config::Config;
 use config::Environment;
 use maxminddb::Reader;
 use mkt_ksa_geo_sec::core::weather_val::{OpenMeteoProvider, WeatherEngine, WeatherProvider};
 use mkt_ksa_geo_sec::db::crud;
 use mkt_ksa_geo_sec::db::models::User;
+use mkt_ksa_geo_sec::security::ai_guard::AiGuardConfig;
+use mkt_ksa_geo_sec::security::ai_guard::RequestAiGuard;
 use mkt_ksa_geo_sec::security::jwt::JwtManager;
 use mkt_ksa_geo_sec::security::ratelimit::RateLimitConfig;
 use mkt_ksa_geo_sec::security::ratelimit::RateLimiter;
+
+/// Build the default fingerprint environment profiles map.
+///
+/// This centralizes the default configuration for the different device
+/// categories (mobile, desktop, IoT, server) so that it can be reused
+/// consistently from a single place.
+fn build_default_fp_env_profiles(
+) -> std::collections::HashMap<String, mkt_ksa_geo_sec::core::device_fp::EnvironmentProfile> {
+    let mut fp_env_profiles = std::collections::HashMap::<
+        String,
+        mkt_ksa_geo_sec::core::device_fp::EnvironmentProfile,
+    >::new();
+
+    fp_env_profiles.insert(
+        "mobile".to_string(),
+        mkt_ksa_geo_sec::core::device_fp::EnvironmentProfile {
+            os_type: "Mobile".to_string(),
+            device_category: "Phone/Tablet".to_string(),
+            threat_level: 6,
+            resource_constraints: mkt_ksa_geo_sec::core::device_fp::ResourceConstraints {
+                max_memory_kb: 512,
+                max_processing_us: 5_000,
+            },
+        },
+    );
+
+    fp_env_profiles.insert(
+        "desktop".to_string(),
+        mkt_ksa_geo_sec::core::device_fp::EnvironmentProfile {
+            os_type: "Desktop".to_string(),
+            device_category: "PC/Workstation".to_string(),
+            threat_level: 4,
+            resource_constraints: mkt_ksa_geo_sec::core::device_fp::ResourceConstraints {
+                max_memory_kb: 2_048,
+                max_processing_us: 10_000,
+            },
+        },
+    );
+
+    fp_env_profiles.insert(
+        "iot".to_string(),
+        mkt_ksa_geo_sec::core::device_fp::EnvironmentProfile {
+            os_type: "IoT".to_string(),
+            device_category: "Embedded".to_string(),
+            threat_level: 7,
+            resource_constraints: mkt_ksa_geo_sec::core::device_fp::ResourceConstraints {
+                max_memory_kb: 256,
+                max_processing_us: 4_000,
+            },
+        },
+    );
+
+    fp_env_profiles.insert(
+        "server".to_string(),
+        mkt_ksa_geo_sec::core::device_fp::EnvironmentProfile {
+            os_type: "Server".to_string(),
+            device_category: "Datacenter Node".to_string(),
+            threat_level: 8,
+            resource_constraints: mkt_ksa_geo_sec::core::device_fp::ResourceConstraints {
+                max_memory_kb: 8_192,
+                max_processing_us: 15_000,
+            },
+        },
+    );
+
+    fp_env_profiles
+}
 use mkt_ksa_geo_sec::security::secret::SecureBytes;
 use mkt_ksa_geo_sec::security::secret::SecureString;
 use rand::RngCore;
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::io::Error as IoError;
+use std::io::ErrorKind;
 use std::sync::Arc;
+use std::time::Instant;
 use tokio::sync::RwLock;
 
 // --- استيراد شامل لجميع المحركات وتبعياتها ---
@@ -89,6 +166,42 @@ fn random_secret_bytes(len: usize) -> SecureBytes {
     SecureBytes::new(bytes)
 }
 
+fn env_u8_or_default(name: &str, default: u8) -> u8 {
+    std::env::var(name)
+        .ok()
+        .and_then(|v| v.trim().parse::<u8>().ok())
+        .unwrap_or(default)
+}
+
+fn env_u64_or_default(name: &str, default: u64) -> u64 {
+    std::env::var(name)
+        .ok()
+        .and_then(|v| v.trim().parse::<u64>().ok())
+        .unwrap_or(default)
+}
+
+fn env_u32_or_default(name: &str, default: u32) -> u32 {
+    std::env::var(name)
+        .ok()
+        .and_then(|v| v.trim().parse::<u32>().ok())
+        .unwrap_or(default)
+}
+
+fn env_usize_or_default(name: &str, default: usize) -> usize {
+    std::env::var(name)
+        .ok()
+        .and_then(|v| v.trim().parse::<usize>().ok())
+        .unwrap_or(default)
+}
+
+fn io_invalid_input(message: impl Into<String>) -> IoError {
+    IoError::new(ErrorKind::InvalidInput, message.into())
+}
+
+fn io_invalid_data(message: impl Into<String>) -> IoError {
+    IoError::new(ErrorKind::InvalidData, message.into())
+}
+
 // Arabic: نقطة الدخول الرئيسية للتطبيق
 // English: Main entry point for the application
 #[actix_web::main]
@@ -97,20 +210,46 @@ async fn main() -> std::io::Result<()> {
     let settings = Config::builder()
         .add_source(Environment::default())
         .build()
-        .expect("Failed to build configuration from environment");
+        .map_err(|e| {
+            io_invalid_input(format!(
+                "Failed to build configuration from environment: {e}"
+            ))
+        })?;
+
+    let security_profile = std::env::var("SECURITY_PROFILE")
+        .unwrap_or_else(|_| "strict".to_string())
+        .to_lowercase();
+    let ultra_strict = matches!(
+        security_profile.as_str(),
+        "ultra" | "ultra-strict" | "paranoid"
+    );
+
+    let default_rate_limit = if ultra_strict { 60 } else { 120 };
+    let default_ai_threshold = if ultra_strict { 55 } else { 70 };
+    let default_payload_bytes = if ultra_strict { 32 * 1024 } else { 64 * 1024 };
+    let default_ai_base_block = if ultra_strict { 60 } else { 20 };
+    let default_ai_max_block = if ultra_strict { 1800 } else { 900 };
     // Prefer direct environment reads for runtime-critical secrets, then fallback to config map keys.
-    let _api_key: String = std::env::var("API_KEY")
+    let api_key: String = std::env::var("API_KEY")
         .or_else(|_| settings.get_string("API_KEY"))
         .or_else(|_| settings.get_string("api_key"))
-        .expect("API_KEY not set");
+        .map_err(|_| io_invalid_input("API_KEY not set"))?
+        .trim()
+        .to_string();
+    let min_api_key_len = if ultra_strict { 32 } else { 16 };
+    if api_key.len() < min_api_key_len {
+        return Err(io_invalid_input(format!(
+            "API_KEY must be at least {min_api_key_len} characters in profile '{security_profile}'"
+        )));
+    }
     let jwt_secret = std::env::var("JWT_SECRET")
         .or_else(|_| settings.get_string("JWT_SECRET"))
         .or_else(|_| settings.get_string("jwt_secret"))
-        .expect("JWT_SECRET must be set and at least 32 bytes")
+        .map_err(|_| io_invalid_input("JWT_SECRET must be set and at least 32 bytes"))?
         .trim()
         .to_string();
     if jwt_secret.len() < 32 {
-        panic!("JWT_SECRET must be at least 32 bytes");
+        return Err(io_invalid_input("JWT_SECRET must be at least 32 bytes"));
     }
 
     // Arabic: إعداد نظام تسجيل الأحداث (سيتم تفعيله بالكامل لاحقًا في utils/logger.rs)
@@ -123,16 +262,18 @@ async fn main() -> std::io::Result<()> {
         std::env::var("DATABASE_URL")
     {
         if !database_url.starts_with("sqlite:") {
-            panic!("Only SQLite is allowed in hardened profile. Set DATABASE_URL like sqlite://data/app.db");
+            return Err(io_invalid_input(
+                "Only SQLite is allowed in hardened profile. Set DATABASE_URL like sqlite://data/app.db",
+            ));
         }
         let sqlite_path = database_url.trim_start_matches("sqlite://");
         let pool = tokio_rusqlite::Connection::open(sqlite_path)
             .await
-            .expect("Failed to connect to SQLite database");
+            .map_err(|e| io_invalid_input(format!("Failed to connect to SQLite database: {e}")))?;
 
         crud::init_schema(&pool)
             .await
-            .expect("Failed to initialize SQLite schema");
+            .map_err(|e| io_invalid_data(format!("Failed to initialize SQLite schema: {e}")))?;
 
         if let Ok(bootstrap_hash) = std::env::var("BOOTSTRAP_ADMIN_PASSWORD_HASH") {
             if !bootstrap_hash.trim().is_empty() {
@@ -159,6 +300,12 @@ async fn main() -> std::io::Result<()> {
         None
     };
 
+    if ultra_strict && db_pool.is_none() {
+        return Err(io_invalid_input(
+            "DATABASE_URL is required in ultra-strict profile",
+        ));
+    }
+
     // Arabic: تهيئة المحركات والخدمات المشتركة فقط إذا كان التطبيق في وضع الإنتاج
     // English: Initialize engines/services only if not in development mode
     println!("🔧 Initializing application engines...");
@@ -170,19 +317,19 @@ async fn main() -> std::io::Result<()> {
             .or_else(|_| std::env::var("MAXMIND_DB_PATH"))
             .unwrap_or_else(|_| "GeoLite2-City-Test.mmdb".to_string());
 
-        let geo_db_bytes = std::fs::read(&geo_db_path).unwrap_or_else(|e| {
-            panic!(
+        let geo_db_bytes = std::fs::read(&geo_db_path).map_err(|e| {
+            io_invalid_data(format!(
                 "Failed to read GeoIP MMDB file at '{}': {}. Set GEOIP_DB_PATH or MAXMIND_DB_PATH to a valid MaxMind DB.",
                 geo_db_path, e
-            )
-        });
+            ))
+        })?;
 
-        let reader = Reader::from_source(geo_db_bytes).unwrap_or_else(|e| {
-            panic!(
+        let reader = Reader::from_source(geo_db_bytes).map_err(|e| {
+            io_invalid_data(format!(
                 "Failed to parse GeoIP MMDB file at '{}': {}. The file is not a valid MaxMind DB.",
                 geo_db_path, e
-            )
-        });
+            ))
+        })?;
 
         Arc::new(mkt_ksa_geo_sec::core::geo_resolver::GeoReaderEnum::Real(
             reader,
@@ -205,12 +352,19 @@ async fn main() -> std::io::Result<()> {
         geo_reader.clone(),
     ));
 
+    let mut fp_env_profiles = HashMap::new();
+    // Populate the fingerprint environment profiles from the centralized defaults.
+    fp_env_profiles.extend(build_default_fp_env_profiles());
+
     // 2. إنشاء محرك DeviceFPEngine
     let fp_engine = Arc::new(AdaptiveFingerprintEngine::new(
         Arc::new(DefaultSecurityMonitor::new()),
-        Arc::new(DefaultQuantumEngine::new().expect("Failed to create quantum engine")),
+        Arc::new(
+            DefaultQuantumEngine::new()
+                .map_err(|e| io_invalid_data(format!("Failed to create quantum engine: {e}")))?,
+        ),
         Arc::new(FpAiProcessor),
-        Arc::new(RwLock::new(HashMap::new())),
+        Arc::new(RwLock::new(fp_env_profiles)),
     ));
 
     // 3. إنشاء محرك BehaviorEngine
@@ -255,7 +409,7 @@ async fn main() -> std::io::Result<()> {
     ));
 
     let rate_limiter = RateLimiter::new(RateLimitConfig {
-        max_requests: 120,
+        max_requests: env_u32_or_default("RATE_LIMIT_MAX_REQUESTS", default_rate_limit),
         window: std::time::Duration::from_secs(60),
         whitelist: HashSet::new(),
         blacklist: HashSet::new(),
@@ -290,6 +444,24 @@ async fn main() -> std::io::Result<()> {
         weather_engine,
         jwt_manager,
         rate_limiter,
+        ai_guard: Arc::new(RequestAiGuard::new(AiGuardConfig {
+            block_threshold: env_u8_or_default("AI_GUARD_BLOCK_THRESHOLD", default_ai_threshold),
+            max_payload_bytes: env_usize_or_default(
+                "AI_GUARD_MAX_PAYLOAD_BYTES",
+                default_payload_bytes,
+            ),
+            reputation_decay_seconds: env_u64_or_default("AI_GUARD_REPUTATION_DECAY_SECONDS", 300),
+            base_block_seconds: env_u64_or_default(
+                "AI_GUARD_BASE_BLOCK_SECONDS",
+                default_ai_base_block,
+            ),
+            max_block_seconds: env_u64_or_default(
+                "AI_GUARD_MAX_BLOCK_SECONDS",
+                default_ai_max_block,
+            ),
+            max_tracked_ips: env_usize_or_default("AI_GUARD_MAX_TRACKED_IPS", 20_000),
+        })),
+        api_key: Some(SecureString::new(api_key)),
         alert_memory: Arc::new(mkt_ksa_geo_sec::app_state::AlertMemoryStore::new(256)),
         db_pool,
     });
@@ -301,6 +473,75 @@ async fn main() -> std::io::Result<()> {
             // Arabic: مشاركة الحالة الكاملة للتطبيق مع جميع المسارات
             // English: Share the full application state with all routes
             .app_data(app_state.clone())
+            .app_data(web::PayloadConfig::new(env_usize_or_default(
+                "GLOBAL_MAX_PAYLOAD_BYTES",
+                default_payload_bytes,
+            )))
+            .wrap_fn(|mut req, srv| {
+                let started = Instant::now();
+                let method = req.method().to_string();
+                let path = req.path().to_string();
+                let peer_ip = req
+                    .peer_addr()
+                    .map(|a| a.ip().to_string())
+                    .unwrap_or_else(|| "0.0.0.0".to_string());
+                let request_id = req
+                    .headers()
+                    .get("X-Request-ID")
+                    .and_then(|hv| hv.to_str().ok())
+                    .map(str::trim)
+                    .filter(|v| !v.is_empty() && v.len() <= 128)
+                    .map(ToString::to_string)
+                    .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+
+                if let Ok(request_id_value) = HeaderValue::from_str(&request_id) {
+                    req.headers_mut()
+                        .insert(HeaderName::from_static("x-request-id"), request_id_value);
+                }
+
+                let req_id_for_response = request_id.clone();
+                let fut = srv.call(req);
+                async move {
+                    let mut response = fut.await?;
+                    let status = response.status();
+                    let latency_ms = started.elapsed().as_millis();
+                    if !response.headers().contains_key("X-Request-ID") {
+                        if let Ok(request_id_value) = HeaderValue::from_str(&req_id_for_response) {
+                            response
+                                .headers_mut()
+                                .insert(HeaderName::from_static("x-request-id"), request_id_value);
+                        }
+                    }
+
+                    if status.is_success() {
+                        eprintln!(
+                            "request_audit outcome=success request_id={} ip={} method={} path={} status={} latency_ms={}",
+                            req_id_for_response,
+                            peer_ip,
+                            method,
+                            path,
+                            status.as_u16(),
+                            latency_ms
+                        );
+                    }
+                    Ok(response)
+                }
+            })
+            .wrap(
+                DefaultHeaders::new()
+                    .add(("X-Content-Type-Options", "nosniff"))
+                    .add(("X-Frame-Options", "DENY"))
+                    .add(("Referrer-Policy", "no-referrer"))
+                    .add((
+                        "Permissions-Policy",
+                        "geolocation=(), microphone=(), camera=()",
+                    ))
+                    .add((
+                        "Content-Security-Policy",
+                        "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
+                    ))
+                    .add(("Cache-Control", "no-store")),
+            )
             // Arabic: تفعيل درع تحديد المعدل الذكي باستخدام governor (pure Rust)
             // English: Enable smart rate limiting shield using governor (pure Rust)
             // .wrap(GovernorMiddleware::new(60, 60)) // This line is removed as per the edit hint

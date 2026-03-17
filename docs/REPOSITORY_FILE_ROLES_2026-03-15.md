@@ -1,4 +1,4 @@
-# Repository File Roles (2026-03-15)
+# Repository File Roles (2026-03-17)
 
 This document is the authoritative map for active top-level files and their purpose.
 
@@ -19,6 +19,12 @@ This document is the authoritative map for active top-level files and their purp
 - `cbindgen.toml`: C header generation configuration.
 - `GeoLite2-City-Test.mmdb`: MaxMind test fixture used by geolocation-related tests.
 
+## Newly Added Security-Critical Files (2026-03-17)
+
+- `.github/workflows/security-profile-matrix.yml`: strict/ultra-strict matrix smoke workflow with retry-header assertions.
+- `src/security/ai_guard.rs`: adaptive AI request guard with per-IP reputation and temporary blocking.
+- `tests/api_request_id_propagation_integration.rs`: integration coverage for request-id propagation and success trace envelope.
+
 ## Active Folders
 
 - `.github/`: workflows, code scanning configuration, templates, and ownership policy.
@@ -27,6 +33,12 @@ This document is the authoritative map for active top-level files and their purp
 - `docs/`: active hardening and scan reports.
 - `examples/`: usage examples.
 - `scripts/`: CI helper scripts.
+
+## Architecture and Traceability Notes
+
+- API gateway now enforces centralized request correlation (`X-Request-ID`) and structured security event logging.
+- Success responses in JSON endpoints now include a trace envelope (`trace_id`, `data`) for operational observability.
+- Profile governance (`strict` and `ultra-strict`) is continuously validated in CI through dedicated matrix smoke checks.
 
 ## Removed Legacy Files
 

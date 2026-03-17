@@ -28,7 +28,9 @@
 use actix_web::{get, web, HttpRequest, HttpResponse, Responder};
 use uuid::Uuid;
 
+use crate::api::api_error;
 use crate::api::authorize_request;
+use crate::api::ok_json_with_trace;
 use crate::db::crud;
 use crate::AppState;
 
@@ -47,15 +49,20 @@ pub async fn get_user(
     // Database connection
 ) -> impl Responder {
     let target_user_id = path.into_inner();
+    let empty_payload = web::Bytes::new();
 
-    let claims = match authorize_request(&app_data, &req, &bearer).await {
+    let claims = match authorize_request(&app_data, &req, &bearer, &empty_payload).await {
         Ok(c) => c,
         Err(resp) => return resp,
     };
 
     let can_read = claims.sub == target_user_id || claims.roles.iter().any(|r| r == "admin");
     if !can_read {
-        return HttpResponse::Forbidden().body("Insufficient permissions");
+        return api_error(
+            actix_web::http::StatusCode::FORBIDDEN,
+            "INSUFFICIENT_PERMISSIONS",
+            "Insufficient permissions",
+        );
     }
 
     let Some(pool) = &app_data.db_pool else {
@@ -64,8 +71,8 @@ pub async fn get_user(
     };
 
     match crud::get_user_by_id(pool, &target_user_id).await {
-        Ok(Some(user)) => HttpResponse::Ok().json(user),
+        Ok(Some(user)) => ok_json_with_trace(&req, user),
         Ok(None) => HttpResponse::NotFound().body("User not found"),
-        Err(e) => HttpResponse::InternalServerError().body(format!("DB error: {e}")),
+        Err(_) => HttpResponse::InternalServerError().body("Database error"),
     }
 }

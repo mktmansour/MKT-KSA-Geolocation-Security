@@ -1,8 +1,10 @@
 use crate::core::composite_verification::CompositeVerifier;
 use crate::core::cross_location::CrossValidationEngine;
 use crate::core::weather_val::WeatherEngine;
+use crate::security::ai_guard::RequestAiGuard;
 use crate::security::jwt::JwtManager;
 use crate::security::ratelimit::RateLimiter;
+use crate::security::secret::SecureString;
 use std::collections::VecDeque;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -40,6 +42,8 @@ pub struct AppState {
     pub weather_engine: Arc<WeatherEngine>,
     pub jwt_manager: Arc<JwtManager>,
     pub rate_limiter: Arc<RateLimiter>,
+    pub ai_guard: Arc<RequestAiGuard>,
+    pub api_key: Option<SecureString>,
     pub alert_memory: Arc<AlertMemoryStore>,
     pub db_pool: Option<DbPool>,
 }

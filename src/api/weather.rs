@@ -26,10 +26,14 @@
     The file is designed as a central point for any external system or user interface wishing to display or analyze weather data.
     It can be integrated with a real weather engine or external service in the future.
 ******************************************************************************************/
+use crate::api::api_error;
 use crate::api::authorize_request;
+use crate::api::ok_json_with_trace;
+use crate::api::parse_json_payload;
 use crate::api::BearerToken;
 use crate::AppState;
-use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
+use actix_web::http::StatusCode;
+use actix_web::{post, web, HttpRequest, Responder};
 use serde::Deserialize;
 
 /// نموذج الطلب لجلب بيانات الطقس.
@@ -51,13 +55,13 @@ pub async fn weather_summary(
     bearer: BearerToken,
     payload_bytes: web::Bytes,
 ) -> impl Responder {
-    if let Err(resp) = authorize_request(&app_data, &req, &bearer).await {
+    if let Err(resp) = authorize_request(&app_data, &req, &bearer, &payload_bytes).await {
         return resp;
     }
 
-    let payload: WeatherSummaryRequest = match serde_json::from_slice(&payload_bytes) {
+    let payload: WeatherSummaryRequest = match parse_json_payload(&payload_bytes) {
         Ok(v) => v,
-        Err(e) => return HttpResponse::BadRequest().body(format!("Invalid JSON payload: {e}")),
+        Err(resp) => return resp,
     };
 
     match app_data
@@ -65,7 +69,11 @@ pub async fn weather_summary(
         .fetch_and_validate(payload.latitude, payload.longitude)
         .await
     {
-        Ok(weather) => HttpResponse::Ok().json(weather),
-        Err(e) => HttpResponse::BadGateway().json(e.to_string()),
+        Ok(weather) => ok_json_with_trace(&req, weather),
+        Err(_) => api_error(
+            StatusCode::BAD_GATEWAY,
+            "WEATHER_PROVIDER_FAILURE",
+            "Weather provider temporarily unavailable",
+        ),
     }
 }

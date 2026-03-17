@@ -25,12 +25,16 @@
     It verifies user authorization via JWT before performing the analysis, ensuring every validation operation is secure and reliable.
     The file is designed as a central point for any external system or user interface wishing to validate location or detect geolocation fraud.
 ******************************************************************************************/
+use crate::api::api_error;
 use crate::api::authorize_request;
+use crate::api::ok_json_with_trace;
+use crate::api::parse_json_payload;
 use crate::api::BearerToken;
 use crate::core::behavior_bio::BehaviorInput;
 use crate::core::cross_location::CrossValidationError;
 use crate::core::cross_location::CrossValidationInput;
 use crate::AppState;
+use actix_web::http::StatusCode;
 use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
 use serde::Deserialize;
 use std::net::IpAddr;
@@ -65,13 +69,13 @@ pub async fn resolve_geo(
     bearer: BearerToken,
     payload_bytes: web::Bytes,
 ) -> impl Responder {
-    if let Err(resp) = authorize_request(&app_data, &req, &bearer).await {
+    if let Err(resp) = authorize_request(&app_data, &req, &bearer, &payload_bytes).await {
         return resp;
     }
 
-    let payload: GeoResolveRequest = match serde_json::from_slice(&payload_bytes) {
+    let payload: GeoResolveRequest = match parse_json_payload(&payload_bytes) {
         Ok(v) => v,
-        Err(e) => return HttpResponse::BadRequest().body(format!("Invalid JSON payload: {e}")),
+        Err(resp) => return resp,
     };
 
     // --- تجميع المدخلات من الطلب ---
@@ -95,7 +99,7 @@ pub async fn resolve_geo(
     // Execute the analysis and return the result
     let engine = &app_data.x_engine;
     match engine.validate(input).await {
-        Ok(result) => HttpResponse::Ok().json(result), // إعادة نتيجة التحقق بنجاح
+        Ok(result) => ok_json_with_trace(&req, result), // إعادة نتيجة التحقق بنجاح
         // Return validation result on success
         Err(CrossValidationError::GeoResolutionFailed(msg)) => {
             // Treat expected lack-of-source scenarios as operational input issues (422), not server faults (500).
@@ -117,7 +121,10 @@ pub async fn resolve_geo(
                 }))
             }
         }
-        Err(e) => HttpResponse::InternalServerError().json(e.to_string()), // معالجة الخطأ وإرجاعه
-                                                                           // Handle and return error
+        Err(_) => api_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "GEO_VALIDATION_INTERNAL_ERROR",
+            "Internal error while validating geolocation",
+        ),
     }
 }

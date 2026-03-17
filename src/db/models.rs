@@ -50,6 +50,7 @@ pub struct User {
     pub id: uuid::Uuid,
     pub username: String,
     pub email: String,
+    #[serde(skip_serializing)]
     pub password_hash: String,
     pub status: String,
     pub created_at: chrono::NaiveDateTime,
