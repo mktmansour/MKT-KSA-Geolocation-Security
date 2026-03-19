@@ -32,6 +32,8 @@ Cargo.toml.bk
 *.tmp
 *.bak
 *.old
+__pycache__/
+*.pyc
 .DS_Store
 Thumbs.db
 
