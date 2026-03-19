@@ -37,10 +37,10 @@ Core practices:
 
 ## 4. API Invocation Example
 
+Auth headers are intentionally omitted in this public snippet; inject them via your secure client configuration.
+
 ```bash
 curl -sS -X POST http://127.0.0.1:8080/api/alerts/trigger \
-  -H "X-API-Key: ${API_KEY}" \
-  -H "Authorization: Bearer ${JWT_TOKEN}" \
   -H "Content-Type: application/json" \
   -H "X-Request-ID: wiki-alert-001" \
   -d '{"entity_id":"00000000-0000-0000-0000-000000000000","entity_type":"user","alert_type":"intrusion","severity":"high","details":{"source":"wiki"}}'

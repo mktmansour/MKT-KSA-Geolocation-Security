@@ -21,10 +21,10 @@ cargo test --all
 ## 3. Run the Service
 
 ```bash
-API_KEY=change_me \
-JWT_SECRET=replace_with_a_long_secret_32_chars_min \
-DATABASE_URL=sqlite://data/app.db \
-SECURITY_PROFILE=strict \
+: "${API_KEY:?Set API_KEY in shell from your secret manager}" \
+&& : "${JWT_SECRET:?Set JWT_SECRET in shell from your secret manager}" \
+&& DATABASE_URL="${DATABASE_URL:-sqlite://data/app.db}" \
+SECURITY_PROFILE="${SECURITY_PROFILE:-strict}" \
 cargo run
 ```
 
@@ -32,15 +32,12 @@ cargo run
 
 ```bash
 curl -sS http://127.0.0.1:8080/api/users/00000000-0000-0000-0000-000000000000 \
-  -H "X-API-Key: change_me" \
-  -H "Authorization: Bearer <jwt_token>" \
   -H "X-Request-ID: quickstart-001"
 ```
 
 Expected behavior:
 
-- Returns structured JSON with trace-aware fields.
-- Returns deterministic auth/security errors when input is invalid.
+- Returns deterministic auth/security response (for example missing auth input) while confirming server reachability.
 - Includes request correlation behavior via request id.
 
 ## 5. Quick Integration as Library

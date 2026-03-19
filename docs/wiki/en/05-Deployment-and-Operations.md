@@ -29,12 +29,12 @@ Recommended hardening controls:
 ## 3. Operational Run Command
 
 ```bash
-API_KEY=change_me \
-JWT_SECRET=replace_with_a_long_secret_32_chars_min \
-DATABASE_URL=sqlite://data/app.db \
-SECURITY_PROFILE=strict \
-HTTP_MAX_CONNECTIONS=50000 \
-HTTP_MAX_CONNECTION_RATE=1024 \
+: "${API_KEY:?Set API_KEY in runtime environment}" \
+&& : "${JWT_SECRET:?Set JWT_SECRET in runtime environment}" \
+&& DATABASE_URL="${DATABASE_URL:-sqlite://data/app.db}" \
+SECURITY_PROFILE="${SECURITY_PROFILE:-strict}" \
+HTTP_MAX_CONNECTIONS="${HTTP_MAX_CONNECTIONS:-50000}" \
+HTTP_MAX_CONNECTION_RATE="${HTTP_MAX_CONNECTION_RATE:-1024}" \
 cargo run
 ```
 

@@ -21,10 +21,10 @@ cargo test --all
 ## 3. تشغيل الخدمة
 
 ```bash
-API_KEY=change_me \
-JWT_SECRET=replace_with_a_long_secret_32_chars_min \
-DATABASE_URL=sqlite://data/app.db \
-SECURITY_PROFILE=strict \
+: "${API_KEY:?قم بضبط API_KEY في shell من مدير الأسرار}" \
+&& : "${JWT_SECRET:?قم بضبط JWT_SECRET في shell من مدير الأسرار}" \
+&& DATABASE_URL="${DATABASE_URL:-sqlite://data/app.db}" \
+SECURITY_PROFILE="${SECURITY_PROFILE:-strict}" \
 cargo run
 ```
 
@@ -32,15 +32,12 @@ cargo run
 
 ```bash
 curl -sS http://127.0.0.1:8080/api/users/00000000-0000-0000-0000-000000000000 \
-  -H "X-API-Key: change_me" \
-  -H "Authorization: Bearer <jwt_token>" \
   -H "X-Request-ID: quickstart-001"
 ```
 
 السلوك المتوقع:
 
-- استجابة JSON منظّمة وواضحة.
-- أخطاء أمنية ثابتة عند إدخال غير صحيح.
+- استجابة أمنية حتمية (مثل نقص بيانات المصادقة) مع تأكيد أن الخدمة متاحة.
 - تتبع طلب عبر request id.
 
 ## 5. التكامل السريع كمكتبة

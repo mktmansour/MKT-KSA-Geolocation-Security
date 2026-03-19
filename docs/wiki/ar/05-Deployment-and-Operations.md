@@ -29,12 +29,12 @@
 ## 3. أمر تشغيل تشغيلي
 
 ```bash
-API_KEY=change_me \
-JWT_SECRET=replace_with_a_long_secret_32_chars_min \
-DATABASE_URL=sqlite://data/app.db \
-SECURITY_PROFILE=strict \
-HTTP_MAX_CONNECTIONS=50000 \
-HTTP_MAX_CONNECTION_RATE=1024 \
+: "${API_KEY:?قم بضبط API_KEY في بيئة التشغيل}" \
+&& : "${JWT_SECRET:?قم بضبط JWT_SECRET في بيئة التشغيل}" \
+&& DATABASE_URL="${DATABASE_URL:-sqlite://data/app.db}" \
+SECURITY_PROFILE="${SECURITY_PROFILE:-strict}" \
+HTTP_MAX_CONNECTIONS="${HTTP_MAX_CONNECTIONS:-50000}" \
+HTTP_MAX_CONNECTION_RATE="${HTTP_MAX_CONNECTION_RATE:-1024}" \
 cargo run
 ```
 
