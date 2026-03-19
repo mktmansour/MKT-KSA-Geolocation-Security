@@ -511,7 +511,7 @@ These symbols are exported from `src/core/device_fp.rs` and declared by cbindgen
 Generate header:
 
 ```bash
-cbindgen --config cbindgen.toml --crate mkt_ksa_geo_sec --output mkt_ksa_geo_sec.h
+cbindgen --config cbindgen.toml --crate MKT_KSA_Geolocation_Security --output mkt_ksa_geo_sec.h
 ```
 
 Build shared library:

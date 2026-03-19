@@ -27,6 +27,9 @@ use std::time::{Duration, Instant};
 use thiserror::Error;
 use tokio::sync::RwLock;
 
+const PRUNE_THRESHOLD_IPS: usize = 1024;
+const STALE_WINDOW_MULTIPLIER: u32 = 10;
+
 /// إعدادات تحديد المعدل (قابلة للتخصيص)
 /// Rate limiting settings (customizable)
 #[derive(Debug, Clone)]
@@ -95,11 +98,13 @@ impl RateLimiter {
         }
         let mut reqs = self.requests.write().await;
         let now = Instant::now();
+        self.prune_if_needed(&mut reqs, now);
+
         let entry = reqs.entry(ip).or_insert(RequestInfo {
             count: 0,
             window_start: now,
         });
-        if now.duration_since(entry.window_start) > self.config.window {
+        if now.saturating_duration_since(entry.window_start) > self.config.window {
             entry.count = 1;
             entry.window_start = now;
         } else {
@@ -111,6 +116,15 @@ impl RateLimiter {
         Ok(())
     }
 
+    fn prune_if_needed(&self, reqs: &mut HashMap<IpAddr, RequestInfo>, now: Instant) {
+        if reqs.len() < PRUNE_THRESHOLD_IPS {
+            return;
+        }
+
+        let stale_after = self.config.window.saturating_mul(STALE_WINDOW_MULTIPLIER);
+        reqs.retain(|_, info| now.saturating_duration_since(info.window_start) <= stale_after);
+    }
+
     /// أضف عنوان IP للقائمة البيضاء
     /// Add IP to whitelist
     pub fn add_whitelist(&mut self, ip: IpAddr) {
@@ -120,6 +134,55 @@ impl RateLimiter {
     /// Add IP to blacklist
     pub fn add_blacklist(&mut self, ip: IpAddr) {
         self.config.blacklist.insert(ip);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn stale_entries_are_pruned_when_map_grows() {
+        let limiter = RateLimiter::new(RateLimitConfig {
+            max_requests: 10,
+            window: Duration::from_millis(5),
+            whitelist: HashSet::new(),
+            blacklist: HashSet::new(),
+        });
+
+        for i in 0..(PRUNE_THRESHOLD_IPS + 64) {
+            let ip = IpAddr::from([10, 0, ((i / 256) & 0xff) as u8, (i % 256) as u8]);
+            let _ = limiter.check(ip).await;
+        }
+
+        let before = limiter.requests.read().await.len();
+        assert!(before >= PRUNE_THRESHOLD_IPS);
+
+        tokio::time::sleep(Duration::from_millis(70)).await;
+
+        let trigger_ip = IpAddr::from([127, 0, 0, 1]);
+        let _ = limiter.check(trigger_ip).await;
+
+        let after = limiter.requests.read().await.len();
+        assert!(after < before);
+        assert!(after <= 2);
+    }
+
+    #[tokio::test]
+    async fn blacklisted_ip_is_denied_immediately() {
+        let blocked_ip = IpAddr::from([203, 0, 113, 10]);
+        let mut blacklist = HashSet::new();
+        blacklist.insert(blocked_ip);
+
+        let limiter = RateLimiter::new(RateLimitConfig {
+            max_requests: 10,
+            window: Duration::from_secs(60),
+            whitelist: HashSet::new(),
+            blacklist,
+        });
+
+        let result = limiter.check(blocked_ip).await;
+        assert!(matches!(result, Err(RateLimitError::Blacklisted)));
     }
 }
 

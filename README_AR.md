@@ -464,7 +464,7 @@ cargo run
 توليد Header:
 
 ```bash
-cbindgen --config cbindgen.toml --crate mkt_ksa_geo_sec --output mkt_ksa_geo_sec.h
+cbindgen --config cbindgen.toml --crate MKT_KSA_Geolocation_Security --output mkt_ksa_geo_sec.h
 ```
 
 بناء المكتبة:
