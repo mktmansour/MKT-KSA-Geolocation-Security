@@ -67,7 +67,7 @@
   <text x="1165" y="375" class="t">- utils/cache.rs</text>
   <text x="1165" y="410" class="t">- utils/precision.rs</text>
   <text x="1165" y="445" class="t">- tests/*</text>
-  <text x="1165" y="480" class="t">- .github/workflows/security-profile-matrix.yml</text>
+  <text x="1165" y="480" class="t">- on-demand security smoke validation</text>
 
   <path d="M350 300 L390 300" class="edge"/>
   <path d="M710 300 L750 300" class="edge"/>

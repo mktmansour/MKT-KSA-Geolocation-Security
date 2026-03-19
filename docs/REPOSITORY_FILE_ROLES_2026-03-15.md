@@ -21,7 +21,6 @@ This document is the authoritative map for active top-level files and their purp
 
 ## Newly Added Security-Critical Files (2026-03-17)
 
-- `.github/workflows/security-profile-matrix.yml`: strict/ultra-strict matrix smoke workflow with retry-header assertions.
 - `src/security/ai_guard.rs`: adaptive AI request guard with per-IP reputation and temporary blocking.
 - `tests/api_request_id_propagation_integration.rs`: integration coverage for request-id propagation and success trace envelope.
 
@@ -38,7 +37,7 @@ This document is the authoritative map for active top-level files and their purp
 
 - API gateway now enforces centralized request correlation (`X-Request-ID`) and structured security event logging.
 - Success responses in JSON endpoints now include a trace envelope (`trace_id`, `data`) for operational observability.
-- Profile governance (`strict` and `ultra-strict`) is continuously validated in CI through dedicated matrix smoke checks.
+- Profile governance (`strict` and `ultra-strict`) remains supported in runtime; deep profile smoke validation is executed on demand.
 
 ## Removed Legacy Files
 

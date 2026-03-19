@@ -74,7 +74,7 @@ Production-grade geolocation and behavioral security system for Rust services an
 - Added strict API key enforcement with constant-time comparison and unified structured API error envelopes.
 - Added security correlation logging for blocked/denied decisions and success audit lines with latency metadata.
 - Added profile-aware runtime hardening (`strict` / `ultra-strict`) with tighter defaults and startup validation controls.
-- Added CI profile matrix smoke checks for both `strict` and `ultra-strict`, including `Retry-After` validation.
+- Automated profile-matrix smoke checks were retired from repository CI; deep profile runs are now executed on demand.
 - Added integration coverage for request-id propagation across multiple endpoints and success JSON trace envelope checks.
 
 - Active release target is now **2.0.1** due to security and engineering fixes.
@@ -90,8 +90,7 @@ Production-grade geolocation and behavioral security system for Rust services an
 - Preserved authorization contract stability by validating JWT before adaptive AI blocking, preventing false semantic drift on expected `401` paths.
 - Added dynamic `Retry-After` computation for rate-limit responses instead of static values.
 - Added HTTP runtime hardening knobs for timeout/capacity behavior (`HTTP_CLIENT_REQUEST_TIMEOUT_SECONDS`, `HTTP_KEEP_ALIVE_SECONDS`, `HTTP_MAX_CONNECTIONS`, and related controls).
-- Added deterministic periodic security scripts under `scripts/security/` for Phase-A, Phase-B, and split traffic tests, plus one-command cycle execution.
-- Added scheduled CI workflow to run the full security cycle daily/weekly and upload generated artifacts and logs.
+- Removed periodic security stress scripts/workflows from the repository baseline; extended pressure testing is now on-demand only.
 - Re-validated the strict path end-to-end (`fmt`, `clippy -D warnings`, full tests, live split execution) with no server `5xx` in recent hardening runs.
 
 ## Maintenance Policy (Important)
@@ -229,7 +228,6 @@ The API layer is served through Actix Web, while core engines are reusable as a 
 
 | Path | Role |
 |---|---|
-| `.github/workflows/security-profile-matrix.yml` | strict/ultra-strict runtime smoke and retry-header enforcement |
 | `tests/api_request_id_propagation_integration.rs` | request-id propagation and success-trace regression testing |
 
 ### `src/` detailed map
@@ -475,28 +473,6 @@ BOOTSTRAP_ADMIN_PASSWORD_HASH=replace_with_hash_if_needed \
 cargo run
 ```
 
-### 7.1 Periodic Security Performance Suite
-
-These scripts convert the strict runtime checks into deterministic, repeatable execution:
-
-```bash
-export API_KEY='change_me'
-export JWT_SECRET='replace_with_a_long_secret_32_chars_min'
-export SECURITY_BASE_URL='http://127.0.0.1:8080'
-
-python3 scripts/security/phase_a_strict.py --duration-sec 180 --workers 10
-python3 scripts/security/phase_b_hostile.py --duration-sec 180 --workers 16
-python3 scripts/security/phase_10m_split.py --duration-sec 600 --workers 24 --legit-share 0.45
-```
-
-Or run all phases in one command:
-
-```bash
-bash scripts/security/run_security_cycle.sh
-```
-
-All summaries are emitted as JSON lines and written to `artifacts/security/`.
-
 ## 8. Current Hardening and Fix History
 
 ![Section 08 Banner](docs/images/banners/section-08.svg)
@@ -519,16 +495,12 @@ Current 2.0.1 coverage includes the following fix/development scope:
 - Security hardening (2026-03-19): centralized authorization order refined to keep JWT semantics deterministic before AI blocking.
 - Security hardening (2026-03-19): dynamic per-IP `Retry-After` in rate-limit denials.
 - Runtime hardening (2026-03-19): environment-tunable HTTP timeout/capacity controls for sustained hostile load posture.
-- Security operations (2026-03-19): reproducible periodic scripts for strict Phase-A, hostile Phase-B, and split traffic campaigns.
-- CI hardening (2026-03-19): scheduled daily/weekly security performance workflow with automatic artifact upload.
 
 Recent security and maintenance milestones are documented in:
 
 - `docs/SECURITY_HARDENING_2026-03-15.md`
 - `docs/GITHUB_ADVANCED_SCAN_2026-03-15.md`
 - `docs/REPOSITORY_FILE_ROLES_2026-03-15.md`
-- `.github/workflows/security-performance-scheduled.yml`
-- `scripts/security/README.md`
 - `CHANGELOG.md`
 
 ## 9. Library Integration and C-ABI
@@ -603,11 +575,6 @@ Earlier docs focused on architecture, API behavior, and security hardening track
 ### `scripts/`
 
 - `ci/cleanup_workspace.sh`: deterministic CI/local cleanup for stale advisory/cache residue.
-- `security/phase_a_strict.py`: deterministic strict mixed functional/security execution.
-- `security/phase_b_hostile.py`: deterministic hostile pressure execution with defense ratio reporting.
-- `security/phase_10m_split.py`: legitimate-vs-hostile split execution for stability/defense trend tracking.
-- `security/run_security_cycle.sh`: one-command cycle runner for Phase-A, Phase-B, and split execution.
-- `security/README.md`: operator guide for security performance scripts and expected outputs.
 
 ### `examples/`
 

@@ -90,8 +90,7 @@
 - تم تثبيت عقد المصادقة عمليًا عبر التحقق من JWT أولاً ثم الحجب التكيفي، لمنع أي انحراف غير مقصود في مسارات `401` المتوقعة.
 - تمت إضافة حساب ديناميكي لـ `Retry-After` في حالات تحديد المعدل بدل القيمة الثابتة.
 - تمت إضافة مفاتيح ضبط تشغيل متقدمة لمهلات/سعة HTTP عبر البيئة (`HTTP_CLIENT_REQUEST_TIMEOUT_SECONDS` و`HTTP_KEEP_ALIVE_SECONDS` و`HTTP_MAX_CONNECTIONS` وغيرها).
-- تمت إضافة سكربتات أمنية دورية قابلة للتكرار تحت `scripts/security/` لتشغيل Phase-A وPhase-B واختبار الفصل بين الشرعي والهجومي.
-- تمت إضافة Workflow مجدول يومي/أسبوعي في CI لتشغيل الدورة الأمنية الكاملة ورفع artifacts والسجلات تلقائيًا.
+- تمت إزالة سكربتات الإجهاد الأمني الدورية والـ workflows المرتبطة بها من خط الأساس داخل المستودع، وأصبحت الجولات العميقة تُنفّذ عند الطلب فقط.
 - تمت إعادة التحقق الصارم للمسار الكامل (`fmt` و`clippy -D warnings` والاختبارات الكاملة والتنفيذ الحي) بدون `5xx` في أحدث جولات التقوية.
 
 ## سياسة الصيانة (مهم)
@@ -229,7 +228,6 @@
 
 | المسار | الدور |
 |---|---|
-| `.github/workflows/security-profile-matrix.yml` | تحقق تشغيلي matrix لوضعي strict و ultra-strict مع فرض رؤوس retry |
 | `tests/api_request_id_propagation_integration.rs` | اختبارات تكامل لانتشار request-id وتتبع استجابات النجاح |
 
 ### تفصيل `src/`
@@ -428,28 +426,6 @@ BOOTSTRAP_ADMIN_PASSWORD_HASH=replace_with_hash_if_needed \
 cargo run
 ```
 
-### 7.1 حزمة الاختبارات الأمنية الدورية للأداء
-
-هذه السكربتات تحوّل اختبارات الصرامة إلى تنفيذ دوري ثابت وقابل للقياس:
-
-```bash
-export API_KEY='change_me'
-export JWT_SECRET='replace_with_a_long_secret_32_chars_min'
-export SECURITY_BASE_URL='http://127.0.0.1:8080'
-
-python3 scripts/security/phase_a_strict.py --duration-sec 180 --workers 10
-python3 scripts/security/phase_b_hostile.py --duration-sec 180 --workers 16
-python3 scripts/security/phase_10m_split.py --duration-sec 600 --workers 24 --legit-share 0.45
-```
-
-ولتنفيذ الدورة كاملة بأمر واحد:
-
-```bash
-bash scripts/security/run_security_cycle.sh
-```
-
-جميع الملخصات تُطبع كسطر JSON وتُحفظ داخل `artifacts/security/`.
-
 ## 8. آخر الإصلاحات والتقويات
 
 ![Section 08 Banner](docs/images/banners/section-08.svg)
@@ -472,16 +448,12 @@ bash scripts/security/run_security_cycle.sh
 - التقوية الأمنية (2026-03-19): ضبط ترتيب التفويض المركزي للحفاظ على دلالات JWT قبل الحظر التكيفي.
 - التقوية الأمنية (2026-03-19): تحويل `Retry-After` إلى قيمة ديناميكية مرتبطة بحالة IP.
 - التقوية التشغيلية (2026-03-19): إضافة ضبط بيئي لمهلات/سعة خادم HTTP في الضغط العالي.
-- الاختبارات الدورية (2026-03-19): إضافة سكربتات أمنية ثابتة لقياس Phase-A وPhase-B والفصل الشرعي/الهجومي.
-- CI (2026-03-19): إضافة Workflow مجدول يومي/أسبوعي لتشغيل الدورة الأمنية ورفع النتائج تلقائيًا.
 
 تم توثيق التحديثات الأمنية والهندسية الحديثة في:
 
 - `docs/SECURITY_HARDENING_2026-03-15.md`
 - `docs/GITHUB_ADVANCED_SCAN_2026-03-15.md`
 - `docs/REPOSITORY_FILE_ROLES_2026-03-15.md`
-- `.github/workflows/security-performance-scheduled.yml`
-- `scripts/security/README.md`
 - `CHANGELOG.md`
 
 ## 9. الاستخدام كمكتبة و C-ABI
@@ -556,11 +528,6 @@ cargo build --release
 ### `scripts/`
 
 - `ci/cleanup_workspace.sh`: تنظيف منهجي لبيئة CI/المحلي من آثار الكاش والملفات المتبقية.
-- `security/phase_a_strict.py`: تشغيل صارم قابل للتكرار للمسارات الوظيفية والأمنية المختلطة.
-- `security/phase_b_hostile.py`: تشغيل هجومي صارم مع قياس فعالية الدفاع.
-- `security/phase_10m_split.py`: تشغيل فصل شرعي/هجومي لقياس الاستقرار واتجاهات الدفاع.
-- `security/run_security_cycle.sh`: تشغيل الدورة الأمنية الكاملة بأمر واحد.
-- `security/README.md`: دليل تشغيل السكربتات الأمنية ومخرجاتها.
 
 ### `examples/`
 

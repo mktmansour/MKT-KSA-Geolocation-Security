@@ -52,6 +52,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated `README.md` and `README_AR.md` latest status date and verified implementation notes to reflect completed 2026-03-19 hardening.
 
+### Removed (2026-03-19 follow-up)
+
+- Removed repository-embedded periodic security script suite to keep mainline package/repo baseline minimal.
+- Removed automated security profile/scheduled stress workflows from CI.
+- Deep security stress campaigns are now executed on demand only.
+
 ---
 
 ## [2.0.1] - 2026-03-17
