@@ -116,6 +116,16 @@ impl RateLimiter {
         Ok(())
     }
 
+    pub async fn retry_after_seconds(&self, ip: IpAddr) -> u64 {
+        let reqs = self.requests.read().await;
+        if let Some(info) = reqs.get(&ip) {
+            let elapsed = Instant::now().saturating_duration_since(info.window_start);
+            let remaining = self.config.window.saturating_sub(elapsed);
+            return remaining.as_secs().max(1);
+        }
+        self.config.window.as_secs().max(1)
+    }
+
     fn prune_if_needed(&self, reqs: &mut HashMap<IpAddr, RequestInfo>, now: Instant) {
         if reqs.len() < PRUNE_THRESHOLD_IPS {
             return;

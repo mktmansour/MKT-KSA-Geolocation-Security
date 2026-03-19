@@ -53,6 +53,8 @@ $RECYCLE.BIN/
 /tests/output/
 tests/tmp/
 tests/results/
+data/
+artifacts/security/
 
 # Optional: Ignore secrets
 .env

@@ -185,6 +185,7 @@ pub async fn authorize_request(
             ));
         }
         Err(RateLimitError::LimitExceeded) => {
+            let retry_after = app_state.rate_limiter.retry_after_seconds(ip).await;
             log_security_event(
                 &req_id,
                 ip,
@@ -193,7 +194,7 @@ pub async fn authorize_request(
                 "request rejected by rate limit",
             );
             return Err(HttpResponse::build(StatusCode::TOO_MANY_REQUESTS)
-                .insert_header(("Retry-After", "60"))
+                .insert_header(("Retry-After", retry_after.to_string()))
                 .insert_header(("X-Request-ID", req_id.clone()))
                 .json(ApiErrorBody {
                     code: "RATE_LIMIT_EXCEEDED",
@@ -249,36 +250,6 @@ pub async fn authorize_request(
         }
     }
 
-    let ua = req
-        .headers()
-        .get("User-Agent")
-        .and_then(|h| h.to_str().ok());
-    let ai_decision = app_state
-        .ai_guard
-        .evaluate_request(ip, req.path(), ua, payload_bytes)
-        .await;
-    if ai_decision.blocked {
-        let detail = format!(
-            "ai_block score={} reasons={}",
-            ai_decision.assessment.score,
-            ai_decision.assessment.reasons.join("|")
-        );
-        log_security_event(&req_id, ip, path, "AI_RISK_BLOCKED", &detail);
-        let mut builder = HttpResponse::build(StatusCode::FORBIDDEN);
-        builder.insert_header(("X-Request-ID", req_id.clone()));
-        if let Some(retry_after) = ai_decision.retry_after_seconds {
-            builder.insert_header(("Retry-After", retry_after.to_string()));
-        }
-        return Err(builder.json(serde_json::json!({
-            "code": "AI_RISK_BLOCKED",
-            "message": "Request blocked by adaptive AI security policy",
-            "request_id": req_id,
-            "risk_score": ai_decision.assessment.score,
-            "reasons": ai_decision.assessment.reasons,
-            "retry_after_seconds": ai_decision.retry_after_seconds,
-        })));
-    }
-
     let mut token = bearer.0.clone();
     if token.is_empty() {
         log_security_event(
@@ -312,7 +283,39 @@ pub async fn authorize_request(
         )
     });
     token.zeroize();
-    claims
+    let claims = claims?;
+
+    let ua = req
+        .headers()
+        .get("User-Agent")
+        .and_then(|h| h.to_str().ok());
+    let ai_decision = app_state
+        .ai_guard
+        .evaluate_request(ip, req.path(), ua, payload_bytes)
+        .await;
+    if ai_decision.blocked {
+        let detail = format!(
+            "ai_block score={} reasons={}",
+            ai_decision.assessment.score,
+            ai_decision.assessment.reasons.join("|")
+        );
+        log_security_event(&req_id, ip, path, "AI_RISK_BLOCKED", &detail);
+        let mut builder = HttpResponse::build(StatusCode::FORBIDDEN);
+        builder.insert_header(("X-Request-ID", req_id.clone()));
+        if let Some(retry_after) = ai_decision.retry_after_seconds {
+            builder.insert_header(("Retry-After", retry_after.to_string()));
+        }
+        return Err(builder.json(serde_json::json!({
+            "code": "AI_RISK_BLOCKED",
+            "message": "Request blocked by adaptive AI security policy",
+            "request_id": req_id,
+            "risk_score": ai_decision.assessment.score,
+            "reasons": ai_decision.assessment.reasons,
+            "retry_after_seconds": ai_decision.retry_after_seconds,
+        })));
+    }
+
+    Ok(claims)
 }
 
 /// Arabic: تقوم هذه الدالة بتسجيل جميع مسارات API في التطبيق.

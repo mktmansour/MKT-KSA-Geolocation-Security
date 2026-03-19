@@ -42,6 +42,7 @@ use mkt_ksa_geo_sec::api;
 use actix_web::{
     dev::Service,
     http::header::{HeaderName, HeaderValue},
+    http::KeepAlive,
     middleware::DefaultHeaders,
     web, App, HttpServer,
 };
@@ -131,7 +132,7 @@ use std::collections::HashSet;
 use std::io::Error as IoError;
 use std::io::ErrorKind;
 use std::sync::Arc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 
 // --- استيراد شامل لجميع المحركات وتبعياتها ---
@@ -229,6 +230,8 @@ async fn main() -> std::io::Result<()> {
     let default_payload_bytes = if ultra_strict { 32 * 1024 } else { 64 * 1024 };
     let default_ai_base_block = if ultra_strict { 60 } else { 20 };
     let default_ai_max_block = if ultra_strict { 1800 } else { 900 };
+    let default_ai_burst_soft_limit = if ultra_strict { 18 } else { 28 };
+    let default_ai_burst_hard_limit = if ultra_strict { 42 } else { 72 };
     // Prefer direct environment reads for runtime-critical secrets, then fallback to config map keys.
     let api_key: String = std::env::var("API_KEY")
         .or_else(|_| settings.get_string("API_KEY"))
@@ -460,11 +463,48 @@ async fn main() -> std::io::Result<()> {
                 default_ai_max_block,
             ),
             max_tracked_ips: env_usize_or_default("AI_GUARD_MAX_TRACKED_IPS", 20_000),
+            burst_window_seconds: env_u64_or_default("AI_GUARD_BURST_WINDOW_SECONDS", 10),
+            burst_soft_limit: env_u32_or_default(
+                "AI_GUARD_BURST_SOFT_LIMIT",
+                default_ai_burst_soft_limit,
+            ) as u16,
+            burst_hard_limit: env_u32_or_default(
+                "AI_GUARD_BURST_HARD_LIMIT",
+                default_ai_burst_hard_limit,
+            ) as u16,
         })),
         api_key: Some(SecureString::new(api_key)),
         alert_memory: Arc::new(mkt_ksa_geo_sec::app_state::AlertMemoryStore::new(256)),
         db_pool,
     });
+
+    let default_worker_count = std::thread::available_parallelism()
+        .map(std::num::NonZeroUsize::get)
+        .unwrap_or(4);
+    let http_workers = env_usize_or_default("HTTP_WORKERS", default_worker_count);
+    let http_backlog = env_u32_or_default("HTTP_BACKLOG", if ultra_strict { 4096 } else { 2048 });
+    let http_max_connections = env_usize_or_default(
+        "HTTP_MAX_CONNECTIONS",
+        if ultra_strict { 50_000 } else { 25_000 },
+    );
+    let http_max_connection_rate = env_usize_or_default(
+        "HTTP_MAX_CONNECTION_RATE",
+        if ultra_strict { 1024 } else { 512 },
+    );
+    let http_keep_alive_seconds =
+        env_u64_or_default("HTTP_KEEP_ALIVE_SECONDS", if ultra_strict { 10 } else { 5 });
+    let http_client_request_timeout_seconds = env_u64_or_default(
+        "HTTP_CLIENT_REQUEST_TIMEOUT_SECONDS",
+        if ultra_strict { 30 } else { 20 },
+    );
+    let http_client_disconnect_timeout_seconds = env_u64_or_default(
+        "HTTP_CLIENT_DISCONNECT_TIMEOUT_SECONDS",
+        if ultra_strict { 10 } else { 7 },
+    );
+    let http_shutdown_timeout_seconds = env_u64_or_default(
+        "HTTP_SHUTDOWN_TIMEOUT_SECONDS",
+        if ultra_strict { 45 } else { 30 },
+    );
 
     println!("✅ Engines initialized successfully.");
     println!("🚀 Server starting at http://127.0.0.1:8080");
@@ -549,6 +589,14 @@ async fn main() -> std::io::Result<()> {
             // English: Register API configurations
             .configure(api::config)
     })
+    .workers(http_workers)
+    .backlog(http_backlog)
+    .max_connections(http_max_connections)
+    .max_connection_rate(http_max_connection_rate)
+    .keep_alive(KeepAlive::Timeout(Duration::from_secs(http_keep_alive_seconds)))
+    .client_request_timeout(Duration::from_secs(http_client_request_timeout_seconds))
+    .client_disconnect_timeout(Duration::from_secs(http_client_disconnect_timeout_seconds))
+    .shutdown_timeout(http_shutdown_timeout_seconds)
     .bind("127.0.0.1:8080")?
     .run()
     .await

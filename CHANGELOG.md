@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.1] - 2026-03-19
+
+### Security
+
+- Extended adaptive AI guard with burst-aware risk control (`soft`/`hard` thresholds), dynamic threshold adaptation, and stronger smart-access route indicators.
+- Refined centralized authorization sequence to preserve deterministic JWT semantics before adaptive AI blocking decisions.
+- Added dynamic per-IP `Retry-After` computation to rate-limit denials.
+
+### Runtime Hardening
+
+- Added environment-tunable HTTP server controls for timeout/capacity posture under sustained load:
+  - `HTTP_WORKERS`
+  - `HTTP_BACKLOG`
+  - `HTTP_MAX_CONNECTIONS`
+  - `HTTP_MAX_CONNECTION_RATE`
+  - `HTTP_KEEP_ALIVE_SECONDS`
+  - `HTTP_CLIENT_REQUEST_TIMEOUT_SECONDS`
+  - `HTTP_CLIENT_DISCONNECT_TIMEOUT_SECONDS`
+  - `HTTP_SHUTDOWN_TIMEOUT_SECONDS`
+
+### CI and Security Operations
+
+- Added scheduled security performance workflow (`daily` + `weekly`) to run the full hardening cycle and upload artifacts/logs automatically:
+  - `.github/workflows/security-performance-scheduled.yml`
+- Added deterministic security performance scripts and operational guide:
+  - `scripts/security/phase_a_strict.py`
+  - `scripts/security/phase_b_hostile.py`
+  - `scripts/security/phase_10m_split.py`
+  - `scripts/security/run_security_cycle.sh`
+  - `scripts/security/README.md`
+
+### Validation
+
+- `cargo fmt --all -- --check`: pass
+- `cargo clippy --all-targets --all-features -- -D warnings`: pass
+- `cargo test --all`: pass
+- Live strict runs:
+  - Phase-A (180s): pass-rate 100%, no `5xx`
+  - Phase-B (180s): pass-rate 100%, no `5xx`
+  - Split run (20m): no `5xx`, stable defense/latency profile under sustained mixed traffic
+
+### Documentation
+
+- Updated `README.md` and `README_AR.md` latest status date and verified implementation notes to reflect completed 2026-03-19 hardening.
+
+---
+
 ## [2.0.1] - 2026-03-17
 
 ### Security

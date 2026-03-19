@@ -62,7 +62,7 @@ Production-grade geolocation and behavioral security system for Rust services an
 - Security verification for **2.0.1** includes strict local gates (`fmt`, `clippy -D warnings`, full tests, `cargo audit`) and GitHub security checks (Code Scanning, Dependabot, Secret Scanning).
 - Teams still running **2.0.0** should upgrade immediately to **2.0.1** and re-run post-upgrade validation.
 
-## Latest Status and Strategic Notice (2026-03-17)
+## Latest Status and Strategic Notice (2026-03-19)
 
 ![Section 00 Update Banner](docs/images/banners/section-08.svg)
 
@@ -83,6 +83,16 @@ Production-grade geolocation and behavioral security system for Rust services an
 - JWT authorization and rate limiting are centralized for all API routes.
 - Dashboard code and legacy stale reports were removed to reduce attack/documentation drift.
 - Repository entered strict hygiene mode: stale docs removed and active file-role map added.
+
+### Verified Implementation Status (2026-03-19)
+
+- Added adaptive AI hardening with burst-aware scoring (`soft`/`hard` thresholds), dynamic threshold lowering, and stricter smart-access indicators.
+- Preserved authorization contract stability by validating JWT before adaptive AI blocking, preventing false semantic drift on expected `401` paths.
+- Added dynamic `Retry-After` computation for rate-limit responses instead of static values.
+- Added HTTP runtime hardening knobs for timeout/capacity behavior (`HTTP_CLIENT_REQUEST_TIMEOUT_SECONDS`, `HTTP_KEEP_ALIVE_SECONDS`, `HTTP_MAX_CONNECTIONS`, and related controls).
+- Added deterministic periodic security scripts under `scripts/security/` for Phase-A, Phase-B, and split traffic tests, plus one-command cycle execution.
+- Added scheduled CI workflow to run the full security cycle daily/weekly and upload generated artifacts and logs.
+- Re-validated the strict path end-to-end (`fmt`, `clippy -D warnings`, full tests, live split execution) with no server `5xx` in recent hardening runs.
 
 ## Maintenance Policy (Important)
 
@@ -427,6 +437,20 @@ curl -X POST "http://127.0.0.1:8080/api/smart_access/verify" \
 | `API_KEY` | Yes | Application key consumed by config layer | `API_KEY=change_me` |
 | `JWT_SECRET` | Yes | JWT signing/validation secret (32+ chars) | `JWT_SECRET=32+_chars_secret_here` |
 | `DATABASE_URL` | Recommended | SQLite path; if missing DB endpoints return 503 | `DATABASE_URL=sqlite://data/app.db` |
+| `SECURITY_PROFILE` | Optional | Security posture preset (`strict` or `ultra`) | `SECURITY_PROFILE=ultra` |
+| `RATE_LIMIT_MAX_REQUESTS` | Optional | Per-IP requests per minute in API gateway | `RATE_LIMIT_MAX_REQUESTS=60` |
+| `AI_GUARD_BLOCK_THRESHOLD` | Optional | Base AI block threshold (lower = stricter) | `AI_GUARD_BLOCK_THRESHOLD=55` |
+| `AI_GUARD_BURST_WINDOW_SECONDS` | Optional | Burst detection window for adaptive AI guard | `AI_GUARD_BURST_WINDOW_SECONDS=10` |
+| `AI_GUARD_BURST_SOFT_LIMIT` | Optional | Soft burst threshold before risk score boost | `AI_GUARD_BURST_SOFT_LIMIT=24` |
+| `AI_GUARD_BURST_HARD_LIMIT` | Optional | Hard burst threshold for aggressive blocking | `AI_GUARD_BURST_HARD_LIMIT=60` |
+| `HTTP_CLIENT_REQUEST_TIMEOUT_SECONDS` | Optional | Request timeout before 408 | `HTTP_CLIENT_REQUEST_TIMEOUT_SECONDS=30` |
+| `HTTP_CLIENT_DISCONNECT_TIMEOUT_SECONDS` | Optional | Grace period for client disconnect handling | `HTTP_CLIENT_DISCONNECT_TIMEOUT_SECONDS=10` |
+| `HTTP_KEEP_ALIVE_SECONDS` | Optional | Keep-alive timeout | `HTTP_KEEP_ALIVE_SECONDS=10` |
+| `HTTP_WORKERS` | Optional | Actix worker threads | `HTTP_WORKERS=8` |
+| `HTTP_MAX_CONNECTIONS` | Optional | Max accepted concurrent connections | `HTTP_MAX_CONNECTIONS=50000` |
+| `HTTP_MAX_CONNECTION_RATE` | Optional | Max accepted connection rate | `HTTP_MAX_CONNECTION_RATE=1024` |
+| `HTTP_BACKLOG` | Optional | Socket listen backlog | `HTTP_BACKLOG=4096` |
+| `HTTP_SHUTDOWN_TIMEOUT_SECONDS` | Optional | Graceful shutdown timeout | `HTTP_SHUTDOWN_TIMEOUT_SECONDS=45` |
 | `BOOTSTRAP_ADMIN_PASSWORD_HASH` | Optional | If set, seeds bootstrap-admin user on startup with provided hash | `BOOTSTRAP_ADMIN_PASSWORD_HASH=<argon2_hash>` |
 | `LOG_LEVEL` | Optional | Log verbosity | `LOG_LEVEL=info` |
 | `GEO_PROVIDER` | Optional | Geolocation source selector | `GEO_PROVIDER=ipapi` |
@@ -451,6 +475,28 @@ BOOTSTRAP_ADMIN_PASSWORD_HASH=replace_with_hash_if_needed \
 cargo run
 ```
 
+### 7.1 Periodic Security Performance Suite
+
+These scripts convert the strict runtime checks into deterministic, repeatable execution:
+
+```bash
+export API_KEY='change_me'
+export JWT_SECRET='replace_with_a_long_secret_32_chars_min'
+export SECURITY_BASE_URL='http://127.0.0.1:8080'
+
+python3 scripts/security/phase_a_strict.py --duration-sec 180 --workers 10
+python3 scripts/security/phase_b_hostile.py --duration-sec 180 --workers 16
+python3 scripts/security/phase_10m_split.py --duration-sec 600 --workers 24 --legit-share 0.45
+```
+
+Or run all phases in one command:
+
+```bash
+bash scripts/security/run_security_cycle.sh
+```
+
+All summaries are emitted as JSON lines and written to `artifacts/security/`.
+
 ## 8. Current Hardening and Fix History
 
 ![Section 08 Banner](docs/images/banners/section-08.svg)
@@ -469,12 +515,20 @@ Current 2.0.1 coverage includes the following fix/development scope:
 - Repository hygiene and docs governance: rebuilt both primary READMEs with strict bilingual engineering structure.
 - Documentation UX: section-by-section visual banners for professional readability, with section names embedded.
 - Validation and quality gates: `cargo fmt --check`, `cargo clippy --all-targets --all-features -- -D warnings`, and `cargo test --all` are clean on this update path.
+- Security hardening (2026-03-19): adaptive burst-aware AI guard with dynamic risk/threshold logic and stronger smart-access route sensitivity.
+- Security hardening (2026-03-19): centralized authorization order refined to keep JWT semantics deterministic before AI blocking.
+- Security hardening (2026-03-19): dynamic per-IP `Retry-After` in rate-limit denials.
+- Runtime hardening (2026-03-19): environment-tunable HTTP timeout/capacity controls for sustained hostile load posture.
+- Security operations (2026-03-19): reproducible periodic scripts for strict Phase-A, hostile Phase-B, and split traffic campaigns.
+- CI hardening (2026-03-19): scheduled daily/weekly security performance workflow with automatic artifact upload.
 
 Recent security and maintenance milestones are documented in:
 
 - `docs/SECURITY_HARDENING_2026-03-15.md`
 - `docs/GITHUB_ADVANCED_SCAN_2026-03-15.md`
 - `docs/REPOSITORY_FILE_ROLES_2026-03-15.md`
+- `.github/workflows/security-performance-scheduled.yml`
+- `scripts/security/README.md`
 - `CHANGELOG.md`
 
 ## 9. Library Integration and C-ABI
@@ -549,6 +603,11 @@ Earlier docs focused on architecture, API behavior, and security hardening track
 ### `scripts/`
 
 - `ci/cleanup_workspace.sh`: deterministic CI/local cleanup for stale advisory/cache residue.
+- `security/phase_a_strict.py`: deterministic strict mixed functional/security execution.
+- `security/phase_b_hostile.py`: deterministic hostile pressure execution with defense ratio reporting.
+- `security/phase_10m_split.py`: legitimate-vs-hostile split execution for stability/defense trend tracking.
+- `security/run_security_cycle.sh`: one-command cycle runner for Phase-A, Phase-B, and split execution.
+- `security/README.md`: operator guide for security performance scripts and expected outputs.
 
 ### `examples/`
 

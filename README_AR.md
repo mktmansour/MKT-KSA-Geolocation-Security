@@ -62,7 +62,7 @@
 - تحقق أمان **2.0.1** تم عبر بوابات صارمة: (`fmt`, `clippy -D warnings`, اختبارات كاملة, `cargo audit`) إضافة إلى فحوص GitHub الأمنية (Code Scanning, Dependabot, Secret Scanning).
 - أي بيئة ما زالت على **2.0.0** يجب ترقيتها فورًا إلى **2.0.1** مع إعادة التحقق بعد الترقية.
 
-## آخر التحديثات والتنبيه الاستراتيجي (2026-03-17)
+## آخر التحديثات والتنبيه الاستراتيجي (2026-03-19)
 
 ![Section 00 Update Banner](docs/images/banners/section-08.svg)
 
@@ -83,6 +83,16 @@
 - تم توحيد التحقق JWT وتحديد المعدل لجميع مسارات API بشكل مركزي.
 - تم حذف وحدة Dashboard والوثائق القديمة المتضاربة لتقليل الانحراف الأمني/التوثيقي.
 - تم اعتماد نهج نظافة مستودع صارم مع خريطة أدوار ملفات محدثة.
+
+### حالة التحقق من التنفيذ الفعلي (2026-03-19)
+
+- تمت إضافة تقوية AI تكيفية مع كشف اندفاع الحركة (`soft`/`hard`) وعتبة حظر ديناميكية ومؤشرات أكثر صرامة لمسار `smart_access`.
+- تم تثبيت عقد المصادقة عمليًا عبر التحقق من JWT أولاً ثم الحجب التكيفي، لمنع أي انحراف غير مقصود في مسارات `401` المتوقعة.
+- تمت إضافة حساب ديناميكي لـ `Retry-After` في حالات تحديد المعدل بدل القيمة الثابتة.
+- تمت إضافة مفاتيح ضبط تشغيل متقدمة لمهلات/سعة HTTP عبر البيئة (`HTTP_CLIENT_REQUEST_TIMEOUT_SECONDS` و`HTTP_KEEP_ALIVE_SECONDS` و`HTTP_MAX_CONNECTIONS` وغيرها).
+- تمت إضافة سكربتات أمنية دورية قابلة للتكرار تحت `scripts/security/` لتشغيل Phase-A وPhase-B واختبار الفصل بين الشرعي والهجومي.
+- تمت إضافة Workflow مجدول يومي/أسبوعي في CI لتشغيل الدورة الأمنية الكاملة ورفع artifacts والسجلات تلقائيًا.
+- تمت إعادة التحقق الصارم للمسار الكامل (`fmt` و`clippy -D warnings` والاختبارات الكاملة والتنفيذ الحي) بدون `5xx` في أحدث جولات التقوية.
 
 ## سياسة الصيانة (مهم)
 
@@ -380,6 +390,20 @@ curl -X POST "http://127.0.0.1:8080/api/smart_access/verify" \
 | `API_KEY` | نعم | مفتاح التطبيق في طبقة الإعداد | `API_KEY=change_me` |
 | `JWT_SECRET` | نعم | سر JWT بطول 32+ | `JWT_SECRET=32+_chars_secret_here` |
 | `DATABASE_URL` | موصى به | مسار SQLite؛ بدونه تعيد مسارات DB حالة 503 | `DATABASE_URL=sqlite://data/app.db` |
+| `SECURITY_PROFILE` | اختياري | نمط الصرامة الأمنية (`strict` أو `ultra`) | `SECURITY_PROFILE=ultra` |
+| `RATE_LIMIT_MAX_REQUESTS` | اختياري | عدد الطلبات المسموح لكل IP في الدقيقة | `RATE_LIMIT_MAX_REQUESTS=60` |
+| `AI_GUARD_BLOCK_THRESHOLD` | اختياري | عتبة حظر AI الأساسية (الأقل = أكثر صرامة) | `AI_GUARD_BLOCK_THRESHOLD=55` |
+| `AI_GUARD_BURST_WINDOW_SECONDS` | اختياري | نافذة كشف الاندفاع لحارس AI التكيفي | `AI_GUARD_BURST_WINDOW_SECONDS=10` |
+| `AI_GUARD_BURST_SOFT_LIMIT` | اختياري | حد اندفاع مرن قبل رفع درجة الخطر | `AI_GUARD_BURST_SOFT_LIMIT=24` |
+| `AI_GUARD_BURST_HARD_LIMIT` | اختياري | حد اندفاع صارم للحظر العدائي | `AI_GUARD_BURST_HARD_LIMIT=60` |
+| `HTTP_CLIENT_REQUEST_TIMEOUT_SECONDS` | اختياري | مهلة الطلب قبل 408 | `HTTP_CLIENT_REQUEST_TIMEOUT_SECONDS=30` |
+| `HTTP_CLIENT_DISCONNECT_TIMEOUT_SECONDS` | اختياري | مهلة معالجة انقطاع العميل | `HTTP_CLIENT_DISCONNECT_TIMEOUT_SECONDS=10` |
+| `HTTP_KEEP_ALIVE_SECONDS` | اختياري | مهلة Keep-Alive | `HTTP_KEEP_ALIVE_SECONDS=10` |
+| `HTTP_WORKERS` | اختياري | عدد عمال Actix | `HTTP_WORKERS=8` |
+| `HTTP_MAX_CONNECTIONS` | اختياري | الحد الأعلى للاتصالات المتزامنة | `HTTP_MAX_CONNECTIONS=50000` |
+| `HTTP_MAX_CONNECTION_RATE` | اختياري | معدل قبول الاتصالات | `HTTP_MAX_CONNECTION_RATE=1024` |
+| `HTTP_BACKLOG` | اختياري | حجم backlog للسوكيت | `HTTP_BACKLOG=4096` |
+| `HTTP_SHUTDOWN_TIMEOUT_SECONDS` | اختياري | مهلة الإيقاف الآمن | `HTTP_SHUTDOWN_TIMEOUT_SECONDS=45` |
 | `BOOTSTRAP_ADMIN_PASSWORD_HASH` | اختياري | عند ضبطه يتم إنشاء مستخدم bootstrap-admin عند الإقلاع بالهاش الممرر | `BOOTSTRAP_ADMIN_PASSWORD_HASH=<argon2_hash>` |
 | `LOG_LEVEL` | اختياري | مستوى السجلات | `LOG_LEVEL=info` |
 | `GEO_PROVIDER` | اختياري | اختيار مزود الموقع | `GEO_PROVIDER=ipapi` |
@@ -404,6 +428,28 @@ BOOTSTRAP_ADMIN_PASSWORD_HASH=replace_with_hash_if_needed \
 cargo run
 ```
 
+### 7.1 حزمة الاختبارات الأمنية الدورية للأداء
+
+هذه السكربتات تحوّل اختبارات الصرامة إلى تنفيذ دوري ثابت وقابل للقياس:
+
+```bash
+export API_KEY='change_me'
+export JWT_SECRET='replace_with_a_long_secret_32_chars_min'
+export SECURITY_BASE_URL='http://127.0.0.1:8080'
+
+python3 scripts/security/phase_a_strict.py --duration-sec 180 --workers 10
+python3 scripts/security/phase_b_hostile.py --duration-sec 180 --workers 16
+python3 scripts/security/phase_10m_split.py --duration-sec 600 --workers 24 --legit-share 0.45
+```
+
+ولتنفيذ الدورة كاملة بأمر واحد:
+
+```bash
+bash scripts/security/run_security_cycle.sh
+```
+
+جميع الملخصات تُطبع كسطر JSON وتُحفظ داخل `artifacts/security/`.
+
 ## 8. آخر الإصلاحات والتقويات
 
 ![Section 08 Banner](docs/images/banners/section-08.svg)
@@ -422,12 +468,20 @@ cargo run
 - الحوكمة ونظافة المستودع: إعادة بناء التوثيقين الأساسيين (إنجليزي/عربي) بصياغة هندسية صارمة.
 - تجربة التوثيق: إضافة بنرات رسومية لكل قسم مع كتابة اسم القسم داخل البنر.
 - التحقق والجودة: نجاح فحوص `fmt` و`clippy -D warnings` و`test` على مسار هذا التحديث.
+- التقوية الأمنية (2026-03-19): تطوير AI Guard ليدعم التكيّف مع burst وعتبات مخاطرة ديناميكية ومسار `smart_access` أكثر صرامة.
+- التقوية الأمنية (2026-03-19): ضبط ترتيب التفويض المركزي للحفاظ على دلالات JWT قبل الحظر التكيفي.
+- التقوية الأمنية (2026-03-19): تحويل `Retry-After` إلى قيمة ديناميكية مرتبطة بحالة IP.
+- التقوية التشغيلية (2026-03-19): إضافة ضبط بيئي لمهلات/سعة خادم HTTP في الضغط العالي.
+- الاختبارات الدورية (2026-03-19): إضافة سكربتات أمنية ثابتة لقياس Phase-A وPhase-B والفصل الشرعي/الهجومي.
+- CI (2026-03-19): إضافة Workflow مجدول يومي/أسبوعي لتشغيل الدورة الأمنية ورفع النتائج تلقائيًا.
 
 تم توثيق التحديثات الأمنية والهندسية الحديثة في:
 
 - `docs/SECURITY_HARDENING_2026-03-15.md`
 - `docs/GITHUB_ADVANCED_SCAN_2026-03-15.md`
 - `docs/REPOSITORY_FILE_ROLES_2026-03-15.md`
+- `.github/workflows/security-performance-scheduled.yml`
+- `scripts/security/README.md`
 - `CHANGELOG.md`
 
 ## 9. الاستخدام كمكتبة و C-ABI
@@ -502,6 +556,11 @@ cargo build --release
 ### `scripts/`
 
 - `ci/cleanup_workspace.sh`: تنظيف منهجي لبيئة CI/المحلي من آثار الكاش والملفات المتبقية.
+- `security/phase_a_strict.py`: تشغيل صارم قابل للتكرار للمسارات الوظيفية والأمنية المختلطة.
+- `security/phase_b_hostile.py`: تشغيل هجومي صارم مع قياس فعالية الدفاع.
+- `security/phase_10m_split.py`: تشغيل فصل شرعي/هجومي لقياس الاستقرار واتجاهات الدفاع.
+- `security/run_security_cycle.sh`: تشغيل الدورة الأمنية الكاملة بأمر واحد.
+- `security/README.md`: دليل تشغيل السكربتات الأمنية ومخرجاتها.
 
 ### `examples/`
 

@@ -13,6 +13,9 @@ pub struct AiGuardConfig {
     pub base_block_seconds: u64,
     pub max_block_seconds: u64,
     pub max_tracked_ips: usize,
+    pub burst_window_seconds: u64,
+    pub burst_soft_limit: u16,
+    pub burst_hard_limit: u16,
 }
 
 impl Default for AiGuardConfig {
@@ -24,6 +27,9 @@ impl Default for AiGuardConfig {
             base_block_seconds: 20,
             max_block_seconds: 900,
             max_tracked_ips: 20_000,
+            burst_window_seconds: 10,
+            burst_soft_limit: 24,
+            burst_hard_limit: 60,
         }
     }
 }
@@ -54,6 +60,8 @@ struct IpRiskState {
     offense_count: u8,
     last_seen: Instant,
     blocked_until: Option<Instant>,
+    burst_count: u16,
+    burst_window_start: Instant,
 }
 
 impl IpRiskState {
@@ -63,6 +71,8 @@ impl IpRiskState {
             offense_count: 0,
             last_seen: now,
             blocked_until: None,
+            burst_count: 0,
+            burst_window_start: now,
         }
     }
 }
@@ -102,6 +112,11 @@ impl RequestAiGuard {
             reasons.push("high_impact_route");
         }
 
+        if path.contains("smart_access/verify") {
+            score = score.saturating_add(8);
+            reasons.push("sensitive_access_route");
+        }
+
         let maybe_text: Cow<'_, str> = String::from_utf8_lossy(payload);
         let text = maybe_text.to_ascii_lowercase();
         let indicators = [
@@ -119,6 +134,22 @@ impl RequestAiGuard {
             if text.contains(needle) {
                 score = score.saturating_add(weight);
                 reasons.push(reason);
+            }
+        }
+
+        if path.contains("smart_access/verify") {
+            let smart_route_indicators = [
+                ("\"is_vpn\":true", 14_u8, "vpn_indicator"),
+                ("tor", 18_u8, "tor_indicator"),
+                ("proxy", 10_u8, "proxy_indicator"),
+                ("unknown device", 14_u8, "unknown_device_indicator"),
+                ("rapid-switch", 12_u8, "velocity_anomaly_indicator"),
+            ];
+            for (needle, weight, reason) in smart_route_indicators {
+                if text.contains(needle) {
+                    score = score.saturating_add(weight);
+                    reasons.push(reason);
+                }
             }
         }
 
@@ -150,6 +181,7 @@ impl RequestAiGuard {
 
         let state = map.entry(ip).or_insert_with(|| IpRiskState::new(now));
         self.apply_decay(state, now);
+        let burst_count = self.bump_burst_counter(state, now);
 
         if let Some(until) = state.blocked_until {
             if until > now {
@@ -172,15 +204,39 @@ impl RequestAiGuard {
             assessment.score = assessment.score.saturating_add(reputation_boost).min(100);
             assessment.reasons.push("ip_reputation_risk");
         }
+        let pre_burst_score = assessment.score;
 
-        let blocked = assessment.is_blocked(self.config.block_threshold);
+        if burst_count > self.config.burst_soft_limit {
+            let extra = burst_count.saturating_sub(self.config.burst_soft_limit);
+            let burst_penalty = ((extra / 2) as u8).min(22);
+            assessment.score = assessment.score.saturating_add(burst_penalty).min(100);
+            assessment.reasons.push("burst_traffic_anomaly");
+        }
+
+        let adaptive_threshold = self.adaptive_block_threshold(state, burst_count);
+        if burst_count >= self.config.burst_hard_limit {
+            assessment.reasons.push("burst_hard_limit_exceeded");
+            if pre_burst_score >= 20 {
+                assessment.score = assessment.score.max(adaptive_threshold);
+            } else {
+                assessment.score = assessment.score.saturating_add(8);
+            }
+        }
+        if adaptive_threshold < self.config.block_threshold {
+            assessment.reasons.push("adaptive_threshold_lowered");
+        }
+
+        let blocked = assessment.is_blocked(adaptive_threshold);
         state.last_seen = now;
 
         if blocked {
             state.offense_count = state.offense_count.saturating_add(1);
             state.reputation = state.reputation.saturating_add(assessment.score as u16);
 
-            let multiplier = u64::from(state.offense_count).min(10);
+            let burst_pressure =
+                u64::from(burst_count.saturating_sub(self.config.burst_soft_limit));
+            let burst_multiplier = 1 + (burst_pressure / 10).min(10);
+            let multiplier = u64::from(state.offense_count).min(10) * burst_multiplier;
             let block_seconds = (self.config.base_block_seconds * multiplier)
                 .min(self.config.max_block_seconds)
                 .max(self.config.base_block_seconds);
@@ -193,7 +249,10 @@ impl RequestAiGuard {
             };
         }
 
-        state.reputation = state.reputation.saturating_sub(2);
+        if burst_count <= self.config.burst_soft_limit {
+            state.offense_count = state.offense_count.saturating_sub(1);
+        }
+        state.reputation = state.reputation.saturating_sub(3);
 
         AiRiskDecision {
             assessment,
@@ -220,6 +279,38 @@ impl RequestAiGuard {
             state.reputation /= 2;
             state.offense_count = state.offense_count.saturating_sub(1);
         }
+    }
+
+    fn bump_burst_counter(&self, state: &mut IpRiskState, now: Instant) -> u16 {
+        let window_seconds = self.config.burst_window_seconds.max(1);
+        if now
+            .saturating_duration_since(state.burst_window_start)
+            .as_secs()
+            >= window_seconds
+        {
+            state.burst_count = 0;
+            state.burst_window_start = now;
+        }
+        state.burst_count = state.burst_count.saturating_add(1);
+        state.burst_count
+    }
+
+    fn adaptive_block_threshold(&self, state: &IpRiskState, burst_count: u16) -> u8 {
+        let reputation_penalty = (state.reputation / 30).min(20) as u8;
+        let offense_penalty = state.offense_count.min(8) * 2;
+        let burst_penalty = if burst_count > self.config.burst_soft_limit {
+            ((burst_count - self.config.burst_soft_limit) / 8).min(12) as u8
+        } else {
+            0
+        };
+
+        let reduction = reputation_penalty
+            .saturating_add(offense_penalty)
+            .saturating_add(burst_penalty);
+        self.config
+            .block_threshold
+            .saturating_sub(reduction)
+            .max(35)
     }
 
     fn prune_if_needed(&self, map: &mut HashMap<IpAddr, IpRiskState>, now: Instant) {
@@ -329,5 +420,59 @@ mod tests {
 
         // We assert the path no longer hard-blocks for benign traffic after decay window.
         assert!(!later.blocked);
+    }
+
+    #[tokio::test]
+    async fn burst_hard_limit_blocks_when_payload_is_suspicious() {
+        let guard = RequestAiGuard::new(AiGuardConfig {
+            block_threshold: 85,
+            burst_window_seconds: 60,
+            burst_soft_limit: 2,
+            burst_hard_limit: 3,
+            base_block_seconds: 1,
+            max_block_seconds: 5,
+            ..AiGuardConfig::default()
+        });
+
+        let ip: IpAddr = "203.0.113.44".parse().expect("valid test ip");
+
+        let _ = guard
+            .evaluate_request(ip, "/api/device/resolve", Some("ua"), b"{}")
+            .await;
+        let _ = guard
+            .evaluate_request(ip, "/api/device/resolve", Some("ua"), b"{}")
+            .await;
+        let blocked = guard
+            .evaluate_request(ip, "/api/device/resolve", Some("ua"), b"../etc/passwd")
+            .await;
+
+        assert!(blocked.blocked);
+        assert!(blocked
+            .assessment
+            .reasons
+            .contains(&"burst_hard_limit_exceeded"));
+    }
+
+    #[tokio::test]
+    async fn smart_access_vpn_risk_is_elevated() {
+        let guard = RequestAiGuard::new(AiGuardConfig {
+            block_threshold: 45,
+            ..AiGuardConfig::default()
+        });
+
+        let decision = guard
+            .evaluate_request(
+                "203.0.113.55".parse().expect("valid test ip"),
+                "/api/smart_access/verify",
+                Some("ua"),
+                br#"{"network_info":{"is_vpn":true},"env":"tor proxy unknown device rapid-switch"}"#,
+            )
+            .await;
+
+        assert!(decision.blocked);
+        assert!(decision
+            .assessment
+            .reasons
+            .contains(&"sensitive_access_route"));
     }
 }

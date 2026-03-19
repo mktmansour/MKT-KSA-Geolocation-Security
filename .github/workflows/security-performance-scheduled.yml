@@ -1,0 +1,102 @@
+name: Scheduled Security Performance Cycle
+
+on:
+  schedule:
+    - cron: "30 1 * * *"
+    - cron: "0 2 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  security-performance-cycle:
+    name: Security Performance Cycle
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          submodules: false
+
+      - name: Prepare secure workspace
+        uses: ./.github/actions/secure-workspace
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+
+      - name: Build release binary
+        run: cargo build --locked --release
+
+      - name: Start server
+        env:
+          API_KEY: ci_perf_api_key_not_secret_000000000000
+          JWT_SECRET: ci_perf_jwt_secret_not_secret_0000000000000000
+          DATABASE_URL: sqlite:///tmp/mkt-security-performance.db
+          SECURITY_PROFILE: strict
+          RATE_LIMIT_MAX_REQUESTS: "600"
+          HTTP_WORKERS: "4"
+        run: |
+          set -euo pipefail
+          target/release/MKT_KSA_Geolocation_Security > /tmp/mkt-security-perf-server.log 2>&1 &
+          echo $! > /tmp/mkt-security-perf-server.pid
+
+      - name: Wait for server readiness
+        run: |
+          set -euo pipefail
+          for _ in $(seq 1 60); do
+            if curl -sS http://127.0.0.1:8080/api/users/00000000-0000-0000-0000-000000000000 -o /tmp/ready-body.json -D /tmp/ready-headers.txt >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Server readiness check failed"
+          exit 1
+
+      - name: Run full security cycle
+        env:
+          API_KEY: ci_perf_api_key_not_secret_000000000000
+          JWT_SECRET: ci_perf_jwt_secret_not_secret_0000000000000000
+          SECURITY_BASE_URL: http://127.0.0.1:8080
+          PHASE_A_DURATION_SEC: "180"
+          PHASE_B_DURATION_SEC: "180"
+          PHASE_SPLIT_DURATION_SEC: "600"
+          PHASE_A_WORKERS: "10"
+          PHASE_B_WORKERS: "16"
+          PHASE_SPLIT_WORKERS: "24"
+          PHASE_SPLIT_LEGIT_SHARE: "0.45"
+        run: |
+          set -euo pipefail
+          bash scripts/security/run_security_cycle.sh
+
+      - name: Stop server
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ -f /tmp/mkt-security-perf-server.pid ]; then
+            kill "$(cat /tmp/mkt-security-perf-server.pid)" 2>/dev/null || true
+            wait "$(cat /tmp/mkt-security-perf-server.pid)" 2>/dev/null || true
+          fi
+
+      - name: Upload security performance artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-performance-artifacts
+          path: |
+            artifacts/security/**
+            /tmp/mkt-security-perf-server.log
+            /tmp/ready-headers.txt
+            /tmp/ready-body.json
+          if-no-files-found: warn
