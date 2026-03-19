@@ -134,6 +134,12 @@ Production-grade geolocation and behavioral security system for Rust services an
 - 👨‍💻 [12. Developer Guide](#12-developer-guide)
 - 🤖 [13. AI and Intelligence Role](#13-ai-and-intelligence-role)
 
+## Project Wiki (Bilingual)
+
+- English Wiki Home: [docs/wiki/en/Home.md](docs/wiki/en/Home.md)
+- Arabic Wiki Home: [docs/wiki/ar/Home.md](docs/wiki/ar/Home.md)
+- Wiki Source Index: [docs/wiki/README.md](docs/wiki/README.md)
+
 ## 1. What This Project Does
 
 ![Section 01 Banner](docs/images/banners/section-01.svg)

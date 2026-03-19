@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="820" viewBox="0 0 1400 820" role="img" aria-label="Data trust flow">
+  <defs>
+    <style>
+      .title { font: 700 34px 'Segoe UI', Arial, sans-serif; fill: #143a56; }
+      .box { fill: #f8fcff; stroke: #77abd0; stroke-width: 2; rx: 12; }
+      .h { font: 700 19px 'Segoe UI', Arial, sans-serif; fill: #153d5a; }
+      .t { font: 500 15px 'Segoe UI', Arial, sans-serif; fill: #27506f; }
+      .edge { stroke: #4a86b2; stroke-width: 2.5; marker-end: url(#arrow); fill: none; }
+      .core { fill: #eef8ff; stroke: #4f90bf; stroke-width: 2.6; rx: 18; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto">
+      <polygon points="0,0 10,4 0,8" fill="#4a86b2"/>
+    </marker>
+  </defs>
+
+  <rect width="1400" height="820" fill="#edf6fd"/>
+  <text x="700" y="58" text-anchor="middle" class="title">Multi-Signal Trust Composition</text>
+
+  <rect x="120" y="160" width="240" height="130" class="box"/>
+  <text x="240" y="205" text-anchor="middle" class="h">Geolocation</text>
+  <text x="140" y="240" class="t">Location confidence</text>
+
+  <rect x="120" y="340" width="240" height="130" class="box"/>
+  <text x="240" y="385" text-anchor="middle" class="h">Behavior</text>
+  <text x="140" y="420" class="t">Anomaly scoring</text>
+
+  <rect x="120" y="520" width="240" height="130" class="box"/>
+  <text x="240" y="565" text-anchor="middle" class="h">Device</text>
+  <text x="140" y="600" class="t">Fingerprint trust</text>
+
+  <rect x="1040" y="160" width="240" height="130" class="box"/>
+  <text x="1160" y="205" text-anchor="middle" class="h">Network</text>
+  <text x="1060" y="240" class="t">VPN or proxy risk</text>
+
+  <rect x="1040" y="340" width="240" height="130" class="box"/>
+  <text x="1160" y="385" text-anchor="middle" class="h">Sensors</text>
+  <text x="1060" y="420" class="t">Signal integrity</text>
+
+  <rect x="1040" y="520" width="240" height="130" class="box"/>
+  <text x="1160" y="565" text-anchor="middle" class="h">Weather</text>
+  <text x="1060" y="600" class="t">Context consistency</text>
+
+  <rect x="460" y="270" width="480" height="270" class="core"/>
+  <text x="700" y="325" text-anchor="middle" class="h">Composite Verification Engine</text>
+  <text x="520" y="370" class="t">- Weighted trust model</text>
+  <text x="520" y="400" class="t">- Security policy evaluation</text>
+  <text x="520" y="430" class="t">- Smart access decision</text>
+  <text x="520" y="460" class="t">- Structured confidence output</text>
+
+  <path d="M360 225 L460 330" class="edge"/>
+  <path d="M360 405 L460 405" class="edge"/>
+  <path d="M360 585 L460 480" class="edge"/>
+
+  <path d="M1040 225 L940 330" class="edge"/>
+  <path d="M1040 405 L940 405" class="edge"/>
+  <path d="M1040 585 L940 480" class="edge"/>
+</svg>

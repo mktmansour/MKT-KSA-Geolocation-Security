@@ -1,0 +1,71 @@
+# 05. النشر والتشغيل
+
+تغطي هذه الصفحة أنماط النشر الإنتاجي وتشغيل اليوم الثاني.
+
+## 1. أوضاع النشر
+
+- نشر الخدمة مباشرة على Linux.
+- نشر بالحاويات عبر Dockerfile الموجود في المستودع.
+- نشر داخلي على منصة تشغيل مع ضوابط أمنية مُدارة.
+
+## 2. الحد الأدنى للبيئة
+
+- API_KEY
+- JWT_SECRET
+- DATABASE_URL
+
+ضوابط تقوية موصى بها:
+
+- SECURITY_PROFILE
+- HTTP_WORKERS
+- HTTP_BACKLOG
+- HTTP_MAX_CONNECTIONS
+- HTTP_MAX_CONNECTION_RATE
+- HTTP_KEEP_ALIVE_SECONDS
+- HTTP_CLIENT_REQUEST_TIMEOUT_SECONDS
+- HTTP_CLIENT_DISCONNECT_TIMEOUT_SECONDS
+- HTTP_SHUTDOWN_TIMEOUT_SECONDS
+
+## 3. أمر تشغيل تشغيلي
+
+```bash
+API_KEY=change_me \
+JWT_SECRET=replace_with_a_long_secret_32_chars_min \
+DATABASE_URL=sqlite://data/app.db \
+SECURITY_PROFILE=strict \
+HTTP_MAX_CONNECTIONS=50000 \
+HTTP_MAX_CONNECTION_RATE=1024 \
+cargo run
+```
+
+## 4. قائمة تشغيل يومية
+
+- التحقق من جاهزية الترحيلات قبل الإقلاع.
+- حقن المتغيرات من مصدر أسرار آمن.
+- اختبار endpoint أساسي بعد الإقلاع.
+- التأكد من سجلات تتبع request id.
+- التحقق من سلوك التنبيهات عند المنع.
+
+## 5. خط أساس المراقبة
+
+تابع على الأقل:
+
+- معدل الطلب وزمن الاستجابة لكل endpoint.
+- معدل المنع حسب نوع الكود الأمني.
+- تكرار تفعيل rate-limit.
+- إشارات تشبع الخادم.
+- اتجاهات الأخطاء حسب المسار والملف الأمني.
+
+## 6. النسخ الاحتياطي والاستعادة
+
+- نسخ SQLite دوريًا وفق سياسة واضحة.
+- الحفاظ على تاريخ الترحيلات بدون تعديل رجعي.
+- اختبار الاستعادة في بيئة staging قبل الإنتاج.
+
+## 7. الخطوة التالية
+
+انتقل إلى [06. الاختبارات والجودة](06-Testing-and-Quality.md).
+
+## كلمات بحث
+
+نشر إنتاجي Rust، تشغيل آمن Actix Web، Runbook أمني، مراقبة API وإدارة العمليات.

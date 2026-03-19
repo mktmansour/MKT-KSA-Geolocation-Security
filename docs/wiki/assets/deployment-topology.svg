@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="800" viewBox="0 0 1400 800" role="img" aria-label="Deployment topology">
+  <defs>
+    <style>
+      .title { font: 700 34px 'Segoe UI', Arial, sans-serif; fill: #173d59; }
+      .zone { fill: #f8fcff; stroke: #6aa3cb; stroke-width: 2; rx: 14; }
+      .head { font: 700 21px 'Segoe UI', Arial, sans-serif; fill: #173d59; }
+      .txt { font: 500 15px 'Segoe UI', Arial, sans-serif; fill: #2a5472; }
+      .edge { stroke: #4f89b6; stroke-width: 2.4; marker-end: url(#arrow); fill: none; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto">
+      <polygon points="0,0 10,4 0,8" fill="#4f89b6"/>
+    </marker>
+  </defs>
+
+  <rect width="1400" height="800" fill="#edf6fd"/>
+  <text x="700" y="58" text-anchor="middle" class="title">Production Deployment Topology</text>
+
+  <rect x="90" y="180" width="280" height="190" class="zone"/>
+  <text x="230" y="230" text-anchor="middle" class="head">Client Zone</text>
+  <text x="120" y="270" class="txt">- Mobile and web clients</text>
+  <text x="120" y="300" class="txt">- Internal service callers</text>
+
+  <rect x="470" y="130" width="460" height="300" class="zone"/>
+  <text x="700" y="180" text-anchor="middle" class="head">Application Zone</text>
+  <text x="510" y="220" class="txt">- Actix Web process</text>
+  <text x="510" y="250" class="txt">- Security gateway and policies</text>
+  <text x="510" y="280" class="txt">- Trust engines and route handlers</text>
+  <text x="510" y="310" class="txt">- Runtime hardening controls</text>
+  <text x="510" y="340" class="txt">- Request correlation logs</text>
+
+  <rect x="1030" y="180" width="280" height="190" class="zone"/>
+  <text x="1170" y="230" text-anchor="middle" class="head">Data Zone</text>
+  <text x="1060" y="270" class="txt">- SQLite database</text>
+  <text x="1060" y="300" class="txt">- Migrations and persistence</text>
+
+  <rect x="350" y="500" width="700" height="210" class="zone"/>
+  <text x="700" y="550" text-anchor="middle" class="head">Operations Zone</text>
+  <text x="390" y="590" class="txt">- CI build, lint, test, security scans</text>
+  <text x="390" y="620" class="txt">- Release checks and dry-run publish</text>
+  <text x="390" y="650" class="txt">- Changelog and wiki synchronization</text>
+
+  <path d="M370 275 L470 275" class="edge"/>
+  <path d="M930 275 L1030 275" class="edge"/>
+  <path d="M700 430 L700 500" class="edge"/>
+</svg>

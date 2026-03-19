@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="820" viewBox="0 0 1400 820" role="img" aria-label="MKT KSA system context">
+  <defs>
+    <style>
+      .title { font: 700 36px 'Segoe UI', Arial, sans-serif; fill: #0a2f4f; }
+      .sub { font: 500 20px 'Segoe UI', Arial, sans-serif; fill: #27506f; }
+      .box { fill: #f4f9ff; stroke: #5f9ccf; stroke-width: 2; rx: 16; }
+      .head { font: 700 22px 'Segoe UI', Arial, sans-serif; fill: #103a5e; }
+      .txt { font: 500 16px 'Segoe UI', Arial, sans-serif; fill: #1e4463; }
+      .edge { stroke: #4d86b4; stroke-width: 2.5; marker-end: url(#arrow); fill: none; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto">
+      <polygon points="0,0 10,4 0,8" fill="#4d86b4"/>
+    </marker>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#f7fbff"/>
+      <stop offset="100%" stop-color="#e6f1fb"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1400" height="820" fill="url(#bg)"/>
+  <text x="700" y="60" text-anchor="middle" class="title">MKT KSA Geolocation Security - System Context</text>
+  <text x="700" y="94" text-anchor="middle" class="sub">Bilingual Wiki Reference Architecture</text>
+
+  <rect x="90" y="190" width="280" height="210" class="box"/>
+  <text x="230" y="235" text-anchor="middle" class="head">Client Layer</text>
+  <text x="120" y="275" class="txt">- Mobile apps</text>
+  <text x="120" y="305" class="txt">- Web dashboards</text>
+  <text x="120" y="335" class="txt">- Internal services</text>
+
+  <rect x="470" y="160" width="460" height="280" class="box"/>
+  <text x="700" y="205" text-anchor="middle" class="head">API and Security Gateway</text>
+  <text x="510" y="245" class="txt">- Actix Web routes</text>
+  <text x="510" y="275" class="txt">- API key and JWT gate</text>
+  <text x="510" y="305" class="txt">- Adaptive risk and rate controls</text>
+  <text x="510" y="335" class="txt">- Request trace and structured errors</text>
+
+  <rect x="1010" y="190" width="300" height="210" class="box"/>
+  <text x="1160" y="235" text-anchor="middle" class="head">Data Layer</text>
+  <text x="1045" y="275" class="txt">- SQLite</text>
+  <text x="1045" y="305" class="txt">- Migrations</text>
+  <text x="1045" y="335" class="txt">- Alert persistence</text>
+
+  <rect x="350" y="500" width="700" height="220" class="box"/>
+  <text x="700" y="545" text-anchor="middle" class="head">Core Trust Engines</text>
+  <text x="390" y="585" class="txt">- Geolocation verification</text>
+  <text x="390" y="615" class="txt">- Behavioral anomaly analysis</text>
+  <text x="390" y="645" class="txt">- Device fingerprint and network risk</text>
+  <text x="390" y="675" class="txt">- Sensors and weather consistency</text>
+  <text x="390" y="705" class="txt">- Composite smart access decision</text>
+
+  <path d="M370 295 L470 295" class="edge"/>
+  <path d="M930 295 L1010 295" class="edge"/>
+  <path d="M700 440 L700 500" class="edge"/>
+</svg>
