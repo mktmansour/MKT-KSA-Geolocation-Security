@@ -113,9 +113,17 @@
 
 ![Community Signal](https://img.shields.io/badge/Community-Feedback%20Loop-0A66C2?style=for-the-badge)
 
+[![Crates Downloads](https://img.shields.io/crates/d/MKT_KSA_Geolocation_Security.svg?style=for-the-badge)](https://crates.io/crates/MKT_KSA_Geolocation_Security)
+[![GitHub Stars](https://img.shields.io/github/stars/mktmansour/MKT-KSA-Geolocation-Security?style=for-the-badge)](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/stargazers)
+
 - تم تحميل الحزمة آلاف المرات.
 - مستوى التفاعل (تعليقات/ردود/تقييمات) أقل بكثير من المتوقع.
 - الملاحظات التقنية الأمنية من المستخدمين مرحب بها بشكل كبير.
+
+### التصويت واللايكات والتعليقات
+
+- التصويت والتفاعل بالرموز (👍 👎 ❤️ 🚀): [Issue #50](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/issues/50)
+- كتابة التعليقات وملاحظات التكامل: [Issue #50](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/issues/50)
 
 ## المحتويات
 

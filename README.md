@@ -113,9 +113,17 @@ Production-grade geolocation and behavioral security system for Rust services an
 
 ![Community Signal](https://img.shields.io/badge/Community-Feedback%20Loop-0A66C2?style=for-the-badge)
 
+[![Crates Downloads](https://img.shields.io/crates/d/MKT_KSA_Geolocation_Security.svg?style=for-the-badge)](https://crates.io/crates/MKT_KSA_Geolocation_Security)
+[![GitHub Stars](https://img.shields.io/github/stars/mktmansour/MKT-KSA-Geolocation-Security?style=for-the-badge)](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/stargazers)
+
 - The crate has been downloaded thousands of times.
 - Engagement feedback (issues/comments/reactions) has been significantly lower than expected.
 - Constructive security and production feedback is highly encouraged.
+
+### Vote, Like, and Comment
+
+- Vote and add reactions here (👍 👎 ❤️ 🚀): [Issue #50](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/issues/50)
+- Write comments and integration feedback: [Issue #50](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/issues/50)
 
 ## Contents
 
