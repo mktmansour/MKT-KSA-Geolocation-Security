@@ -29,6 +29,7 @@ Production-grade geolocation and behavioral security system for Rust services an
   </a>
   <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-0A66C2?style=for-the-badge" />
   <img alt="Edition" src="https://img.shields.io/badge/edition-2021-0A66C2?style=for-the-badge" />
+  <img alt="Made in Saudi Arabia" src="https://img.shields.io/badge/Made%20in-Saudi%20Arabia-006C35?style=for-the-badge" />
 </p>
 
 ![MKT KSA Geolocation Security Cover](docs/images/mkt_ksa.png)
@@ -61,6 +62,9 @@ Production-grade geolocation and behavioral security system for Rust services an
 - Version **2.0.1** is the mandatory upgrade baseline and the most stable release in this repository line after hardening and cleanup.
 - Security verification for **2.0.1** includes strict local gates (`fmt`, `clippy -D warnings`, full tests, `cargo audit`) and GitHub security checks (Code Scanning, Dependabot, Secret Scanning).
 - Teams still running **2.0.0** should upgrade immediately to **2.0.1** and re-run post-upgrade validation.
+- Security advisory templates for release publication are available in:
+  - `docs/security-advisories/SECURITY_ADVISORY_TEMPLATE_EN.md`
+  - `docs/security-advisories/SECURITY_ADVISORY_TEMPLATE_AR.md`
 
 ## Latest Status and Strategic Notice (2026-03-19)
 

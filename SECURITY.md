@@ -29,6 +29,8 @@ These controls are mandatory for all code regardless of implementation language.
 - Lockfiles are required for deterministic builds.
 - Critical and high dependency findings fail CI.
 - Third-party caches and build artifacts must stay out of analysis scope and VCS tracking.
+- Maintainers must update dependencies proactively; security updates are mandatory, not optional.
+- Minimum policy: daily advisory review, immediate security patch PR merge after CI pass, and fast patch release publication.
 
 4. CI and workflow security
 - Explicit workflow permissions are required.

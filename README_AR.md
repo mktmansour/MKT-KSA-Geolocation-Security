@@ -29,6 +29,7 @@
   </a>
   <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-0A66C2?style=for-the-badge" />
   <img alt="Edition" src="https://img.shields.io/badge/edition-2021-0A66C2?style=for-the-badge" />
+  <img alt="Made in Saudi Arabia" src="https://img.shields.io/badge/Made%20in-Saudi%20Arabia-006C35?style=for-the-badge" />
 </p>
 
 ![MKT KSA Geolocation Security Cover](docs/images/mkt_ksa.png)
@@ -61,6 +62,9 @@
 - الإصدار **2.0.1** هو خط الأساس الإلزامي للترقية، وهو الأكثر استقرارًا ضمن سلسلة هذا المستودع بعد أعمال التحصين والتنظيف.
 - تحقق أمان **2.0.1** تم عبر بوابات صارمة: (`fmt`, `clippy -D warnings`, اختبارات كاملة, `cargo audit`) إضافة إلى فحوص GitHub الأمنية (Code Scanning, Dependabot, Secret Scanning).
 - أي بيئة ما زالت على **2.0.0** يجب ترقيتها فورًا إلى **2.0.1** مع إعادة التحقق بعد الترقية.
+- قوالب التنبيه الأمني الجاهزة للنشر متوفرة في:
+  - `docs/security-advisories/SECURITY_ADVISORY_TEMPLATE_EN.md`
+  - `docs/security-advisories/SECURITY_ADVISORY_TEMPLATE_AR.md`
 
 ## آخر التحديثات والتنبيه الاستراتيجي (2026-03-19)
 
