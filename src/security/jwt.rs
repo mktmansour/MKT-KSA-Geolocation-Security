@@ -254,4 +254,27 @@ mod tests {
         let result = wrong_issuer_manager.decode_token(&token);
         assert!(result.is_err());
     }
+
+    #[test]
+    fn test_decode_rejects_non_hs512_algorithm() {
+        let manager = create_manager();
+        let claims = Claims {
+            sub: Uuid::new_v4(),
+            roles: vec!["user".to_string()],
+            exp: (Utc::now() + Duration::seconds(60)).timestamp(),
+            iat: Utc::now().timestamp(),
+            iss: manager.issuer.clone(),
+            aud: manager.audience.clone(),
+        };
+
+        // Token is intentionally signed with HS256 and must be rejected by HS512-only validation.
+        let token = encode(
+            &Header::new(Algorithm::HS256),
+            &claims,
+            &manager.encoding_key,
+        )
+        .unwrap();
+        let result = manager.decode_token(&token);
+        assert!(result.is_err());
+    }
 }
