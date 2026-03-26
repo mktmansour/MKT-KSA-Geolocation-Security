@@ -78,7 +78,7 @@ jobs:
         uses: ./.github/actions/secure-workspace
 
       - name: Run Trivy in SARIF mode
-        uses: aquasecurity/trivy-action@v0.24.0
+        uses: aquasecurity/trivy-action@v0.35.0
         with:
           scan-type: fs
           format: sarif
