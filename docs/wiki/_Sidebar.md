@@ -1,0 +1,21 @@
+## 🇬🇧 English
+- 🏠 [Home](en/Home.md)
+- 🚀 [Quick Start](en/01-Quick-Start.md)
+- 🏗️ [Architecture](en/02-Architecture.md)
+- 🔒 [Security Deep Dive](en/03-Security-Deep-Dive.md)
+- 🔌 [API Guide](en/04-API-Guide.md)
+- 🚢 [Deployment & Operations](en/05-Deployment-and-Operations.md)
+- ✅ [Testing & Quality](en/06-Testing-and-Quality.md)
+- ❓ [FAQ & Troubleshooting](en/07-FAQ-and-Troubleshooting.md)
+- 📈 [SEO & Docs Strategy](en/08-SEO-and-Documentation-Strategy.md)
+
+## 🇸🇦 العربية
+- 🏠 [الصفحة الرئيسية](ar/Home.md)
+- 🚀 [البدء السريع](ar/01-Quick-Start.md)
+- 🏗️ [المعمارية](ar/02-Architecture.md)
+- 🔒 [التعمق الأمني](ar/03-Security-Deep-Dive.md)
+- 🔌 [دليل API](ar/04-API-Guide.md)
+- 🚢 [النشر والتشغيل](ar/05-Deployment-and-Operations.md)
+- ✅ [الاختبارات والجودة](ar/06-Testing-and-Quality.md)
+- ❓ [الأسئلة الشائعة وحل المشاكل](ar/07-FAQ-and-Troubleshooting.md)
+- 📈 [استراتيجية الظهور والانتشار](ar/08-SEO-and-Documentation-Strategy.md)

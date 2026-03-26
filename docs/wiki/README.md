@@ -10,6 +10,8 @@ This folder contains a complete bilingual wiki source for the project in English
 
 ## Wiki Structure
 
+- Root landing: [Home](Home.md) (links to both language tracks)
+- Root sidebar: [_Sidebar](_Sidebar.md) with bilingual navigation
 - English entry: [Home](en/Home.md)
 - Arabic entry: [الصفحة الرئيسية](ar/Home.md)
 
@@ -52,9 +54,9 @@ GitHub Wiki is a separate git repository. Use these steps when you want to publi
    - cp -r docs/wiki/en wiki-publish/
    - cp -r docs/wiki/ar wiki-publish/
    - cp -r docs/wiki/assets wiki-publish/
-3. Create language entry pages in wiki root:
-   - Home.md (link to English and Arabic homes)
-4. Commit and push.
+   - cp docs/wiki/Home.md wiki-publish/
+   - cp docs/wiki/_Sidebar.md wiki-publish/
+3. Commit and push.
 
 ## Editorial Standards
 
