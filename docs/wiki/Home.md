@@ -14,15 +14,15 @@
 - 📈 SEO & Docs Strategy: [08-SEO-and-Documentation-Strategy](en/08-SEO-and-Documentation-Strategy)
 
 ## 🇸🇦 العربية
-- 🏠 الصفحة الرئيسية: [الرئيسية](ar/Home)
-- 🚀 البدء السريع: [01-Quick-Start](ar/01-Quick-Start)
-- 🏗️ المعمارية: [02-Architecture](ar/02-Architecture)
-- 🔒 التعمق الأمني: [03-Security-Deep-Dive](ar/03-Security-Deep-Dive)
-- 🔌 دليل API: [04-API-Guide](ar/04-API-Guide)
-- 🚢 النشر والتشغيل: [05-Deployment-and-Operations](ar/05-Deployment-and-Operations)
-- ✅ الاختبارات والجودة: [06-Testing-and-Quality](ar/06-Testing-and-Quality)
-- ❓ الأسئلة الشائعة وحل المشاكل: [07-FAQ-and-Troubleshooting](ar/07-FAQ-and-Troubleshooting)
-- 📈 استراتيجية الظهور والانتشار: [08-SEO-and-Documentation-Strategy](ar/08-SEO-and-Documentation-Strategy)
+- 🏠 الصفحة الرئيسية: [الرئيسية](ar/الرئيسية)
+- 🚀 البدء السريع: [01-البدء-السريع](ar/01-البدء-السريع)
+- 🏗️ المعمارية: [02-المعمارية](ar/02-المعمارية)
+- 🔒 التعمق الأمني: [03-التعمق-الأمني](ar/03-التعمق-الأمني)
+- 🔌 دليل API: [04-دليل-API](ar/04-دليل-API)
+- 🚢 النشر والتشغيل: [05-النشر-والتشغيل](ar/05-النشر-والتشغيل)
+- ✅ الاختبارات والجودة: [06-الاختبارات-والجودة](ar/06-الاختبارات-والجودة)
+- ❓ الأسئلة الشائعة وحل المشاكل: [07-الأسئلة-الشائعة-وحل-المشاكل](ar/07-الأسئلة-الشائعة-وحل-المشاكل)
+- 📈 استراتيجية الظهور والانتشار: [08-استراتيجية-الظهور-والانتشار](ar/08-استراتيجية-الظهور-والانتشار)
 
 ## روابط سريعة
 - 📦 ملاحظات الإصدارات: [releases](https://github.com/mktmansour/MKT-KSA-Geolocation-Security/tree/main/docs/releases)

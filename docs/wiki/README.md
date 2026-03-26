@@ -28,14 +28,14 @@ This folder contains a complete bilingual wiki source for the project in English
 
 ### Arabic Track
 
-- [01. البدء السريع](ar/01-Quick-Start.md)
-- [02. المعمارية](ar/02-Architecture.md)
-- [03. التعمق الأمني](ar/03-Security-Deep-Dive.md)
-- [04. دليل API](ar/04-API-Guide.md)
-- [05. النشر والتشغيل](ar/05-Deployment-and-Operations.md)
-- [06. الاختبارات والجودة](ar/06-Testing-and-Quality.md)
-- [07. الأسئلة الشائعة وحل المشاكل](ar/07-FAQ-and-Troubleshooting.md)
-- [08. استراتيجية الظهور والانتشار](ar/08-SEO-and-Documentation-Strategy.md)
+- [01. البدء السريع](ar/01-البدء-السريع.md)
+- [02. المعمارية](ar/02-المعمارية.md)
+- [03. التعمق الأمني](ar/03-التعمق-الأمني.md)
+- [04. دليل API](ar/04-دليل-API.md)
+- [05. النشر والتشغيل](ar/05-النشر-والتشغيل.md)
+- [06. الاختبارات والجودة](ar/06-الاختبارات-والجودة.md)
+- [07. الأسئلة الشائعة وحل المشاكل](ar/07-الأسئلة-الشائعة-وحل-المشاكل.md)
+- [08. استراتيجية الظهور والانتشار](ar/08-استراتيجية-الظهور-والانتشار.md)
 
 ## Diagram and Image Assets
 
