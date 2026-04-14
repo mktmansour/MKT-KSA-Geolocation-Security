@@ -51,7 +51,7 @@ hmac = "0.12.1"
 sha2 = "0.10.9"
 blake3 = "1.8.2"
 base64 = "0.22.1"
-jsonwebtoken = { version = "10.3.0", default-features = false, features = ["rust_crypto"] }
+jsonwebtoken = { version = "9.3.1", default-features = false }
 pqcrypto-mlkem = "0.1.1"
 unicode-normalization = "0.1.24"
 validator = "0.20"
@@ -60,7 +60,7 @@ lru = "0.16.3"
 subtle = "2.6.1"
 
 cfg-if = "1.0.4"
-rand = "0.8.5"
+rand_core = "0.6.4"
 chrono = { version = "0.4", features = ["serde"] }
 
 # Utilities

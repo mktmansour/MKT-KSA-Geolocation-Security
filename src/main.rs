@@ -126,7 +126,8 @@ fn build_default_fp_env_profiles(
 }
 use mkt_ksa_geo_sec::security::secret::SecureBytes;
 use mkt_ksa_geo_sec::security::secret::SecureString;
-use rand::RngCore;
+use rand_core::OsRng;
+use rand_core::RngCore;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::io::Error as IoError;
@@ -163,7 +164,7 @@ use mkt_ksa_geo_sec::AppState;
 
 fn random_secret_bytes(len: usize) -> SecureBytes {
     let mut bytes = vec![0_u8; len];
-    rand::rngs::OsRng.fill_bytes(&mut bytes);
+    OsRng.fill_bytes(&mut bytes);
     SecureBytes::new(bytes)
 }
 

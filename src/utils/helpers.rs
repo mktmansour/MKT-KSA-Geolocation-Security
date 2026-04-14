@@ -24,7 +24,8 @@ use aes_gcm::aead::KeyInit;
 use aes_gcm::Aes256Gcm;
 use aes_gcm::Nonce;
 use anyhow::Error;
-use rand::RngCore;
+use rand_core::OsRng;
+use rand_core::RngCore;
 
 /// Arabic: يقوم بتشفير البيانات باستخدام مفتاح مشترك. هذا تنفيذ وهمي.
 ///
@@ -46,7 +47,7 @@ pub fn aes_encrypt(data: &[u8], key: &[u8]) -> Result<Vec<u8>, Error> {
         .map_err(|_| anyhow::anyhow!("failed to initialize AES-256-GCM"))?;
 
     let mut nonce_bytes = [0_u8; 12];
-    rand::rngs::OsRng.fill_bytes(&mut nonce_bytes);
+    OsRng.fill_bytes(&mut nonce_bytes);
     let nonce = Nonce::from_slice(&nonce_bytes);
 
     let mut output = Vec::with_capacity(12 + data.len() + 16);

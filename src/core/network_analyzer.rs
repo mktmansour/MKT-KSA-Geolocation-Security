@@ -39,6 +39,7 @@ use aes_gcm::aead::{Aead, KeyInit};
 use aes_gcm::AeadCore;
 use aes_gcm::{Aes256Gcm, Key};
 use async_trait::async_trait;
+use rand_core::OsRng;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::net::IpAddr;
@@ -271,7 +272,7 @@ impl NetworkAnalyzer {
         let key_slice = self.encryption_key.expose();
         let key = Key::<Aes256Gcm>::from_slice(key_slice);
         let cipher = Aes256Gcm::new(key);
-        let nonce = Aes256Gcm::generate_nonce(&mut rand::rngs::OsRng);
+        let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
 
         let ciphertext = cipher
             .encrypt(&nonce, ip.to_string().as_bytes())

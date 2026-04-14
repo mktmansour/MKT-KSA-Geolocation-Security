@@ -1,5 +1,5 @@
 [advisories]
 informational_warnings = ["unmaintained", "unsound", "notice"]
 ignore = [
-	"RUSTSEC-2023-0071", # No upstream fix yet; runtime JWT usage is constrained to HS512 only.
+	"RUSTSEC-2026-0097", # Remaining rand 0.8 path is transitive via sanitizer/proc-macro deps; no safe upstream migration path fully removes it yet.
 ]
