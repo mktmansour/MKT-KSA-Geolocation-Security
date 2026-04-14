@@ -70,7 +70,7 @@ serde = { version = "1", features = ["derive"] }
 thiserror = "2.0.17"
 maxminddb = { version = "0.27.0", features = ["mmap"] }
 pqcrypto-traits = "0.3.5"
-tokio-rusqlite = "0.6.0"
+tokio-rusqlite = "0.7.0"
 rusqlite = "0.37.0"
 
 [dev-dependencies]
