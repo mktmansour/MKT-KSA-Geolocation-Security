@@ -205,7 +205,12 @@ impl JwtManager {
         let signing_input = format!("{header_b64}.{payload_b64}");
         let expected_sig = sign_hs512(&self.secret, &signing_input)?;
         let provided_sig = b64url_decode(signature_b64)?;
-        if expected_sig.as_slice().ct_eq(provided_sig.as_slice()).unwrap_u8() != 1 {
+        if expected_sig
+            .as_slice()
+            .ct_eq(provided_sig.as_slice())
+            .unwrap_u8()
+            != 1
+        {
             return Err(JwtError::InvalidSignature);
         }
 
