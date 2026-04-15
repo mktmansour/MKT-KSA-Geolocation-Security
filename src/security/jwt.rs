@@ -29,20 +29,29 @@
 ******************************************************************************************/
 
 use crate::security::secret::SecureString;
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use chrono::{Duration, Utc};
-use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
+use hmac::{Hmac, Mac};
 use serde::{Deserialize, Serialize};
+use sha2::Sha512;
+use subtle::ConstantTimeEq;
 use thiserror::Error;
 use uuid::Uuid;
+
+type HmacSha512 = Hmac<Sha512>;
 
 /// Arabic: تعريف الأخطاء المخصصة لوحدة JWT.
 /// English: Defines custom errors for the JWT module.
 #[derive(Error, Debug)]
 pub enum JwtError {
     #[error("JWT Error: {0}")]
-    TokenError(#[from] jsonwebtoken::errors::Error),
+    TokenError(String),
     #[error("Invalid token claims: {0}")]
     InvalidClaims(String),
+    #[error("Invalid token format")]
+    InvalidTokenFormat,
+    #[error("Invalid signature")]
+    InvalidSignature,
 }
 
 /// Arabic: "المطالبات" (Claims) التي يتم تضمينها في حمولة التوكن.
@@ -77,11 +86,34 @@ pub struct Claims {
 /// English: The JWT manager. Encapsulates encoding and signing logic.
 #[derive(Clone)]
 pub struct JwtManager {
-    encoding_key: EncodingKey,
-    decoding_key: DecodingKey,
+    secret: Vec<u8>,
     token_duration_sec: i64,
     issuer: String,
     audience: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct JwtHeader {
+    alg: String,
+    #[serde(default)]
+    typ: Option<String>,
+}
+
+fn b64url_encode(input: &[u8]) -> String {
+    URL_SAFE_NO_PAD.encode(input)
+}
+
+fn b64url_decode(input: &str) -> Result<Vec<u8>, JwtError> {
+    URL_SAFE_NO_PAD
+        .decode(input)
+        .map_err(|e| JwtError::TokenError(format!("base64 decode failed: {e}")))
+}
+
+fn sign_hs512(secret: &[u8], signing_input: &str) -> Result<Vec<u8>, JwtError> {
+    let mut mac = HmacSha512::new_from_slice(secret)
+        .map_err(|e| JwtError::TokenError(format!("hmac init failed: {e}")))?;
+    mac.update(signing_input.as_bytes());
+    Ok(mac.finalize().into_bytes().to_vec())
 }
 
 impl JwtManager {
@@ -94,14 +126,31 @@ impl JwtManager {
         issuer: String,
         audience: String,
     ) -> Self {
-        let secret_bytes = secret.expose().as_bytes();
+        let secret_bytes = secret.expose().as_bytes().to_vec();
         Self {
-            encoding_key: EncodingKey::from_secret(secret_bytes),
-            decoding_key: DecodingKey::from_secret(secret_bytes),
+            secret: secret_bytes,
             token_duration_sec,
             issuer,
             audience,
         }
+    }
+
+    fn encode_claims(&self, claims: &Claims) -> Result<String, JwtError> {
+        let header = serde_json::json!({
+            "alg": "HS512",
+            "typ": "JWT"
+        });
+        let header_json = serde_json::to_vec(&header)
+            .map_err(|e| JwtError::TokenError(format!("header serialization failed: {e}")))?;
+        let payload_json = serde_json::to_vec(claims)
+            .map_err(|e| JwtError::TokenError(format!("claims serialization failed: {e}")))?;
+
+        let encoded_header = b64url_encode(&header_json);
+        let encoded_payload = b64url_encode(&payload_json);
+        let signing_input = format!("{encoded_header}.{encoded_payload}");
+        let signature = sign_hs512(&self.secret, &signing_input)?;
+        let encoded_signature = b64url_encode(&signature);
+        Ok(format!("{signing_input}.{encoded_signature}"))
     }
 
     /// Arabic: إنشاء توكن جديد لمستخدم معين مع أدواره.
@@ -121,9 +170,7 @@ impl JwtManager {
             iss: self.issuer.clone(),
             aud: self.audience.clone(),
         };
-
-        let header = Header::new(Algorithm::HS512);
-        encode(&header, &claims, &self.encoding_key).map_err(JwtError::from)
+        self.encode_claims(&claims)
     }
 
     /// Arabic: فك تشفير والتحقق من صحة التوكن بشكل كامل.
@@ -134,19 +181,50 @@ impl JwtManager {
     /// # Errors
     /// يعيد `JwtError` عند فشل التحقق أو عدم صحة المطالبات.
     pub fn decode_token(&self, token: &str) -> Result<Claims, JwtError> {
-        let mut validation = Validation::new(Algorithm::HS512);
-        validation.validate_exp = true;
-        validation.set_audience(std::slice::from_ref(&self.audience));
-        validation.set_issuer(std::slice::from_ref(&self.issuer));
+        let mut parts = token.split('.');
+        let header_b64 = parts.next().ok_or(JwtError::InvalidTokenFormat)?;
+        let payload_b64 = parts.next().ok_or(JwtError::InvalidTokenFormat)?;
+        let signature_b64 = parts.next().ok_or(JwtError::InvalidTokenFormat)?;
+        if parts.next().is_some() {
+            return Err(JwtError::InvalidTokenFormat);
+        }
 
-        decode::<Claims>(token, &self.decoding_key, &validation)
-            .map(|data| data.claims)
-            .map_err(|err| {
-                // TODO: Here, we can integrate with the logging/alerting system.
-                // For example:
-                // log_failed_jwt_validation(err.kind());
-                JwtError::from(err)
-            })
+        let header_raw = b64url_decode(header_b64)?;
+        let header: JwtHeader = serde_json::from_slice(&header_raw)
+            .map_err(|e| JwtError::TokenError(format!("header parse failed: {e}")))?;
+
+        if header.alg != "HS512" {
+            return Err(JwtError::TokenError("unsupported algorithm".to_string()));
+        }
+        if let Some(typ) = header.typ {
+            if typ != "JWT" {
+                return Err(JwtError::TokenError("invalid token type".to_string()));
+            }
+        }
+
+        let signing_input = format!("{header_b64}.{payload_b64}");
+        let expected_sig = sign_hs512(&self.secret, &signing_input)?;
+        let provided_sig = b64url_decode(signature_b64)?;
+        if expected_sig.as_slice().ct_eq(provided_sig.as_slice()).unwrap_u8() != 1 {
+            return Err(JwtError::InvalidSignature);
+        }
+
+        let payload_raw = b64url_decode(payload_b64)?;
+        let claims: Claims = serde_json::from_slice(&payload_raw)
+            .map_err(|e| JwtError::TokenError(format!("claims parse failed: {e}")))?;
+
+        let now = Utc::now().timestamp();
+        if claims.exp <= now {
+            return Err(JwtError::TokenError("token expired".to_string()));
+        }
+        if claims.iss != self.issuer {
+            return Err(JwtError::InvalidClaims("issuer mismatch".to_string()));
+        }
+        if claims.aud != self.audience {
+            return Err(JwtError::InvalidClaims("audience mismatch".to_string()));
+        }
+
+        Ok(claims)
     }
 }
 
@@ -196,14 +274,9 @@ mod tests {
             iss: manager.issuer.clone(),
             aud: manager.audience.clone(),
         };
-        let header = Header::new(Algorithm::HS512);
-        let token = encode(&header, &expired_claims, &manager.encoding_key).unwrap();
-        let result = std::panic::catch_unwind(|| manager.decode_token(&token));
-        let _ = result.is_err();
-        let result = result.unwrap();
-        if result.is_err() {}
-        // إذا لم يكن هناك خطأ، اعتبر الاختبار ناجحاً فقط
-        // Removed redundant constant assertion per clippy
+        let token = manager.encode_claims(&expired_claims).unwrap();
+        let result = manager.decode_token(&token);
+        assert!(result.is_err());
     }
 
     #[test]
@@ -225,15 +298,7 @@ mod tests {
 
         let result = manager2.decode_token(&token);
         assert!(result.is_err());
-        match result.unwrap_err() {
-            JwtError::TokenError(err) => {
-                assert_eq!(
-                    err.kind(),
-                    &jsonwebtoken::errors::ErrorKind::InvalidSignature
-                );
-            }
-            JwtError::InvalidClaims(_) => panic!("Unexpected InvalidClaims error"),
-        }
+        assert!(matches!(result.unwrap_err(), JwtError::InvalidSignature));
     }
 
     #[test]
@@ -267,13 +332,14 @@ mod tests {
             aud: manager.audience.clone(),
         };
 
-        // Token is intentionally signed with HS256 and must be rejected by HS512-only validation.
-        let token = encode(
-            &Header::new(Algorithm::HS256),
-            &claims,
-            &manager.encoding_key,
-        )
-        .unwrap();
+        // Token header is intentionally marked as HS256 and must be rejected.
+        let header = serde_json::json!({"alg": "HS256", "typ": "JWT"});
+        let encoded_header = b64url_encode(&serde_json::to_vec(&header).unwrap());
+        let encoded_payload = b64url_encode(&serde_json::to_vec(&claims).unwrap());
+        let signing_input = format!("{encoded_header}.{encoded_payload}");
+        let signature = sign_hs512(&manager.secret, &signing_input).unwrap();
+        let token = format!("{signing_input}.{}", b64url_encode(&signature));
+
         let result = manager.decode_token(&token);
         assert!(result.is_err());
     }

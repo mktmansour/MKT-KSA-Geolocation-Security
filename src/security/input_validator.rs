@@ -27,7 +27,7 @@
     a wide range of attacks like SQL Injection, XSS, and others.
 ******************************************************************************************/
 
-use ammonia::clean;
+use html_escape::encode_safe;
 // once_cell is no longer used for statics after switching to std::sync::LazyLock
 use regex::Regex;
 #[cfg(test)]
@@ -62,16 +62,15 @@ static USERNAME_BLACKLIST: std::sync::LazyLock<Vec<&'static str>> =
 // --- Sanitization Functions ---
 
 /// Arabic: دالة مركزية لتعقيم المدخلات النصية من هجمات XSS.
-/// تستخدم مكتبة `ammonia` لإزالة أي أكواد HTML أو JS خبيثة.
-/// يسمح فقط بالنص العادي، مما يجعله آمنًا للعرض أو التخزين.
+/// تستخدم ترميز HTML الصارم لتحويل أي وسوم/سكربت إلى نص غير قابل للتنفيذ.
+/// يسمح فقط بالنص العادي الآمن للعرض أو التخزين.
 ///
 /// English: A central function to sanitize string inputs against XSS attacks.
-/// It uses the `ammonia` library to remove any malicious HTML or JS code.
-/// Only plain text is allowed, making it safe for display or storage.
+/// It uses strict HTML escaping to turn any tags/scripts into non-executable text.
+/// Only safe plain text is produced for display or storage.
 #[must_use]
 pub fn sanitize_text(input: &str) -> String {
-    // A very strict setting: allows no HTML tags at all.
-    clean(input)
+    encode_safe(input).into_owned()
 }
 
 /// Arabic: دالة متقدمة تقوم بتوحيد ترميز النص (لمنع هجمات Homoglyph) ثم تعقيمه.
@@ -183,15 +182,20 @@ mod tests {
     fn test_sanitize_text_removes_scripts() {
         let malicious_input = "Hello, <script>alert('XSS');</script> world!";
         let sanitized = sanitize_text(malicious_input);
-        assert_eq!(sanitized, "Hello,  world!");
+        assert!(!sanitized.contains("<script>"));
+        assert!(sanitized.contains("script"));
     }
 
     #[test]
     fn test_sanitize_text_removes_html_tags() {
         let html_input = "<b>Bold</b> and <i>italic</i> text. <style>p { color: red; }</style>";
         let sanitized = sanitize_text(html_input);
-        // Default ammonia settings keep safe tags like <b> and <i>, but remove things like <style>
-        assert_eq!(sanitized, "<b>Bold</b> and <i>italic</i> text. ");
+        assert!(sanitized.contains("Bold"));
+        assert!(sanitized.contains("italic"));
+        assert!(sanitized.contains("style"));
+        assert!(!sanitized.contains("<b>"));
+        assert!(!sanitized.contains("<i>"));
+        assert!(!sanitized.contains("<style>"));
     }
 
     #[test]
