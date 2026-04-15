@@ -66,7 +66,18 @@ Production-grade geolocation and behavioral security system for Rust services an
   - `docs/security-advisories/SECURITY_ADVISORY_TEMPLATE_EN.md`
   - `docs/security-advisories/SECURITY_ADVISORY_TEMPLATE_AR.md`
 
-## Latest Status and Strategic Notice (2026-03-19)
+## Latest Status and Strategic Notice (2026-04-15)
+
+### Dependency Governance and Recurrence Prevention Update (2026-04-15)
+
+- Executed a strict security-maintenance cycle to remove high-risk legacy dependency routes from the active baseline.
+- Added a scientific postmortem that documents: observed symptoms, root-cause analysis, corrective actions, and preventive controls.
+- Hardened repository hygiene by extending cleanup automation for temporary/random artifacts and packaging residues.
+- Closed stale dependency PRs that were behind `main` and failing required checks, preserving deterministic merge governance.
+
+Scientific report:
+
+- `docs/DEPENDENCY_HARDENING_POSTMORTEM_2026-04-15.md`
 
 ![Section 00 Update Banner](docs/images/banners/section-08.svg)
 

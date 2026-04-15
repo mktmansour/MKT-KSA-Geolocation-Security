@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.1] - 2026-04-15
+
+### Security Maintenance
+
+- Removed high-risk transitive exposure paths from the default dependency graph by replacing legacy routes:
+  - Removed `jsonwebtoken` usage path and moved to internal HS512 JWT implementation.
+  - Removed `ammonia` usage path and moved to strict HTML escaping for input sanitization.
+- Eliminated prior advisory-linked dependency routes associated with `rsa` and legacy `rand` chains in active baseline.
+
+### Dependency and CI Governance
+
+- Closed stale Dependabot PRs that were behind `main` and failing required checks (`build`, workflow `clippy`) to keep merge queue deterministic.
+- Documented distinction between required workflow checks and informational neutral check contexts to reduce false operational interpretation.
+
+### Operational Hygiene
+
+- Hardened workspace cleanup procedure in `scripts/ci/cleanup_workspace.sh`:
+  - Removes temporary/random artifact patterns (`*.tmp`, `*.orig`, swap and backup files).
+  - Removes `target/package` staging residues to avoid stale packaging artifacts.
+
+### Validation
+
+- `cargo update`: pass
+- `cargo check`: pass
+- `cargo test -q`: pass
+- `cargo audit -q`: pass
+
+### Documentation
+
+- Added scientific postmortem and prevention guide:
+  - `docs/DEPENDENCY_HARDENING_POSTMORTEM_2026-04-15.md`
+
 ## [2.0.1] - 2026-03-19
 
 ### Security
