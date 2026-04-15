@@ -47,7 +47,7 @@ aes-gcm = "0.10.3"
 secrecy = { version = "0.10.3", features = ["serde"] }
 zeroize = { version = "1.8.1", features = ["derive"] }
 hex = "0.4.3"
-hmac = "0.12.1"
+hmac = "0.13.0"
 sha2 = "0.10.9"
 blake3 = "1.8.2"
 base64 = "0.22.1"
