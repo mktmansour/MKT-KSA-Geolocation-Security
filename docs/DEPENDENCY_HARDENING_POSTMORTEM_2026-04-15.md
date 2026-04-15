@@ -9,6 +9,11 @@ The corrective strategy combined three tracks:
 3. Operational hygiene correction (automate cleanup of transient artifacts).
 
 ## 2. Incident Context
+### GitHub Security Trigger (Why This Work Started)
+- GitHub security surfaces (Dependabot/advisory context + Code Scanning) indicated non-compliant security posture that required immediate hardening.
+- A major trigger was dependency-risk exposure through legacy routes and subsequent CI/code-scanning instability.
+- During verification, GitHub Code Scanning displayed 13 open compile-analysis alerts (`E0599`, `E0282`) tied to crypto API mismatch and type-inference breakage in analyzed snapshots.
+
 ### Observed Symptoms
 - Presence of dependency routes tied to previously flagged cryptographic and randomness chains.
 - Open dependency PRs remained unmerged because they were behind `main` and failing required checks.
@@ -24,6 +29,7 @@ The corrective strategy combined three tracks:
 1. Excessive reliance on transitive security-sensitive crates via legacy integration choices.
 2. Sanitization dependency choice introduced an avoidable legacy randomness path.
 3. PR queue contained stale branches that no longer matched hardened `main` baseline.
+4. Crypto refactor compatibility gap: missing `hmac::KeyInit` trait imports at `new_from_slice` call-sites caused compile-level analysis failures (`E0599`).
 
 ### 3.2 Process Causes
 1. Dependency updates were not consistently re-based on latest protected `main` before merge decisions.
@@ -37,10 +43,11 @@ The corrective strategy combined three tracks:
 5. Why was recurrence possible? Because cleanup and dependency-governance controls were incomplete.
 
 ## 4. Corrective Actions Executed
-1. Removed legacy JWT dependency route and applied internal HS512 path.
-2. Replaced HTML sanitizer dependency route with strict escaping approach.
-3. Closed stale/failing dependency PRs that were behind `main` and non-mergeable under required protections.
-4. Extended cleanup automation in `scripts/ci/cleanup_workspace.sh` to remove temporary/random artifacts and packaging residues.
+1. Removed legacy JWT dependency route (`jsonwebtoken`) and applied internal HS512 path.
+2. Replaced legacy HTML sanitizer dependency route (`ammonia`) with strict escaping approach.
+3. Fixed compile-analysis breakage by restoring required crypto trait imports (`hmac::KeyInit`) on all `new_from_slice` call-sites.
+4. Closed stale/failing dependency PRs that were behind `main` and non-mergeable under required protections.
+5. Extended cleanup automation in `scripts/ci/cleanup_workspace.sh` to remove temporary/random artifacts and packaging residues.
 
 ## 5. Preventive Controls to Avoid Recurrence
 ### 5.1 Dependency Controls
@@ -62,6 +69,7 @@ Validation was executed after hardening actions:
 - `cargo update`
 - `cargo check`
 - `cargo test -q`
+- `cargo clippy --all-targets --all-features -- -D warnings`
 - `cargo audit -q`
 
 Observed result: validation commands completed successfully on current baseline.

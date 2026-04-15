@@ -71,6 +71,8 @@ Production-grade geolocation and behavioral security system for Rust services an
 ### Dependency Governance and Recurrence Prevention Update (2026-04-15)
 
 - Executed a strict security-maintenance cycle to remove high-risk legacy dependency routes from the active baseline.
+- This remediation was triggered by GitHub security signals (Dependabot/Code Scanning) indicating dependency-risk drift and compile-analysis instability.
+- Applied explicit replacement path: removed `jsonwebtoken` in favor of internal HS512 JWT and replaced `ammonia` with `html-escape` to reduce high-risk transitive exposure.
 - Added a scientific postmortem that documents: observed symptoms, root-cause analysis, corrective actions, and preventive controls.
 - Hardened repository hygiene by extending cleanup automation for temporary/random artifacts and packaging residues.
 - Closed stale dependency PRs that were behind `main` and failing required checks, preserving deterministic merge governance.

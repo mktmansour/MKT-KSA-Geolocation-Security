@@ -49,7 +49,7 @@ use crate::utils::helpers::{aes_encrypt, calculate_distance};
 use anyhow::anyhow;
 use async_trait::async_trait;
 use blake3::Hasher;
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 #[allow(unused_imports)]
 use log::error;
 use lru::LruCache;

@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Closed stale Dependabot PRs that were behind `main` and failing required checks (`build`, workflow `clippy`) to keep merge queue deterministic.
 - Documented distinction between required workflow checks and informational neutral check contexts to reduce false operational interpretation.
+- Addressed GitHub Code Scanning compile-analysis alerts (13 open items in affected snapshot) by fixing crypto API compatibility (`hmac::KeyInit` imports for `new_from_slice` call-sites).
 
 ### Operational Hygiene
 
