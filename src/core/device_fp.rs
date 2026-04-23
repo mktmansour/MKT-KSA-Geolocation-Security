@@ -52,6 +52,7 @@ use std::time::Instant;
 use crate::security::secret::SecureBytes;
 use async_trait::async_trait;
 use blake3::Hasher;
+use futures::executor;
 use rand_core::OsRng;
 use rand_core::RngCore;
 use serde::{Deserialize, Serialize};
@@ -433,13 +434,8 @@ impl FullEngine {
     }
 }
 
-// استخدام once_cell لضمان التهيئة لمرة واحدة فقط
-// Use once_cell to ensure one-time initialization
-static ENGINE: std::sync::LazyLock<Result<FullEngine, FingerprintError>> =
-    std::sync::LazyLock::new(FullEngine::new);
-
-/// توليد بصمة (واجهة C) - الآن تستخدم النسخة الوحيدة
-/// Generate fingerprint (C interface) - now uses the singleton instance
+/// توليد بصمة (واجهة C)
+/// Generate fingerprint (C interface)
 ///
 /// # Safety
 /// - يجب أن تكون المؤشرات `os`, `device_info`, `env_data` صالحة وغير فارغة وتشير إلى سلاسل C منتهية بـ NUL.
@@ -458,23 +454,15 @@ pub unsafe extern "C" fn generate_adaptive_fingerprint(
         let device_str = unsafe { CStr::from_ptr(device_info).to_str()? };
         let env_str = unsafe { CStr::from_ptr(env_data).to_str()? };
 
-        // الوصول إلى المحرك المهيأ
-        // Access the initialized engine
-        let full_engine = match &*ENGINE {
-            Ok(engine) => engine,
-            Err(e) => return Err(e.to_string().into()),
-        };
+        // إنشاء المحرك محلياً داخل الاستدعاء لتقليل بقاء الذاكرة طويلة العمر عبر FFI.
+        // Build a short-lived engine per FFI invocation to reduce process-lifetime retention.
+        let full_engine = FullEngine::new()?;
 
-        // تنفيذ غير متزامن
-        // Async execution
-        let fp = tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()?
-            .block_on(
-                full_engine
-                    .engine
-                    .generate_fingerprint(os_str, device_str, env_str),
-            )?;
+        let fp = executor::block_on(
+            full_engine
+                .engine
+                .generate_fingerprint(os_str, device_str, env_str),
+        )?;
 
         let json = serde_json::to_string(&fp)?;
         Ok(CString::new(json)?)
