@@ -54,8 +54,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
         with:
-          # Scan the published tree for current secrets without replaying removed historical cache/vendor content.
-          fetch-depth: 1
+          # Keep the pushed commit and its immediate parent so Gitleaks can diff the current push
+          # without replaying the repository's older removed cache/vendor history.
+          fetch-depth: 2
           submodules: false
 
       - name: Prepare secure workspace
