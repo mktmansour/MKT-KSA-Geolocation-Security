@@ -66,7 +66,16 @@ Production-grade geolocation and behavioral security system for Rust services an
   - `docs/security-advisories/SECURITY_ADVISORY_TEMPLATE_EN.md`
   - `docs/security-advisories/SECURITY_ADVISORY_TEMPLATE_AR.md`
 
-## Latest Status and Strategic Notice (2026-04-15)
+## Latest Status and Strategic Notice (2026-04-23)
+
+### Strict Advisory and Request-Surface Hardening Update (2026-04-23)
+
+- Remediated the active dependency advisories by upgrading `actix-http` to `3.12.1` and `rustls-webpki` to `0.103.13`.
+- Added centralized request-framing rejection for conflicting `Content-Length` / `Transfer-Encoding` combinations to harden the API surface against CL.TE-style request smuggling.
+- Stopped trusting `X-Forwarded-For` by default so spoofed forwarded IP headers cannot bypass rate limiting or adaptive AI blocking unless explicitly enabled by deployment policy.
+- Reduced JWT secret residual exposure by keeping in-memory signing material in zeroizing storage.
+- Added strict tests for request smuggling rejection, forwarded-IP spoofing resistance, and AI guard stale-state pruning under pressure.
+- Reviewed webhook exposure as part of the same pass: no webhook endpoints are currently registered in the API surface, so webhook risk remains intentionally absent in the active baseline.
 
 ### Dependency Governance and Recurrence Prevention Update (2026-04-15)
 

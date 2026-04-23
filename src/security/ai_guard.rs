@@ -475,4 +475,38 @@ mod tests {
             .reasons
             .contains(&"sensitive_access_route"));
     }
+
+    #[tokio::test]
+    async fn stale_ip_state_is_pruned_when_capacity_is_reached() {
+        let guard = RequestAiGuard::new(AiGuardConfig {
+            max_tracked_ips: 2,
+            reputation_decay_seconds: 1,
+            ..AiGuardConfig::default()
+        });
+
+        let stale_seen = Instant::now() - Duration::from_secs(400);
+        let stale_ip_one: IpAddr = "203.0.113.61".parse().expect("valid test ip");
+        let stale_ip_two: IpAddr = "203.0.113.62".parse().expect("valid test ip");
+
+        {
+            let mut map = guard.ip_state.write().await;
+            let mut stale_state_one = IpRiskState::new(stale_seen);
+            stale_state_one.last_seen = stale_seen;
+            let mut stale_state_two = IpRiskState::new(stale_seen);
+            stale_state_two.last_seen = stale_seen;
+            map.insert(stale_ip_one, stale_state_one);
+            map.insert(stale_ip_two, stale_state_two);
+        }
+
+        let fresh_ip: IpAddr = "203.0.113.63".parse().expect("valid test ip");
+        let _ = guard
+            .evaluate_request(fresh_ip, "/api/behavior/analyze", Some("ua"), b"{}")
+            .await;
+
+        let map = guard.ip_state.read().await;
+        assert_eq!(map.len(), 1);
+        assert!(map.contains_key(&fresh_ip));
+        assert!(!map.contains_key(&stale_ip_one));
+        assert!(!map.contains_key(&stale_ip_two));
+    }
 }

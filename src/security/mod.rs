@@ -49,3 +49,7 @@ pub mod secret;
 // Arabic: طبقة حراسة ذكية مدعومة بقواعد AI heuristic
 // English: AI-assisted adaptive request guard
 pub mod ai_guard;
+
+// Arabic: حارس framing للطلبات ضد request smuggling والتغليف الملتبس
+// English: Request framing guard against request smuggling and ambiguous message framing
+pub mod request_guard;

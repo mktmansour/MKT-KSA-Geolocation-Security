@@ -212,3 +212,47 @@ async fn burst_requests_trigger_strict_rate_limit() {
         "Most burst requests must be rate-limited"
     );
 }
+
+#[actix_web::test]
+async fn rejects_conflicting_request_framing_headers() {
+    let (state, _user_id, token, _) = build_state_with_db(100).await;
+
+    let app = test::init_service(App::new().app_data(state.clone()).configure(api::config)).await;
+
+    let req = test::TestRequest::post()
+        .uri("/api/behavior/analyze")
+        .insert_header((header::AUTHORIZATION, format!("Bearer {token}")))
+        .insert_header((header::CONTENT_TYPE, "application/json"))
+        .insert_header((header::CONTENT_LENGTH, "16"))
+        .insert_header((header::TRANSFER_ENCODING, "chunked"))
+        .set_payload(sample_behavior_input().to_string())
+        .to_request();
+
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+}
+
+#[actix_web::test]
+async fn spoofed_x_forwarded_for_does_not_bypass_rate_limit_by_default() {
+    let (state, user_id, token, _) = build_state_with_db(2).await;
+
+    let app = test::init_service(App::new().app_data(state.clone()).configure(api::config)).await;
+
+    for spoofed_ip in ["198.51.100.10", "198.51.100.11"] {
+        let req = test::TestRequest::get()
+            .uri(&format!("/api/users/{user_id}"))
+            .insert_header((header::AUTHORIZATION, format!("Bearer {token}")))
+            .insert_header(("X-Forwarded-For", spoofed_ip))
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), StatusCode::OK);
+    }
+
+    let third = test::TestRequest::get()
+        .uri(&format!("/api/users/{user_id}"))
+        .insert_header((header::AUTHORIZATION, format!("Bearer {token}")))
+        .insert_header(("X-Forwarded-For", "198.51.100.12"))
+        .to_request();
+    let third_resp = test::call_service(&app, third).await;
+    assert_eq!(third_resp.status(), StatusCode::TOO_MANY_REQUESTS);
+}

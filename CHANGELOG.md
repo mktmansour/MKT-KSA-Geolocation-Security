@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.1] - 2026-04-23
+
+### Security Maintenance
+
+- Remediated the active dependency advisories without widening the dependency surface:
+  - Upgraded `actix-http` to `3.12.1` to remove the GitHub-reported HTTP/1.1 CL.TE request smuggling exposure.
+  - Upgraded `rustls-webpki` to `0.103.13` to remove the reachable CRL parsing panic advisory path used through `reqwest`/`rustls`.
+- Hardened request authorization against ambiguous message framing by rejecting conflicting `Content-Length` and `Transfer-Encoding` combinations centrally.
+- Stopped trusting `X-Forwarded-For` by default so IP-based rate limiting and AI blocking cannot be bypassed by header spoofing unless explicitly enabled via `TRUST_X_FORWARDED_FOR`.
+- Reduced residual secret exposure by storing JWT signing material in zeroizing memory.
+
+### Testing and Verification
+
+- Added strict unit tests for request framing validation.
+- Added integration test that rejects CL.TE-style conflicting request framing headers.
+- Added integration test that proves spoofed `X-Forwarded-For` values do not bypass rate limiting by default.
+- Added AI guard test that verifies stale tracked-IP state is pruned under capacity pressure to cap memory retention.
+- Validation:
+  - `cargo check`: pass
+  - `cargo test`: pass
+  - `cargo clippy --all-targets --all-features -- -D warnings`: pass
+  - `cargo audit -q`: pass
+
 ## [2.0.1] - 2026-04-15
 
 ### Security Maintenance

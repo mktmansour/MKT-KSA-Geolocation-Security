@@ -43,6 +43,7 @@ use zeroize::Zeroize;
 
 use crate::security::jwt::Claims;
 use crate::security::ratelimit::RateLimitError;
+use crate::security::request_guard::{validate_request_framing, RequestFramingError};
 use crate::AppState;
 use std::future::{ready, Ready};
 use std::net::IpAddr;
@@ -109,12 +110,29 @@ pub fn ok_json_with_trace<T: Serialize>(req: &HttpRequest, data: T) -> HttpRespo
 }
 
 pub fn client_ip(req: &HttpRequest) -> IpAddr {
-    req.headers()
-        .get("X-Forwarded-For")
-        .and_then(|hv| hv.to_str().ok())
-        .and_then(|v| v.split(',').next())
-        .and_then(|s| s.trim().parse::<IpAddr>().ok())
-        .or_else(|| req.peer_addr().map(|a| a.ip()))
+    let trust_x_forwarded_for = std::env::var("TRUST_X_FORWARDED_FOR")
+        .ok()
+        .map(|value| {
+            matches!(
+                value.trim().to_ascii_lowercase().as_str(),
+                "1" | "true" | "yes" | "on"
+            )
+        })
+        .unwrap_or(false);
+
+    if trust_x_forwarded_for {
+        return req
+            .headers()
+            .get("X-Forwarded-For")
+            .and_then(|hv| hv.to_str().ok())
+            .and_then(|v| v.split(',').next())
+            .and_then(|s| s.trim().parse::<IpAddr>().ok())
+            .or_else(|| req.peer_addr().map(|a| a.ip()))
+            .unwrap_or(IpAddr::from([0, 0, 0, 0]));
+    }
+
+    req.peer_addr()
+        .map(|a| a.ip())
         .unwrap_or(IpAddr::from([0, 0, 0, 0]))
 }
 
@@ -166,6 +184,30 @@ pub async fn authorize_request(
     let ip = client_ip(req);
     let req_id = request_id(req);
     let path = req.path();
+
+    if let Err(error) = validate_request_framing(req.headers()) {
+        let (code, message) = match error {
+            RequestFramingError::AmbiguousContentLength => (
+                "AMBIGUOUS_CONTENT_LENGTH",
+                "Ambiguous Content-Length headers are not allowed",
+            ),
+            RequestFramingError::ConflictingMessageFraming => (
+                "CONFLICTING_MESSAGE_FRAMING",
+                "Content-Length and Transfer-Encoding must not be combined",
+            ),
+            RequestFramingError::UnsupportedTransferEncoding => (
+                "UNSUPPORTED_TRANSFER_ENCODING",
+                "Unsupported Transfer-Encoding chain",
+            ),
+        };
+        log_security_event(&req_id, ip, path, code, "request framing rejected");
+        return Err(api_error_with_request_id(
+            StatusCode::BAD_REQUEST,
+            code,
+            message,
+            &req_id,
+        ));
+    }
 
     match app_state.rate_limiter.check(ip).await {
         Ok(()) => {}

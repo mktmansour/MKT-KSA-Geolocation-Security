@@ -49,6 +49,15 @@ The corrective strategy combined three tracks:
 4. Closed stale/failing dependency PRs that were behind `main` and non-mergeable under required protections.
 5. Extended cleanup automation in `scripts/ci/cleanup_workspace.sh` to remove temporary/random artifacts and packaging residues.
 
+## 4.1 April 2026 Follow-Up Remediation
+1. Upgraded `actix-http` to `3.12.1` to remove the active GitHub advisory for HTTP/1.1 CL.TE request smuggling.
+2. Upgraded `rustls-webpki` to `0.103.13` to remove the reachable CRL parsing panic advisory in the TLS chain used by `reqwest`.
+3. Added centralized request framing validation to reject ambiguous `Content-Length` / `Transfer-Encoding` combinations before authentication and business logic.
+4. Changed client IP derivation to distrust `X-Forwarded-For` by default, preventing spoof-based bypass of rate limiting and adaptive AI blocking unless explicitly opted in.
+5. Moved JWT in-memory signing material into zeroizing storage to reduce residual secret exposure after use.
+6. Added targeted tests for framing rejection, spoofed forwarded-IP resistance, and AI guard stale-state pruning.
+7. Reviewed webhook exposure and confirmed that no webhook endpoints are registered in the current API surface, keeping webhook-specific attack surface absent by design in the active baseline.
+
 ## 5. Preventive Controls to Avoid Recurrence
 ### 5.1 Dependency Controls
 1. Minimize security-critical transitive dependencies unless strictly required.

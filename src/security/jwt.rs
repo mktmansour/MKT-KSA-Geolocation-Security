@@ -37,6 +37,7 @@ use sha2::Sha512;
 use subtle::ConstantTimeEq;
 use thiserror::Error;
 use uuid::Uuid;
+use zeroize::Zeroizing;
 
 type HmacSha512 = Hmac<Sha512>;
 
@@ -86,7 +87,7 @@ pub struct Claims {
 /// English: The JWT manager. Encapsulates encoding and signing logic.
 #[derive(Clone)]
 pub struct JwtManager {
-    secret: Vec<u8>,
+    secret: Zeroizing<Vec<u8>>,
     token_duration_sec: i64,
     issuer: String,
     audience: String,
@@ -126,7 +127,7 @@ impl JwtManager {
         issuer: String,
         audience: String,
     ) -> Self {
-        let secret_bytes = secret.expose().as_bytes().to_vec();
+        let secret_bytes = Zeroizing::new(secret.expose().as_bytes().to_vec());
         Self {
             secret: secret_bytes,
             token_duration_sec,
@@ -148,7 +149,7 @@ impl JwtManager {
         let encoded_header = b64url_encode(&header_json);
         let encoded_payload = b64url_encode(&payload_json);
         let signing_input = format!("{encoded_header}.{encoded_payload}");
-        let signature = sign_hs512(&self.secret, &signing_input)?;
+        let signature = sign_hs512(self.secret.as_slice(), &signing_input)?;
         let encoded_signature = b64url_encode(&signature);
         Ok(format!("{signing_input}.{encoded_signature}"))
     }
@@ -203,7 +204,7 @@ impl JwtManager {
         }
 
         let signing_input = format!("{header_b64}.{payload_b64}");
-        let expected_sig = sign_hs512(&self.secret, &signing_input)?;
+        let expected_sig = sign_hs512(self.secret.as_slice(), &signing_input)?;
         let provided_sig = b64url_decode(signature_b64)?;
         if expected_sig
             .as_slice()
