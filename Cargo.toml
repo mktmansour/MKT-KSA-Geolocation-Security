@@ -40,7 +40,7 @@ log = "0.4.28"
 
 # Database
 tokio = { version = "1", features = ["full"] }
-uuid = { version = "1.18.0", features = ["v4", "serde"] }
+uuid = { version = "1.23.1", features = ["v4", "serde"] }
 
 # Crypto & Security
 aes-gcm = "0.10.3"
@@ -55,11 +55,11 @@ pqcrypto-mlkem = "0.1.1"
 unicode-normalization = "0.1.24"
 validator = "0.20"
 regex = "1.12.2"
-lru = "0.16.3"
+lru = "0.17.0"
 subtle = "2.6.1"
 
 cfg-if = "1.0.4"
-rand_core = "0.6.4"
+rand_core = "0.10.1"
 chrono = { version = "0.4", features = ["serde"] }
 
 # Utilities
@@ -69,7 +69,7 @@ serde = { version = "1", features = ["derive"] }
 thiserror = "2.0.17"
 maxminddb = { version = "0.27.0", features = ["mmap"] }
 pqcrypto-traits = "0.3.5"
-tokio-rusqlite = "0.6.0"
+tokio-rusqlite = "0.7.0"
 rusqlite = "0.37.0"
 
 [dev-dependencies]
